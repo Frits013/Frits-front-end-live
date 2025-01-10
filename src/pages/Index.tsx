@@ -30,22 +30,39 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-background to-secondary/20 p-4">
-      <div className="w-full max-w-4xl text-center mb-8">
+    <div 
+      className="min-h-screen flex flex-col items-center justify-center p-4 relative"
+      style={{
+        background: `
+          linear-gradient(
+            to bottom,
+            rgba(37, 99, 235, 0.1),
+            rgba(59, 130, 246, 0.2)
+          ),
+          url('https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=1920&q=80')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-white/80 backdrop-blur-sm" />
+      
+      {/* Content */}
+      <div className="relative z-10 w-full max-w-4xl text-center mb-8">
         <div className="flex items-center justify-center gap-2 mb-4">
-          <MessageSquare className="h-8 w-8 text-primary" />
-          <h1 className="text-4xl font-bold">Frits</h1>
+          <MessageSquare className="h-8 w-8 text-blue-600" />
+          <h1 className="text-4xl font-bold text-blue-900">Frits</h1>
         </div>
-        <p className="text-xl text-muted-foreground">
+        <p className="text-xl text-blue-800">
           Your personal AI assistant, ready to help
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8 w-full max-w-4xl">
-        <Card className="p-2">
+      <div className="relative z-10 grid md:grid-cols-2 gap-8 w-full max-w-4xl">
+        <Card className="backdrop-blur-md bg-white/80 border border-blue-100 shadow-lg">
           <CardHeader>
-            <CardTitle>Welcome to Frits</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-blue-900">Welcome to Frits</CardTitle>
+            <CardDescription className="text-blue-700">
               Experience intelligent conversations powered by AI
             </CardDescription>
           </CardHeader>
@@ -58,6 +75,7 @@ const Index = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  className="border-blue-200 focus:border-blue-400"
                 />
               </div>
               <div className="space-y-2">
@@ -67,34 +85,35 @@ const Index = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  className="border-blue-200 focus:border-blue-400"
                 />
               </div>
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
                 Login
               </Button>
             </form>
           </CardContent>
         </Card>
 
-        <Card className="p-6 flex flex-col justify-center">
-          <div className="space-y-4">
-            <h3 className="text-2xl font-semibold">Why Choose Frits?</h3>
+        <Card className="backdrop-blur-md bg-white/80 border border-blue-100 shadow-lg">
+          <div className="space-y-4 p-6">
+            <h3 className="text-2xl font-semibold text-blue-900">Why Choose Frits?</h3>
             <ul className="space-y-2">
               <li className="flex items-start gap-2">
-                <span className="text-primary">•</span>
-                <span>Intelligent conversations tailored to your needs</span>
+                <span className="text-blue-600">•</span>
+                <span className="text-blue-800">Intelligent conversations tailored to your needs</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-primary">•</span>
-                <span>Secure and private communication</span>
+                <span className="text-blue-600">•</span>
+                <span className="text-blue-800">Secure and private communication</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-primary">•</span>
-                <span>24/7 availability for assistance</span>
+                <span className="text-blue-600">•</span>
+                <span className="text-blue-800">24/7 availability for assistance</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-primary">•</span>
-                <span>Seamless conversation history tracking</span>
+                <span className="text-blue-600">•</span>
+                <span className="text-blue-800">Seamless conversation history tracking</span>
               </li>
             </ul>
           </div>
