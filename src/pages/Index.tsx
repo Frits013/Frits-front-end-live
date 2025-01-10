@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { MessageSquare } from "lucide-react";
 import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [email, setEmail] = useState("");
@@ -25,6 +25,24 @@ const Index = () => {
         variant: "destructive",
         title: "Error",
         description: "Failed to log in. Please try again.",
+      });
+    }
+  };
+
+  const handleSignUp = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      console.log("Attempting signup with:", { email });
+      toast({
+        title: "Sign up functionality coming soon",
+        description: "The registration system is under development.",
+      });
+    } catch (error) {
+      console.error("Signup error:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to sign up. Please try again.",
       });
     }
   };
@@ -88,9 +106,19 @@ const Index = () => {
                   className="border-blue-200 focus:border-blue-400"
                 />
               </div>
-              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-                Login
-              </Button>
+              <div className="flex gap-4">
+                <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700">
+                  Login
+                </Button>
+                <Button 
+                  type="button" 
+                  onClick={handleSignUp}
+                  variant="outline"
+                  className="flex-1 border-blue-200 hover:bg-blue-50"
+                >
+                  Sign Up
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>
