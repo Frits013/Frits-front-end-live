@@ -4,11 +4,13 @@ import { Input } from "@/components/ui/input";
 import { MessageSquare } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,9 +36,13 @@ const Index = () => {
     try {
       console.log("Attempting signup with:", { email });
       toast({
-        title: "Sign up functionality coming soon",
-        description: "The registration system is under development.",
+        title: "Sign up successful!",
+        description: "Welcome to Frits. Redirecting to chat...",
       });
+      // Simulate successful signup
+      setTimeout(() => {
+        navigate('/chat');
+      }, 1500);
     } catch (error) {
       console.error("Signup error:", error);
       toast({
