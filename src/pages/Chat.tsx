@@ -222,18 +222,18 @@ const Chat = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 p-4">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50/30 to-purple-50/30 dark:from-gray-900 dark:to-purple-900/20 p-4">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Sphere Container */}
         <div className="flex justify-center">
-          <div className="relative w-[400px] h-[400px] bg-gradient-to-b from-transparent to-blue-50/20 dark:to-blue-950/20 rounded-full">
+          <div className="relative w-[500px] h-[500px] bg-gradient-to-b from-transparent to-purple-50/20 dark:to-purple-900/20 rounded-full">
             <canvas ref={canvasRef} className="absolute inset-0" />
           </div>
         </div>
 
         {/* Chat Container */}
-        <Card className="p-6 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-blue-100 dark:border-blue-900 shadow-lg">
-          <div className="h-[400px] overflow-y-auto mb-4 space-y-4 p-4 scrollbar-thin scrollbar-thumb-blue-200 dark:scrollbar-thumb-blue-800 scrollbar-track-transparent">
+        <Card className="p-6 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-purple-100 dark:border-purple-900 shadow-lg rounded-xl">
+          <div className="h-[400px] overflow-y-auto mb-4 space-y-4 p-4 scrollbar-thin scrollbar-thumb-purple-200 dark:scrollbar-thumb-purple-800 scrollbar-track-transparent">
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -244,8 +244,8 @@ const Chat = () => {
                 <div
                   className={`max-w-[80%] p-4 rounded-2xl shadow-sm ${
                     message.sender === 'user'
-                      ? 'bg-blue-600 text-white ml-4'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 mr-4'
+                      ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white'
+                      : 'bg-gradient-to-r from-gray-100 to-purple-50 dark:from-gray-800 dark:to-purple-900/50 text-gray-800 dark:text-gray-200'
                   } transition-all duration-200 hover:shadow-md`}
                 >
                   {message.content}
@@ -258,11 +258,11 @@ const Chat = () => {
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               placeholder="Type your message..."
-              className="flex-1 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-blue-100 dark:border-blue-900 focus:ring-blue-500 dark:focus:ring-blue-400"
+              className="flex-1 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-purple-100 dark:border-purple-900 focus:ring-purple-500 dark:focus:ring-purple-400"
             />
             <Button 
               type="submit" 
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white transition-all duration-300"
             >
               <Send className="w-4 h-4 mr-2" />
               Send
