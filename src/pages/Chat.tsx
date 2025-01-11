@@ -29,9 +29,9 @@ const Chat = () => {
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    // Scene setup with fog for depth
+    // Scene setup with enhanced fog
     const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x000000, 5, 15);
+    scene.fog = new THREE.Fog(0x000000, 8, 20);
     sceneRef.current = scene;
 
     // Camera setup with adjusted position
@@ -41,7 +41,7 @@ const Chat = () => {
       0.1,
       1000
     );
-    camera.position.z = 7;
+    camera.position.z = 10;
     cameraRef.current = camera;
 
     // Enhanced renderer setup
@@ -50,28 +50,69 @@ const Chat = () => {
       alpha: true,
       antialias: true,
     });
-    renderer.setSize(400, 400); // Increased size
+    renderer.setSize(500, 500); // Increased size for wider sphere
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1;
+    renderer.toneMappingExposure = 1.2;
     rendererRef.current = renderer;
 
-    // Create complex sphere geometry
-    const geometry = new THREE.IcosahedronGeometry(2, 4); // Larger and more detailed
+    // Create complex sphere geometry with more detail
+    const geometry = new THREE.IcosahedronGeometry(3, 5); // Increased size and detail
     
-    // Create complex material with custom shading
+    // Create network pattern texture
+    const textureSize = 1024;
+    const canvas = document.createElement('canvas');
+    canvas.width = textureSize;
+    canvas.height = textureSize;
+    const ctx = canvas.getContext('2d')!;
+    
+    // Draw network pattern
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, textureSize, textureSize);
+    
+    // Draw lines
+    ctx.strokeStyle = '#D6BCFA50'; // Light purple with transparency
+    ctx.lineWidth = 2;
+    
+    for (let i = 0; i < 50; i++) {
+      const x1 = Math.random() * textureSize;
+      const y1 = Math.random() * textureSize;
+      const x2 = x1 + (Math.random() - 0.5) * 200;
+      const y2 = y1 + (Math.random() - 0.5) * 200;
+      
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+    
+    // Add dots at intersections
+    ctx.fillStyle = '#D3E4FD80'; // Soft blue with transparency
+    for (let i = 0; i < 100; i++) {
+      const x = Math.random() * textureSize;
+      const y = Math.random() * textureSize;
+      ctx.beginPath();
+      ctx.arc(x, y, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    
+    // Create enhanced material with network pattern
     const material = new THREE.MeshPhysicalMaterial({
-      color: 0x3b82f6,
+      color: 0xE5DEFF, // Soft purple base color
       metalness: 0.2,
       roughness: 0.3,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.3,
-      emissive: 0x072f5f,
-      envMapIntensity: 1.2,
+      clearcoat: 0.8,
+      clearcoatRoughness: 0.2,
       transmission: 0.2,
-      opacity: 0.9,
+      thickness: 0.5,
+      envMapIntensity: 1.5,
+      map: texture,
+      emissive: 0x8B5CF6, // Vivid purple glow
+      emissiveIntensity: 0.2,
       transparent: true,
-      side: THREE.DoubleSide
+      opacity: 0.9,
     });
 
     const sphere = new THREE.Mesh(geometry, material);
@@ -86,13 +127,18 @@ const Chat = () => {
     directionalLight.position.set(5, 5, 5);
     scene.add(directionalLight);
 
-    const pointLight1 = new THREE.PointLight(0x3b82f6, 4);
-    pointLight1.position.set(-2, 1, 4);
+    // Add multiple colored point lights
+    const pointLight1 = new THREE.PointLight(0xD6BCFA, 5); // Purple light
+    pointLight1.position.set(-3, 2, 4);
     scene.add(pointLight1);
 
-    const pointLight2 = new THREE.PointLight(0x3b82f6, 4);
-    pointLight2.position.set(2, -1, 4);
+    const pointLight2 = new THREE.PointLight(0xD3E4FD, 5); // Blue light
+    pointLight2.position.set(3, -2, 4);
     scene.add(pointLight2);
+
+    const pointLight3 = new THREE.PointLight(0x33C3F0, 4); // Sky blue light
+    pointLight3.position.set(0, 3, 4);
+    scene.add(pointLight3);
 
     // Animation loop with enhanced effects
     const animate = () => {
@@ -130,12 +176,12 @@ const Chat = () => {
 
     animate();
 
-    // Enhanced window resize handler
+    // Window resize handler
     const handleResize = () => {
       if (!cameraRef.current || !rendererRef.current) return;
       cameraRef.current.aspect = window.innerWidth / window.innerHeight;
       cameraRef.current.updateProjectionMatrix();
-      rendererRef.current.setSize(400, 400);
+      rendererRef.current.setSize(500, 500);
     };
 
     window.addEventListener('resize', handleResize);
