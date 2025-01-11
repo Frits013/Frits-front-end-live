@@ -29,75 +29,97 @@ const Chat = () => {
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    // Scene setup
+    // Scene setup with fog for depth
     const scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0x000000, 5, 15);
     sceneRef.current = scene;
 
-    // Camera setup
+    // Camera setup with adjusted position
     const camera = new THREE.PerspectiveCamera(
       75,
       window.innerWidth / window.innerHeight,
       0.1,
       1000
     );
-    camera.position.z = 5;
+    camera.position.z = 7;
     cameraRef.current = camera;
 
-    // Renderer setup
+    // Enhanced renderer setup
     const renderer = new THREE.WebGLRenderer({
       canvas: canvasRef.current,
       alpha: true,
       antialias: true,
     });
-    renderer.setSize(300, 300);
+    renderer.setSize(400, 400); // Increased size
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1;
     rendererRef.current = renderer;
 
-    // Create sphere with more detailed geometry
-    const geometry = new THREE.SphereGeometry(1.5, 64, 64);
+    // Create complex sphere geometry
+    const geometry = new THREE.IcosahedronGeometry(2, 4); // Larger and more detailed
+    
+    // Create complex material with custom shading
     const material = new THREE.MeshPhysicalMaterial({
       color: 0x3b82f6,
-      metalness: 0.3,
-      roughness: 0.4,
-      clearcoat: 0.8,
-      clearcoatRoughness: 0.2,
+      metalness: 0.2,
+      roughness: 0.3,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.3,
       emissive: 0x072f5f,
-      envMapIntensity: 0.8
+      envMapIntensity: 1.2,
+      transmission: 0.2,
+      opacity: 0.9,
+      transparent: true,
+      side: THREE.DoubleSide
     });
+
     const sphere = new THREE.Mesh(geometry, material);
     sphereRef.current = sphere;
     scene.add(sphere);
 
-    // Enhanced lighting
+    // Enhanced lighting setup
     const ambientLight = new THREE.AmbientLight(0x404040, 2);
     scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
-    directionalLight.position.set(1, 1, 1);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 3);
+    directionalLight.position.set(5, 5, 5);
     scene.add(directionalLight);
 
-    const pointLight = new THREE.PointLight(0x3b82f6, 2);
-    pointLight.position.set(-2, 1, 4);
-    scene.add(pointLight);
+    const pointLight1 = new THREE.PointLight(0x3b82f6, 4);
+    pointLight1.position.set(-2, 1, 4);
+    scene.add(pointLight1);
 
-    // Animation loop
+    const pointLight2 = new THREE.PointLight(0x3b82f6, 4);
+    pointLight2.position.set(2, -1, 4);
+    scene.add(pointLight2);
+
+    // Animation loop with enhanced effects
     const animate = () => {
       requestAnimationFrame(animate);
 
       if (sphereRef.current) {
         if (isThinkingRef.current) {
-          // Enhanced pulsing animation while thinking
+          // Enhanced thinking animation
           const time = Date.now() * 0.001;
           const pulseScale = 1 + Math.sin(time * 3) * 0.1;
           sphereRef.current.scale.set(pulseScale, pulseScale, pulseScale);
-          sphereRef.current.rotation.y += 0.02;
+          sphereRef.current.rotation.y += 0.03;
+          sphereRef.current.rotation.x += Math.sin(time) * 0.01;
           
-          // Add subtle wobble
-          sphereRef.current.position.y = Math.sin(time * 2) * 0.1;
+          // Dynamic vertex displacement
+          const positions = geometry.attributes.position.array;
+          for (let i = 0; i < positions.length; i += 3) {
+            const time = Date.now() * 0.001;
+            positions[i + 1] += Math.sin(time + positions[i]) * 0.002;
+          }
+          geometry.attributes.position.needsUpdate = true;
         } else {
-          // Smooth idle rotation with subtle floating motion
+          // Enhanced idle animation
           const time = Date.now() * 0.001;
           sphereRef.current.rotation.y += 0.005;
-          sphereRef.current.position.y = Math.sin(time) * 0.05;
+          sphereRef.current.rotation.x = Math.sin(time * 0.5) * 0.1;
+          sphereRef.current.position.y = Math.sin(time * 0.5) * 0.1;
         }
       }
 
@@ -108,12 +130,12 @@ const Chat = () => {
 
     animate();
 
-    // Handle window resize
+    // Enhanced window resize handler
     const handleResize = () => {
       if (!cameraRef.current || !rendererRef.current) return;
       cameraRef.current.aspect = window.innerWidth / window.innerHeight;
       cameraRef.current.updateProjectionMatrix();
-      rendererRef.current.setSize(300, 300);
+      rendererRef.current.setSize(400, 400);
     };
 
     window.addEventListener('resize', handleResize);
@@ -158,7 +180,7 @@ const Chat = () => {
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Sphere Container */}
         <div className="flex justify-center">
-          <div className="relative w-[300px] h-[300px] bg-gradient-to-b from-transparent to-blue-50/20 dark:to-blue-950/20 rounded-full">
+          <div className="relative w-[400px] h-[400px] bg-gradient-to-b from-transparent to-blue-50/20 dark:to-blue-950/20 rounded-full">
             <canvas ref={canvasRef} className="absolute inset-0" />
           </div>
         </div>
