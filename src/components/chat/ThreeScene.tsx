@@ -3,14 +3,16 @@ import * as THREE from "three";
 
 interface ThreeSceneProps {
   isThinking: boolean;
+  audioData?: number[];
 }
 
-const ThreeScene = ({ isThinking }: ThreeSceneProps) => {
+const ThreeScene = ({ isThinking, audioData }: ThreeSceneProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const brainRef = useRef<THREE.Group | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const nodesRef = useRef<THREE.Mesh[]>([]);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -97,6 +99,7 @@ const ThreeScene = ({ isThinking }: ThreeSceneProps) => {
       nodes.push(node);
       brainGroup.add(node);
     }
+    nodesRef.current = nodes;
 
     // Create connections between nearby nodes
     nodes.forEach((node, i) => {
@@ -139,19 +142,31 @@ const ThreeScene = ({ isThinking }: ThreeSceneProps) => {
           const time = Date.now() * 0.001;
           brainRef.current.rotation.y += 0.03;
           brainRef.current.rotation.x += Math.sin(time) * 0.01;
-          
-          // Pulse effect for nodes during thinking
-          brainGroup.children.forEach((child, i) => {
-            if (child instanceof THREE.Mesh) {
-              const pulseScale = 1 + Math.sin(time * 3 + i * 0.1) * 0.1;
-              child.scale.set(pulseScale, pulseScale, pulseScale);
-            }
-          });
         } else {
           const time = Date.now() * 0.001;
           brainRef.current.rotation.y += 0.005;
           brainRef.current.rotation.x = Math.sin(time * 0.5) * 0.1;
           brainRef.current.position.y = Math.sin(time * 0.5) * 0.1;
+        }
+
+        // Apply audio-reactive scaling to nodes
+        if (audioData && audioData.length > 0) {
+          nodesRef.current.forEach((node, i) => {
+            const audioIndex = i % audioData.length;
+            const scale = 1 + audioData[audioIndex] * 2; // Scale based on audio amplitude
+            node.scale.set(scale, scale, scale);
+            
+            // Update emissive intensity based on audio
+            const material = node.material as THREE.MeshPhysicalMaterial;
+            material.emissiveIntensity = 0.2 + audioData[audioIndex] * 2;
+          });
+        } else {
+          // Default pulsing when no audio
+          const time = Date.now() * 0.001;
+          nodesRef.current.forEach((node, i) => {
+            const pulseScale = 1 + Math.sin(time * 3 + i * 0.1) * 0.1;
+            node.scale.set(pulseScale, pulseScale, pulseScale);
+          });
         }
       }
 
@@ -174,7 +189,7 @@ const ThreeScene = ({ isThinking }: ThreeSceneProps) => {
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [isThinking]);
+  }, [isThinking, audioData]);
 
   return (
     <div className="flex justify-center">

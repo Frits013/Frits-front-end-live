@@ -3,7 +3,6 @@ import { Card } from "@/components/ui/card";
 import ThreeScene from "@/components/chat/ThreeScene";
 import ChatMessages from "@/components/chat/ChatMessages";
 import ChatInput from "@/components/chat/ChatInput";
-import AudioWaveform from "@/components/chat/AudioWaveform";
 
 interface Message {
   id: string;
@@ -17,6 +16,7 @@ const Chat = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const isThinkingRef = useRef(false);
+  const [audioData, setAudioData] = useState<number[]>([]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +34,7 @@ const Chat = () => {
     setIsProcessing(true);
     isThinkingRef.current = true;
 
-    // Simulate API response
+    // Simulate API response with audio data
     setTimeout(() => {
       const agentResponse: Message = {
         id: (Date.now() + 1).toString(),
@@ -42,9 +42,17 @@ const Chat = () => {
         sender: 'agent',
         timestamp: new Date(),
       };
+      
+      // Simulate audio data (replace with actual API response)
+      const simulatedAudioData = Array.from({ length: 32 }, () => Math.random() * 0.5);
+      setAudioData(simulatedAudioData);
+      
       setMessages(prev => [...prev, agentResponse]);
       setIsProcessing(false);
       isThinkingRef.current = false;
+
+      // Clear audio data after a delay
+      setTimeout(() => setAudioData([]), 3000);
     }, 2000);
   };
 
@@ -57,7 +65,7 @@ const Chat = () => {
       
       <div className="max-w-4xl mx-auto space-y-8 relative z-10">
         <div className="w-full max-w-[500px] mx-auto">
-          <ThreeScene isThinking={isThinkingRef.current} />
+          <ThreeScene isThinking={isThinkingRef.current} audioData={audioData} />
         </div>
         
         <Card className="p-6 bg-white/20 dark:bg-gray-900/20 backdrop-blur-xl border-purple-100/50 dark:border-purple-900/50 shadow-xl rounded-xl relative overflow-hidden">
@@ -72,7 +80,6 @@ const Chat = () => {
               setInputMessage={setInputMessage}
               handleSendMessage={handleSendMessage}
             />
-            <AudioWaveform isAnimating={isProcessing} />
           </div>
         </Card>
       </div>
