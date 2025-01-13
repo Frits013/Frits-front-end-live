@@ -140,11 +140,11 @@ const ThreeScene = ({ isThinking, audioData }: ThreeSceneProps) => {
       if (brainRef.current) {
         if (isThinking) {
           const time = Date.now() * 0.001;
-          brainRef.current.rotation.y += 0.03;
-          brainRef.current.rotation.x += Math.sin(time) * 0.01;
+          brainRef.current.rotation.y += 0.01; // Reduced from 0.03
+          brainRef.current.rotation.x += Math.sin(time) * 0.005; // Reduced from 0.01
         } else {
           const time = Date.now() * 0.001;
-          brainRef.current.rotation.y += 0.005;
+          brainRef.current.rotation.y += 0.002; // Reduced from 0.005
           brainRef.current.rotation.x = Math.sin(time * 0.5) * 0.1;
           brainRef.current.position.y = Math.sin(time * 0.5) * 0.1;
         }
