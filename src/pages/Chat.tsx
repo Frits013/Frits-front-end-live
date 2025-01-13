@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import ThreeScene from "@/components/chat/ThreeScene";
 import ChatMessages from "@/components/chat/ChatMessages";
 import ChatInput from "@/components/chat/ChatInput";
+import AudioWaveform from "@/components/chat/AudioWaveform";
 
 interface Message {
   id: string;
@@ -14,6 +15,7 @@ interface Message {
 const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
   const isThinkingRef = useRef(false);
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -29,17 +31,19 @@ const Chat = () => {
 
     setMessages(prev => [...prev, newMessage]);
     setInputMessage("");
-
+    setIsProcessing(true);
     isThinkingRef.current = true;
 
+    // Simulate API response
     setTimeout(() => {
       const agentResponse: Message = {
         id: (Date.now() + 1).toString(),
-        content: "This is a placeholder response. Connect your backend to get real responses from Frits.",
+        content: "This is a placeholder response. Connect your backend to get real responses.",
         sender: 'agent',
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, agentResponse]);
+      setIsProcessing(false);
       isThinkingRef.current = false;
     }, 2000);
   };
@@ -61,13 +65,14 @@ const Chat = () => {
           <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-purple-50/30 dark:from-gray-800/50 dark:to-purple-900/30 pointer-events-none" />
           
           {/* Content */}
-          <div className="relative z-10">
+          <div className="relative z-10 space-y-6">
             <ChatMessages messages={messages} />
             <ChatInput
               inputMessage={inputMessage}
               setInputMessage={setInputMessage}
               handleSendMessage={handleSendMessage}
             />
+            <AudioWaveform isAnimating={isProcessing} />
           </div>
         </Card>
       </div>
