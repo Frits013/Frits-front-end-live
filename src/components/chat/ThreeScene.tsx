@@ -7,7 +7,7 @@ interface ThreeSceneProps {
 
 const ThreeScene = ({ isThinking }: ThreeSceneProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const sphereRef = useRef<THREE.Mesh | null>(null);
+  const brainRef = useRef<THREE.Group | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -15,12 +15,12 @@ const ThreeScene = ({ isThinking }: ThreeSceneProps) => {
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    // Scene setup with enhanced fog
+    // Scene setup
     const scene = new THREE.Scene();
     scene.fog = new THREE.Fog(0x000000, 8, 20);
     sceneRef.current = scene;
 
-    // Camera setup with adjusted position
+    // Camera setup
     const camera = new THREE.PerspectiveCamera(
       75,
       window.innerWidth / window.innerHeight,
@@ -30,7 +30,7 @@ const ThreeScene = ({ isThinking }: ThreeSceneProps) => {
     camera.position.z = 10;
     cameraRef.current = camera;
 
-    // Enhanced renderer setup
+    // Renderer setup
     const renderer = new THREE.WebGLRenderer({
       canvas: canvasRef.current,
       alpha: true,
@@ -42,65 +42,74 @@ const ThreeScene = ({ isThinking }: ThreeSceneProps) => {
     renderer.toneMappingExposure = 1.2;
     rendererRef.current = renderer;
 
-    // Create complex sphere geometry with more detail
-    const geometry = new THREE.IcosahedronGeometry(3, 5);
-    
-    // Create network pattern texture
-    const textureSize = 1024;
-    const canvas = document.createElement('canvas');
-    canvas.width = textureSize;
-    canvas.height = textureSize;
-    const ctx = canvas.getContext('2d')!;
-    
-    // Draw network pattern
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, textureSize, textureSize);
-    
-    ctx.strokeStyle = '#D6BCFA50';
-    ctx.lineWidth = 2;
-    
-    for (let i = 0; i < 50; i++) {
-      const x1 = Math.random() * textureSize;
-      const y1 = Math.random() * textureSize;
-      const x2 = x1 + (Math.random() - 0.5) * 200;
-      const y2 = y1 + (Math.random() - 0.5) * 200;
-      
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-      ctx.stroke();
-    }
-    
-    ctx.fillStyle = '#D3E4FD80';
+    // Create brain group
+    const brainGroup = new THREE.Group();
+    brainRef.current = brainGroup;
+
+    // Create neural network nodes
+    const createNode = (x: number, y: number, z: number) => {
+      const geometry = new THREE.SphereGeometry(0.2, 16, 16);
+      const material = new THREE.MeshPhysicalMaterial({
+        color: 0xE5DEFF,
+        metalness: 0.2,
+        roughness: 0.3,
+        transmission: 0.2,
+        thickness: 0.5,
+        emissive: 0x8B5CF6,
+        emissiveIntensity: 0.2,
+      });
+      const node = new THREE.Mesh(geometry, material);
+      node.position.set(
+        x + (Math.random() - 0.5) * 2,
+        y + (Math.random() - 0.5) * 2,
+        z + (Math.random() - 0.5) * 2
+      );
+      return node;
+    };
+
+    // Create neural connections
+    const createConnection = (start: THREE.Vector3, end: THREE.Vector3) => {
+      const points = [];
+      points.push(start);
+      points.push(end);
+
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const material = new THREE.LineBasicMaterial({
+        color: 0xD6BCFA,
+        transparent: true,
+        opacity: 0.3,
+      });
+      return new THREE.Line(geometry, material);
+    };
+
+    // Generate brain structure
+    const nodes: THREE.Mesh[] = [];
     for (let i = 0; i < 100; i++) {
-      const x = Math.random() * textureSize;
-      const y = Math.random() * textureSize;
-      ctx.beginPath();
-      ctx.arc(x, y, 3, 0, Math.PI * 2);
-      ctx.fill();
+      const radius = 3;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.random() * Math.PI;
+      
+      const x = radius * Math.sin(phi) * Math.cos(theta);
+      const y = radius * Math.sin(phi) * Math.sin(theta);
+      const z = radius * Math.cos(phi);
+      
+      const node = createNode(x, y, z);
+      nodes.push(node);
+      brainGroup.add(node);
     }
 
-    const texture = new THREE.CanvasTexture(canvas);
-    
-    const material = new THREE.MeshPhysicalMaterial({
-      color: 0xE5DEFF,
-      metalness: 0.2,
-      roughness: 0.3,
-      clearcoat: 0.8,
-      clearcoatRoughness: 0.2,
-      transmission: 0.2,
-      thickness: 0.5,
-      envMapIntensity: 1.5,
-      map: texture,
-      emissive: 0x8B5CF6,
-      emissiveIntensity: 0.2,
-      transparent: true,
-      opacity: 0.9,
+    // Create connections between nearby nodes
+    nodes.forEach((node, i) => {
+      nodes.slice(i + 1).forEach(otherNode => {
+        const distance = node.position.distanceTo(otherNode.position);
+        if (distance < 2) {
+          const connection = createConnection(node.position, otherNode.position);
+          brainGroup.add(connection);
+        }
+      });
     });
 
-    const sphere = new THREE.Mesh(geometry, material);
-    sphereRef.current = sphere;
-    scene.add(sphere);
+    scene.add(brainGroup);
 
     // Lighting setup
     const ambientLight = new THREE.AmbientLight(0x404040, 2);
@@ -125,25 +134,24 @@ const ThreeScene = ({ isThinking }: ThreeSceneProps) => {
     const animate = () => {
       requestAnimationFrame(animate);
 
-      if (sphereRef.current) {
+      if (brainRef.current) {
         if (isThinking) {
           const time = Date.now() * 0.001;
-          const pulseScale = 1 + Math.sin(time * 3) * 0.1;
-          sphereRef.current.scale.set(pulseScale, pulseScale, pulseScale);
-          sphereRef.current.rotation.y += 0.03;
-          sphereRef.current.rotation.x += Math.sin(time) * 0.01;
+          brainRef.current.rotation.y += 0.03;
+          brainRef.current.rotation.x += Math.sin(time) * 0.01;
           
-          const positions = geometry.attributes.position.array;
-          for (let i = 0; i < positions.length; i += 3) {
-            const time = Date.now() * 0.001;
-            positions[i + 1] += Math.sin(time + positions[i]) * 0.002;
-          }
-          geometry.attributes.position.needsUpdate = true;
+          // Pulse effect for nodes during thinking
+          brainGroup.children.forEach((child, i) => {
+            if (child instanceof THREE.Mesh) {
+              const pulseScale = 1 + Math.sin(time * 3 + i * 0.1) * 0.1;
+              child.scale.set(pulseScale, pulseScale, pulseScale);
+            }
+          });
         } else {
           const time = Date.now() * 0.001;
-          sphereRef.current.rotation.y += 0.005;
-          sphereRef.current.rotation.x = Math.sin(time * 0.5) * 0.1;
-          sphereRef.current.position.y = Math.sin(time * 0.5) * 0.1;
+          brainRef.current.rotation.y += 0.005;
+          brainRef.current.rotation.x = Math.sin(time * 0.5) * 0.1;
+          brainRef.current.position.y = Math.sin(time * 0.5) * 0.1;
         }
       }
 
