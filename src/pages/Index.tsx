@@ -25,7 +25,7 @@ const Index = () => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state changed:", event);
-      if (event === 'SIGNED_IN') {
+      if (event === 'SIGNED_IN' && session) {
         toast({
           title: "Welcome!",
           description: "Successfully signed in. Redirecting to chat...",
@@ -77,7 +77,8 @@ const Index = () => {
               },
             }}
             providers={['github']}
-            redirectTo={window.location.origin + '/chat'}
+            view="sign_in"
+            showLinks={false}
           />
         </Card>
       </div>
