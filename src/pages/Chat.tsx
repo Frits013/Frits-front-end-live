@@ -70,7 +70,10 @@ const Chat = () => {
       if (!currentChatId) {
         const { data: newChat, error: createError } = await supabase
           .from('chats')
-          .insert([{}])
+          .insert([{
+            user_id: session.user.id,  // Add the user_id here
+            title: 'New Chat'
+          }])
           .select()
           .single();
 
