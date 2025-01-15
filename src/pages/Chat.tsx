@@ -45,6 +45,23 @@ const Chat = () => {
   const isThinkingRef = useRef(false);
   const [audioData, setAudioData] = useState<number[]>([]);
 
+  const updateChatTitle = async (chatId: string, firstMessage: string) => {
+    const title = firstMessage.slice(0, 50) + (firstMessage.length > 50 ? '...' : '');
+    const { error } = await supabase
+      .from('chats')
+      .update({ title })
+      .eq('id', chatId);
+
+    if (error) {
+      console.error('Error updating chat title:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update chat title",
+        variant: "destructive",
+      });
+    }
+  };
+
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -71,7 +88,7 @@ const Chat = () => {
         const { data: newChat, error: createError } = await supabase
           .from('chats')
           .insert([{
-            user_id: session.user.id,  // Add the user_id here
+            user_id: session.user.id,
             title: 'New Chat'
           }])
           .select()
@@ -119,41 +136,76 @@ const Chat = () => {
       return;
     }
 
+    // Update chat title if this is the first message
+    const { data: existingMessages } = await supabase
+      .from('messages')
+      .select('id')
+      .eq('chat_id', currentChatId);
+
+    if (existingMessages && existingMessages.length === 1) {
+      await updateChatTitle(currentChatId, inputMessage);
+      // Refresh chat histories to show the new title
+      const { data: updatedChats } = await supabase
+        .from('chats')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (updatedChats) {
+        setChatHistories(updatedChats);
+      }
+    }
+
     setMessages(prev => [...prev, newMessage]);
     setInputMessage("");
     setIsProcessing(true);
     isThinkingRef.current = true;
 
-    // Simulate API response with audio data
-    setTimeout(() => {
+    try {
+      // Make request to FastAPI backend (you'll need to set this up)
+      const response = await fetch('http://localhost:8000/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: inputMessage,
+          chat_id: currentChatId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get response from server');
+      }
+
+      const data = await response.json();
+      
       const agentResponse = {
         id: (Date.now() + 1).toString(),
-        content: "This is a placeholder response. Connect your backend to get real responses.",
+        content: data.response,
         sender: 'agent' as const,
         timestamp: new Date(),
       };
       
       // Save agent response to database
-      supabase
+      await supabase
         .from('messages')
         .insert([{
           chat_id: currentChatId,
           content: agentResponse.content,
           sender: 'agent'
-        }])
-        .then(({ error }) => {
-          if (error) console.error('Error saving agent response:', error);
-        });
+        }]);
 
-      const simulatedAudioData = Array.from({ length: 32 }, () => Math.random() * 0.5);
-      setAudioData(simulatedAudioData);
-      
       setMessages(prev => [...prev, agentResponse]);
+    } catch (error) {
+      console.error('Error getting response:', error);
+      toast({
+        title: "Error",
+        description: "Failed to get response from AI",
+        variant: "destructive",
+      });
+    } finally {
       setIsProcessing(false);
       isThinkingRef.current = false;
-
-      setTimeout(() => setAudioData([]), 3000);
-    }, 2000);
+    }
   };
 
   return (
