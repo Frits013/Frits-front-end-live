@@ -74,23 +74,15 @@ const ChatContainer = ({
     isThinkingRef.current = true;
 
     try {
-      // Make request to FastAPI backend
-      const response = await fetch('http://localhost:8000/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      // Call Supabase Edge Function
+      const { data, error } = await supabase.functions.invoke('chat', {
+        body: {
           message: inputMessage,
           chat_id: currentChatId,
-        }),
+        },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to get response from server');
-      }
-
-      const data = await response.json();
+      if (error) throw error;
       
       const agentResponse: Message = {
         id: (Date.now() + 1).toString(),
@@ -108,7 +100,7 @@ const ChatContainer = ({
           sender: 'agent'
         }]);
 
-      setMessages([...messages, agentResponse]);
+      setMessages([...messages, newMessage, agentResponse]);
     } catch (error) {
       console.error('Error getting response:', error);
       toast({
