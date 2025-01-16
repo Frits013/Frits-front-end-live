@@ -36,10 +36,10 @@ const ChatContainer = ({
     e.preventDefault();
     if (!inputMessage.trim() || !currentChatId) return;
 
-    const newMessage = {
+    const newMessage: Message = {
       id: Date.now().toString(),
       content: inputMessage,
-      sender: 'user' as const,
+      sender: 'user',
       timestamp: new Date(),
     };
 
@@ -68,7 +68,7 @@ const ChatContainer = ({
       await updateChatTitle(currentChatId, title);
     }
 
-    setMessages(prev => [...prev, newMessage]);
+    setMessages([...messages, newMessage]);
     setInputMessage("");
     setIsProcessing(true);
     isThinkingRef.current = true;
@@ -92,10 +92,10 @@ const ChatContainer = ({
 
       const data = await response.json();
       
-      const agentResponse = {
+      const agentResponse: Message = {
         id: (Date.now() + 1).toString(),
         content: data.response,
-        sender: 'agent' as const,
+        sender: 'agent',
         timestamp: new Date(),
       };
       
@@ -108,7 +108,7 @@ const ChatContainer = ({
           sender: 'agent'
         }]);
 
-      setMessages(prev => [...prev, agentResponse]);
+      setMessages([...messages, agentResponse]);
     } catch (error) {
       console.error('Error getting response:', error);
       toast({

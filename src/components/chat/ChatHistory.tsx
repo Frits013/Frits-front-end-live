@@ -23,7 +23,7 @@ interface ChatHistoryProps {
   setCurrentChatId: (id: string | null) => void;
 }
 
-const ChatHistory = ({
+const ChatHistoryComponent = ({
   chatHistories,
   currentChatId,
   setChatHistories,
@@ -60,11 +60,9 @@ const ChatHistory = ({
     if (editingTitle.trim()) {
       const success = await updateChatTitle(chatId, editingTitle.trim());
       if (success) {
-        setChatHistories(prev =>
-          prev.map(chat =>
-            chat.id === chatId ? { ...chat, title: editingTitle.trim() } : chat
-          )
-        );
+        setChatHistories(chatHistories.map(chat =>
+          chat.id === chatId ? { ...chat, title: editingTitle.trim() } : chat
+        ));
       }
     }
     setEditingChatId(null);
@@ -132,4 +130,4 @@ const ChatHistory = ({
   );
 };
 
-export default ChatHistory;
+export default ChatHistoryComponent;

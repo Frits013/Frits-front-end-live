@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import ChatHistory from "@/components/chat/ChatHistory";
+import ChatHistoryComponent from "@/components/chat/ChatHistory";
 import ChatContainer from "@/components/chat/ChatContainer";
 import {
   Sidebar,
@@ -164,7 +164,7 @@ const Chat = () => {
             <SidebarGroup>
               <SidebarGroupLabel>Chat History</SidebarGroupLabel>
               <SidebarGroupContent>
-                <ChatHistory
+                <ChatHistoryComponent
                   chatHistories={chatHistories}
                   currentChatId={currentChatId}
                   setChatHistories={setChatHistories}
