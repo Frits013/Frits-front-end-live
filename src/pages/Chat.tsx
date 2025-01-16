@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { LogOut, Pencil, Check, X } from "lucide-react";
 import ThreeScene from "@/components/chat/ThreeScene";
 import ChatMessages from "@/components/chat/ChatMessages";
 import ChatInput from "@/components/chat/ChatInput";
@@ -42,15 +43,15 @@ const Chat = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [chatHistories, setChatHistories] = useState<ChatHistory[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+  const [editingChatId, setEditingChatId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
   const isThinkingRef = useRef(false);
   const [audioData, setAudioData] = useState<number[]>([]);
 
-  const updateChatTitle = async (chatId: string, firstMessage: string) => {
-    // Get the first word or first 50 characters if no spaces
-    const title = firstMessage.split(' ')[0] || firstMessage.slice(0, 50);
+  const updateChatTitle = async (chatId: string, newTitle: string) => {
     const { error } = await supabase
       .from('chats')
-      .update({ title })
+      .update({ title: newTitle })
       .eq('id', chatId);
 
     if (error) {
@@ -60,7 +61,34 @@ const Chat = () => {
         description: "Failed to update chat title",
         variant: "destructive",
       });
+      return false;
     }
+    return true;
+  };
+
+  const handleEditTitle = (chat: ChatHistory) => {
+    setEditingChatId(chat.id);
+    setEditingTitle(chat.title);
+  };
+
+  const handleSaveTitle = async (chatId: string) => {
+    if (editingTitle.trim()) {
+      const success = await updateChatTitle(chatId, editingTitle.trim());
+      if (success) {
+        setChatHistories(prev =>
+          prev.map(chat =>
+            chat.id === chatId ? { ...chat, title: editingTitle.trim() } : chat
+          )
+        );
+      }
+    }
+    setEditingChatId(null);
+    setEditingTitle("");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingChatId(null);
+    setEditingTitle("");
   };
 
   const loadChatMessages = async (chatId: string) => {
@@ -80,7 +108,6 @@ const Chat = () => {
       return;
     }
 
-    // Transform the messages to match our Message interface
     const formattedMessages: Message[] = chatMessages.map(msg => ({
       id: msg.id,
       content: msg.content,
@@ -179,7 +206,8 @@ const Chat = () => {
       .eq('chat_id', currentChatId);
 
     if (existingMessages && existingMessages.length === 1) {
-      await updateChatTitle(currentChatId, inputMessage);
+      const title = inputMessage.split(' ')[0] || inputMessage.slice(0, 50);
+      await updateChatTitle(currentChatId, title);
       // Refresh chat histories to show the new title
       const { data: updatedChats } = await supabase
         .from('chats')
@@ -265,12 +293,52 @@ const Chat = () => {
                 <SidebarMenu>
                   {chatHistories.map((chat) => (
                     <SidebarMenuItem key={chat.id}>
-                      <SidebarMenuButton
-                        onClick={() => setCurrentChatId(chat.id)}
-                        isActive={currentChatId === chat.id}
-                      >
-                        {chat.title}
-                      </SidebarMenuButton>
+                      <div className="flex items-center w-full gap-2">
+                        {editingChatId === chat.id ? (
+                          <>
+                            <Input
+                              value={editingTitle}
+                              onChange={(e) => setEditingTitle(e.target.value)}
+                              className="h-8 flex-1"
+                              autoFocus
+                            />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleSaveTitle(chat.id)}
+                              className="h-8 w-8"
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={handleCancelEdit}
+                              className="h-8 w-8"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <SidebarMenuButton
+                              onClick={() => setCurrentChatId(chat.id)}
+                              isActive={currentChatId === chat.id}
+                              className="flex-1"
+                            >
+                              {chat.title}
+                            </SidebarMenuButton>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEditTitle(chat)}
+                              className="h-8 w-8"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </SidebarMenuItem>
                   ))}
                 </SidebarMenu>
