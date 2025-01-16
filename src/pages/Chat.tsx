@@ -46,7 +46,8 @@ const Chat = () => {
   const [audioData, setAudioData] = useState<number[]>([]);
 
   const updateChatTitle = async (chatId: string, firstMessage: string) => {
-    const title = firstMessage.slice(0, 50) + (firstMessage.length > 50 ? '...' : '');
+    // Get the first word or first 50 characters if no spaces
+    const title = firstMessage.split(' ')[0] || firstMessage.slice(0, 50);
     const { error } = await supabase
       .from('chats')
       .update({ title })
@@ -60,6 +61,34 @@ const Chat = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const loadChatMessages = async (chatId: string) => {
+    const { data: chatMessages, error } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('chat_id', chatId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('Error loading chat messages:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load chat messages",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Transform the messages to match our Message interface
+    const formattedMessages: Message[] = chatMessages.map(msg => ({
+      id: msg.id,
+      content: msg.content,
+      sender: msg.sender as 'user' | 'agent',
+      timestamp: new Date(msg.created_at),
+    }));
+
+    setMessages(formattedMessages);
   };
 
   useEffect(() => {
@@ -105,6 +134,13 @@ const Chat = () => {
 
     checkAuth();
   }, [navigate, currentChatId]);
+
+  // Load messages when chat is selected
+  useEffect(() => {
+    if (currentChatId) {
+      loadChatMessages(currentChatId);
+    }
+  }, [currentChatId]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -160,7 +196,7 @@ const Chat = () => {
     isThinkingRef.current = true;
 
     try {
-      // Make request to FastAPI backend (you'll need to set this up)
+      // Make request to FastAPI backend
       const response = await fetch('http://localhost:8000/chat', {
         method: 'POST',
         headers: {
