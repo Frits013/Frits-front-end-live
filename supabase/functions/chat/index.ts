@@ -16,9 +16,9 @@ serve(async (req) => {
     const { message, chat_id } = await req.json();
     console.log('Received request:', { message, chat_id });
 
-    // Make request to FastAPI backend
-    console.log('Attempting to connect to FastAPI at http://localhost:8000/chat');
-    const response = await fetch('http://localhost:8000/chat', {
+    // Make request to FastAPI backend on Render
+    console.log('Attempting to connect to FastAPI at https://demo-fastapi-app.onrender.com/chat');
+    const response = await fetch('https://demo-fastapi-app.onrender.com/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -55,7 +55,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        details: 'Make sure FastAPI is running on http://localhost:8000'
+        details: 'Error connecting to FastAPI backend on Render'
       }),
       { 
         status: 500,
