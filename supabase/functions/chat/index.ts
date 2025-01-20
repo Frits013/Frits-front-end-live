@@ -18,7 +18,8 @@ serve(async (req) => {
     console.log('Received request:', { message, chat_id });
 
     // If no chat_id is provided, start a new chat session
-    if (!chat_id) {
+    let sessionId = chat_id;
+    if (!sessionId) {
       console.log('Starting new chat session');
       const startResponse = await fetch(`${FASTAPI_URL}/chat/start`, {
         method: 'POST',
@@ -33,20 +34,21 @@ serve(async (req) => {
 
       const session = await startResponse.json();
       console.log('New chat session created:', session);
-      chat_id = session.id;
+      sessionId = session.id;
     }
 
-    // Send message to FastAPI backend
-    console.log('Sending message to FastAPI:', { message, chat_id });
-    const response = await fetch(`${FASTAPI_URL}/chat/send_message`, {
+    // Send message to FastAPI backend using URL parameters as required by the API
+    const url = new URL(`${FASTAPI_URL}/chat/send_message`);
+    url.searchParams.append('session_id', sessionId);
+    url.searchParams.append('content', message);
+    
+    console.log('Sending message to FastAPI:', { url: url.toString(), sessionId, message });
+    
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        session_id: chat_id,
-        content: message,
-      }),
+      }
     });
 
     if (!response.ok) {
