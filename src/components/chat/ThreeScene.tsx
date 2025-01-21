@@ -9,6 +9,7 @@ interface ThreeSceneProps {
 }
 
 const ThreeScene = ({ isThinking, audioData }: ThreeSceneProps) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const brainRef = useRef<THREE.Group | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -17,10 +18,14 @@ const ThreeScene = ({ isThinking, audioData }: ThreeSceneProps) => {
   const nodesRef = useRef<THREE.Mesh[]>([]);
 
   useEffect(() => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current || !containerRef.current) return;
 
-    // Initialize scene, camera, and renderer
-    const { scene, camera, renderer } = setupScene(canvasRef.current);
+    const container = containerRef.current;
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
+
+    // Initialize scene, camera, and renderer with container dimensions
+    const { scene, camera, renderer } = setupScene(canvasRef.current, containerWidth, containerHeight);
     sceneRef.current = scene;
     cameraRef.current = camera;
     rendererRef.current = renderer;
@@ -76,10 +81,14 @@ const ThreeScene = ({ isThinking, audioData }: ThreeSceneProps) => {
     animate();
 
     const handleResize = () => {
-      if (!cameraRef.current || !rendererRef.current) return;
-      cameraRef.current.aspect = window.innerWidth / window.innerHeight;
+      if (!cameraRef.current || !rendererRef.current || !containerRef.current) return;
+      
+      const newWidth = containerRef.current.clientWidth;
+      const newHeight = containerRef.current.clientHeight;
+      
+      cameraRef.current.aspect = newWidth / newHeight;
       cameraRef.current.updateProjectionMatrix();
-      rendererRef.current.setSize(500, 500);
+      rendererRef.current.setSize(newWidth, newHeight);
     };
 
     window.addEventListener('resize', handleResize);
@@ -87,9 +96,21 @@ const ThreeScene = ({ isThinking, audioData }: ThreeSceneProps) => {
   }, [isThinking, audioData]);
 
   return (
-    <div className="flex justify-center">
-      <div className="relative w-[500px] h-[500px] bg-gradient-to-b from-transparent to-purple-50/20 dark:to-purple-900/20 rounded-full">
+    <div className="flex justify-center w-full">
+      <div 
+        ref={containerRef}
+        className="relative w-full aspect-square max-w-[800px] bg-gradient-to-b from-transparent to-purple-50/20 dark:to-purple-900/20 rounded-full"
+      >
         <canvas ref={canvasRef} className="absolute inset-0" />
+        {isThinking && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="bg-white/80 dark:bg-black/80 backdrop-blur-sm px-4 py-2 rounded-full">
+              <p className="text-sm font-medium text-purple-600 dark:text-purple-400 animate-pulse">
+                Thinking...
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

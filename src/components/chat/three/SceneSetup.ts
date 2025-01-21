@@ -1,12 +1,12 @@
 import * as THREE from "three";
 
-export const setupScene = (canvas: HTMLCanvasElement) => {
+export const setupScene = (canvas: HTMLCanvasElement, width: number, height: number) => {
   const scene = new THREE.Scene();
   scene.fog = new THREE.Fog(0x000000, 8, 20);
 
   const camera = new THREE.PerspectiveCamera(
     75,
-    window.innerWidth / window.innerHeight,
+    width / height,
     0.1,
     1000
   );
@@ -17,8 +17,8 @@ export const setupScene = (canvas: HTMLCanvasElement) => {
     alpha: true,
     antialias: true,
   });
-  renderer.setSize(500, 500);
-  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(width, height);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit pixel ratio for better performance
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.2;
 
