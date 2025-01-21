@@ -77,8 +77,6 @@ const Index = () => {
               },
             }}
             providers={['github']}
-            view="sign_in"
-            showLinks={false}
           />
         </Card>
       </div>
