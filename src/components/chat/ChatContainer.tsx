@@ -32,6 +32,20 @@ const ChatContainer = ({
   const isThinkingRef = useRef(false);
   const [audioData, setAudioData] = useState<number[]>([]);
 
+  const generateChatTitle = async (messages: Message[]) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('summarize-chat', {
+        body: { messages },
+      });
+
+      if (error) throw error;
+      return data.summary;
+    } catch (error) {
+      console.error('Error generating chat title:', error);
+      return null;
+    }
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputMessage.trim() || !currentChatId) return;
@@ -57,24 +71,13 @@ const ChatContainer = ({
       return;
     }
 
-    // Update chat title if this is the first message
-    const { data: existingMessages } = await supabase
-      .from('messages')
-      .select('id')
-      .eq('chat_id', currentChatId);
-
-    if (existingMessages && existingMessages.length === 1) {
-      const title = inputMessage.split(' ')[0] || inputMessage.slice(0, 50);
-      await updateChatTitle(currentChatId, title);
-    }
-
     setMessages([...messages, newMessage]);
     setInputMessage("");
     setIsProcessing(true);
     isThinkingRef.current = true;
 
     try {
-      // Call Supabase Edge Function
+      // Call Supabase Edge Function for chat response
       const { data, error } = await supabase.functions.invoke('chat', {
         body: {
           message: inputMessage,
@@ -100,7 +103,16 @@ const ChatContainer = ({
           sender: 'agent'
         }]);
 
-      setMessages([...messages, newMessage, agentResponse]);
+      const updatedMessages = [...messages, newMessage, agentResponse];
+      setMessages(updatedMessages);
+
+      // Generate and update chat title after the first exchange
+      if (messages.length === 0) {
+        const title = await generateChatTitle(updatedMessages);
+        if (title) {
+          await updateChatTitle(currentChatId, title);
+        }
+      }
     } catch (error) {
       console.error('Error getting response:', error);
       toast({
