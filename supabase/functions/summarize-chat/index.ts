@@ -26,6 +26,8 @@ serve(async (req) => {
       throw new Error('Missing OpenAI API key');
     }
 
+    console.log('Generating summary for context:', context);
+
     // Generate summary using OpenAI
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -34,7 +36,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-3.5-turbo',
         messages: [
           {
             role: 'system',
@@ -45,12 +47,20 @@ serve(async (req) => {
             content: `Please generate a very short (2-3 words) title for this conversation:\n\n${context}`
           }
         ],
-        max_tokens: 50
+        max_tokens: 50,
+        temperature: 0.7
       }),
     });
 
     const data = await openAIResponse.json();
+    console.log('OpenAI response:', data);
+
+    if (!data.choices?.[0]?.message?.content) {
+      throw new Error('Invalid response from OpenAI');
+    }
+
     const summary = data.choices[0].message.content.trim();
+    console.log('Generated summary:', summary);
 
     return new Response(JSON.stringify({ summary }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
