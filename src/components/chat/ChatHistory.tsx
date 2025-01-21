@@ -1,25 +1,9 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Pencil, Check, X, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-} from "@/components/ui/sidebar";
+import { SidebarMenu, SidebarMenuItem } from "@/components/ui/sidebar";
+import ChatHistoryItem from "./ChatHistoryItem";
+import ChatHistoryEditItem from "./ChatHistoryEditItem";
 
 interface ChatHistory {
   id: string;
@@ -78,7 +62,6 @@ const ChatHistoryComponent = ({
       return;
     }
 
-    // Update local state
     setChatHistories(chatHistories.filter(chat => chat.id !== chatId));
     if (currentChatId === chatId) {
       setCurrentChatId(null);
@@ -117,80 +100,23 @@ const ChatHistoryComponent = ({
     <SidebarMenu>
       {chatHistories.map((chat) => (
         <SidebarMenuItem key={chat.id}>
-          <div className="flex items-center w-full gap-2">
-            {editingChatId === chat.id ? (
-              <>
-                <Input
-                  value={editingTitle}
-                  onChange={(e) => setEditingTitle(e.target.value)}
-                  className="h-8 flex-1"
-                  autoFocus
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleSaveTitle(chat.id)}
-                  className="h-8 w-8"
-                >
-                  <Check className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleCancelEdit}
-                  className="h-8 w-8"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </>
-            ) : (
-              <>
-                <SidebarMenuButton
-                  onClick={() => setCurrentChatId(chat.id)}
-                  isActive={currentChatId === chat.id}
-                  className="flex-1"
-                >
-                  {chat.title}
-                </SidebarMenuButton>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleEditTitle(chat)}
-                  className="h-8 w-8"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Chat History</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to delete the chat history? Your conversation will be lost.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => handleDeleteChat(chat.id)}
-                        className="bg-red-500 hover:bg-red-600"
-                      >
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </>
-            )}
-          </div>
+          {editingChatId === chat.id ? (
+            <ChatHistoryEditItem
+              editingTitle={editingTitle}
+              onTitleChange={setEditingTitle}
+              onSave={() => handleSaveTitle(chat.id)}
+              onCancel={handleCancelEdit}
+            />
+          ) : (
+            <ChatHistoryItem
+              id={chat.id}
+              title={chat.title}
+              isActive={currentChatId === chat.id}
+              onSelect={() => setCurrentChatId(chat.id)}
+              onEdit={() => handleEditTitle(chat)}
+              onDelete={handleDeleteChat}
+            />
+          )}
         </SidebarMenuItem>
       ))}
     </SidebarMenu>
