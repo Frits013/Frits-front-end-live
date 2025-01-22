@@ -19,11 +19,11 @@ import {
 interface Message {
   id: string;
   content: string;
-  sender: 'user' | 'agent';
-  timestamp: Date;
+  role: 'user' | 'assistant';
+  created_at: Date;
 }
 
-interface ChatHistory {
+interface ChatSession {
   id: string;
   title: string;
   created_at: string;
@@ -33,14 +33,15 @@ const Chat = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [chatHistories, setChatHistories] = useState<ChatHistory[]>([]);
-  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
-  const loadChatMessages = async (chatId: string) => {
+  const loadChatMessages = async (sessionId: string) => {
+    console.log('Loading messages for session:', sessionId);
     const { data: chatMessages, error } = await supabase
-      .from('messages')
+      .from('chat_messages')
       .select('*')
-      .eq('chat_id', chatId)
+      .eq('session_id', sessionId)
       .order('created_at', { ascending: true });
 
     if (error) {
@@ -56,8 +57,8 @@ const Chat = () => {
     const formattedMessages: Message[] = chatMessages.map(msg => ({
       id: msg.id,
       content: msg.content,
-      sender: msg.sender as 'user' | 'agent',
-      timestamp: new Date(msg.created_at),
+      role: msg.role as 'user' | 'assistant',
+      created_at: new Date(msg.created_at),
     }));
 
     setMessages(formattedMessages);
@@ -71,62 +72,61 @@ const Chat = () => {
         return;
       }
       
-      // Fetch chat histories
-      const { data: chats, error } = await supabase
-        .from('chats')
+      // Fetch chat sessions
+      const { data: sessions, error } = await supabase
+        .from('chat_sessions')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching chats:', error);
+        console.error('Error fetching sessions:', error);
         return;
       }
 
-      setChatHistories(chats);
+      setChatSessions(sessions);
 
-      // Create a new chat if none exists
-      if (!currentChatId) {
-        const { data: newChat, error: createError } = await supabase
-          .from('chats')
+      // Create a new session if none exists
+      if (!currentSessionId && (!sessions || sessions.length === 0)) {
+        const { data: newSession, error: createError } = await supabase
+          .from('chat_sessions')
           .insert([{
-            user_id: session.user.id,
             title: 'New Chat'
           }])
           .select()
           .single();
 
         if (createError) {
-          console.error('Error creating chat:', createError);
+          console.error('Error creating session:', createError);
           return;
         }
 
-        setCurrentChatId(newChat.id);
+        setCurrentSessionId(newSession.id);
       }
     };
 
     checkAuth();
-  }, [navigate, currentChatId]);
+  }, [navigate, currentSessionId]);
 
-  // Load messages when chat is selected
+  // Load messages when session is selected
   useEffect(() => {
-    if (currentChatId) {
-      loadChatMessages(currentChatId);
+    if (currentSessionId) {
+      loadChatMessages(currentSessionId);
     }
-  }, [currentChatId]);
+  }, [currentSessionId]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate('/');
   };
 
-  const updateChatTitle = async (chatId: string, newTitle: string) => {
+  const updateSessionTitle = async (sessionId: string, newTitle: string) => {
     const { error } = await supabase
-      .from('chats')
+      .from('chat_sessions')
       .update({ title: newTitle })
-      .eq('id', chatId);
+      .eq('id', sessionId);
 
     if (error) {
-      console.error('Error updating chat title:', error);
+      console.error('Error updating session title:', error);
       toast({
         title: "Error",
         description: "Failed to update chat title",
@@ -135,13 +135,13 @@ const Chat = () => {
       return false;
     }
 
-    // Refresh chat histories to show the new title
-    const { data: updatedChats } = await supabase
-      .from('chats')
+    // Refresh chat sessions to show the new title
+    const { data: updatedSessions } = await supabase
+      .from('chat_sessions')
       .select('*')
       .order('created_at', { ascending: false });
-    if (updatedChats) {
-      setChatHistories(updatedChats);
+    if (updatedSessions) {
+      setChatSessions(updatedSessions);
     }
     return true;
   };
@@ -165,10 +165,10 @@ const Chat = () => {
               <SidebarGroupLabel>Chat History</SidebarGroupLabel>
               <SidebarGroupContent>
                 <ChatHistoryComponent
-                  chatHistories={chatHistories}
-                  currentChatId={currentChatId}
-                  setChatHistories={setChatHistories}
-                  setCurrentChatId={setCurrentChatId}
+                  chatHistories={chatSessions}
+                  currentChatId={currentSessionId}
+                  setChatHistories={setChatSessions}
+                  setCurrentChatId={setCurrentSessionId}
                 />
               </SidebarGroupContent>
             </SidebarGroup>
@@ -178,8 +178,8 @@ const Chat = () => {
         <ChatContainer
           messages={messages}
           setMessages={setMessages}
-          currentChatId={currentChatId}
-          updateChatTitle={updateChatTitle}
+          currentChatId={currentSessionId}
+          updateChatTitle={updateSessionTitle}
         />
       </div>
     </SidebarProvider>

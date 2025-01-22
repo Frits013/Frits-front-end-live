@@ -11,56 +11,56 @@ export type Database = {
     Tables: {
       chat_messages: {
         Row: {
-          content: string
-          created_at: string
+          created_at: string | null
           id: string
+          message: string
+          metadata: Json | null
           role: string
           session_id: string
-          timestamp: string
+          user_id: string
         }
         Insert: {
-          content: string
-          created_at?: string
+          created_at?: string | null
           id?: string
+          message: string
+          metadata?: Json | null
           role: string
           session_id: string
-          timestamp?: string
+          user_id: string
         }
         Update: {
-          content?: string
-          created_at?: string
+          created_at?: string | null
           id?: string
+          message?: string
+          metadata?: Json | null
           role?: string
           session_id?: string
-          timestamp?: string
-        }
-        Relationships: []
-      }
-      chats: {
-        Row: {
-          created_at: string
-          id: string
-          title: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          title?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          title?: string
-          updated_at?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "chats_user_id_fkey"
+            foreignKeyName: "chat_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "chat_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_session"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "chat_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_user"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -68,34 +68,38 @@ export type Database = {
           },
         ]
       }
-      messages: {
+      chat_sessions: {
         Row: {
-          chat_id: string
-          content: string
-          created_at: string
+          created_at: string | null
           id: string
-          sender: string
+          title: string | null
+          user_id: string
         }
         Insert: {
-          chat_id: string
-          content: string
-          created_at?: string
+          created_at?: string | null
           id?: string
-          sender: string
+          title?: string | null
+          user_id: string
         }
         Update: {
-          chat_id?: string
-          content?: string
-          created_at?: string
+          created_at?: string | null
           id?: string
-          sender?: string
+          title?: string | null
+          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "messages_chat_id_fkey"
-            columns: ["chat_id"]
+            foreignKeyName: "chat_sessions_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "chats"
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_user"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

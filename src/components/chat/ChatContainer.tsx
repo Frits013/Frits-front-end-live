@@ -9,8 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 interface Message {
   id: string;
   content: string;
-  sender: 'user' | 'agent';
-  timestamp: Date;
+  role: 'user' | 'assistant';
+  created_at: Date;
 }
 
 interface ChatContainerProps {
@@ -53,17 +53,17 @@ const ChatContainer = ({
     const newMessage: Message = {
       id: Date.now().toString(),
       content: inputMessage,
-      sender: 'user',
-      timestamp: new Date(),
+      role: 'user',
+      created_at: new Date(),
     };
 
     // Save message to database
     const { error: messageError } = await supabase
-      .from('messages')
+      .from('chat_messages')
       .insert([{
-        chat_id: currentChatId,
+        session_id: currentChatId,
         content: inputMessage,
-        sender: 'user'
+        role: 'user'
       }]);
 
     if (messageError) {
@@ -81,7 +81,7 @@ const ChatContainer = ({
       const { data, error } = await supabase.functions.invoke('chat', {
         body: {
           message: inputMessage,
-          chat_id: currentChatId,
+          session_id: currentChatId,
         },
       });
 
@@ -90,17 +90,17 @@ const ChatContainer = ({
       const agentResponse: Message = {
         id: (Date.now() + 1).toString(),
         content: data.response,
-        sender: 'agent',
-        timestamp: new Date(),
+        role: 'assistant',
+        created_at: new Date(),
       };
       
       // Save agent response to database
       await supabase
-        .from('messages')
+        .from('chat_messages')
         .insert([{
-          chat_id: currentChatId,
+          session_id: currentChatId,
           content: agentResponse.content,
-          sender: 'agent'
+          role: 'assistant'
         }]);
 
       const updatedMessages = [...messages, newMessage, agentResponse];
