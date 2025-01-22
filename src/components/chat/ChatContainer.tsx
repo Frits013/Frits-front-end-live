@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   id: string;
-  content: string;
+  message: string;
   role: 'user' | 'assistant';
   created_at: Date;
 }
@@ -50,9 +50,19 @@ const ChatContainer = ({
     e.preventDefault();
     if (!inputMessage.trim() || !currentChatId) return;
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to send messages",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const newMessage: Message = {
       id: Date.now().toString(),
-      content: inputMessage,
+      message: inputMessage,
       role: 'user',
       created_at: new Date(),
     };
@@ -62,8 +72,9 @@ const ChatContainer = ({
       .from('chat_messages')
       .insert([{
         session_id: currentChatId,
-        content: inputMessage,
-        role: 'user'
+        message: inputMessage,
+        role: 'user',
+        user_id: user.id
       }]);
 
     if (messageError) {
@@ -89,7 +100,7 @@ const ChatContainer = ({
       
       const agentResponse: Message = {
         id: (Date.now() + 1).toString(),
-        content: data.response,
+        message: data.response,
         role: 'assistant',
         created_at: new Date(),
       };
@@ -99,8 +110,9 @@ const ChatContainer = ({
         .from('chat_messages')
         .insert([{
           session_id: currentChatId,
-          content: agentResponse.content,
-          role: 'assistant'
+          message: agentResponse.message,
+          role: 'assistant',
+          user_id: user.id
         }]);
 
       const updatedMessages = [...messages, newMessage, agentResponse];

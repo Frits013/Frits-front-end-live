@@ -18,7 +18,7 @@ import {
 
 interface Message {
   id: string;
-  content: string;
+  message: string;
   role: 'user' | 'assistant';
   created_at: Date;
 }
@@ -56,7 +56,7 @@ const Chat = () => {
 
     const formattedMessages: Message[] = chatMessages.map(msg => ({
       id: msg.id,
-      content: msg.content,
+      message: msg.message,
       role: msg.role as 'user' | 'assistant',
       created_at: new Date(msg.created_at),
     }));
@@ -90,7 +90,8 @@ const Chat = () => {
         const { data: newSession, error: createError } = await supabase
           .from('chat_sessions')
           .insert([{
-            title: 'New Chat'
+            title: 'New Chat',
+            user_id: session.user.id
           }])
           .select()
           .single();
@@ -101,6 +102,7 @@ const Chat = () => {
         }
 
         setCurrentSessionId(newSession.id);
+        setChatSessions([newSession]);
       }
     };
 

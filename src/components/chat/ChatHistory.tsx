@@ -30,7 +30,7 @@ const ChatHistoryComponent = ({
 
   const updateChatTitle = async (chatId: string, newTitle: string) => {
     const { error } = await supabase
-      .from('chats')
+      .from('chat_sessions')
       .update({ title: newTitle })
       .eq('id', chatId);
 
@@ -48,7 +48,7 @@ const ChatHistoryComponent = ({
 
   const handleDeleteChat = async (chatId: string) => {
     const { error } = await supabase
-      .from('chats')
+      .from('chat_sessions')
       .delete()
       .eq('id', chatId);
 

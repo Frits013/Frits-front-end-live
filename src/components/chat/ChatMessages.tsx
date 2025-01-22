@@ -1,6 +1,6 @@
 interface Message {
   id: string;
-  content: string;
+  message: string;
   role: 'user' | 'assistant';
   created_at: Date;
 }
@@ -26,7 +26,7 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
                 : 'bg-gradient-to-r from-gray-100/80 to-purple-50/80 dark:from-gray-800/80 dark:to-purple-900/80 text-gray-800 dark:text-gray-200'
             } transition-all duration-200 hover:shadow-md backdrop-blur-sm`}
           >
-            {message.content}
+            {message.message}
           </div>
         </div>
       ))}
