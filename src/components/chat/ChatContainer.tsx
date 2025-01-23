@@ -77,8 +77,8 @@ const ChatContainer = ({
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No active session');
 
-      // Call FastAPI backend instead of Edge Function
-      const response = await fetch('http://localhost:8000/chat/send_message', {
+      // Call FastAPI backend with the correct URL
+      const response = await fetch('https://demo-fastapi-app.onrender.com/chat/send_message', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
