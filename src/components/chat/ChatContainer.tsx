@@ -77,18 +77,24 @@ const ChatContainer = ({
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No active session');
 
-      // Call Edge Function with auth token
-      const { data, error } = await supabase.functions.invoke('chat', {
-        body: {
+      // Call FastAPI backend instead of Edge Function
+      const response = await fetch('http://localhost:8000/chat/send_message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
           message: inputMessage,
           session_id: currentChatId,
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        }),
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
       
       const agentResponse: Message = {
         id: (Date.now() + 1).toString(),
