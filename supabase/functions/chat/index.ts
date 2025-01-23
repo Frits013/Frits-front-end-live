@@ -1,11 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-const FASTAPI_URL = "https://demo-fastapi-app.onrender.com";
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -14,41 +13,27 @@ serve(async (req) => {
   }
 
   try {
-    const { message, chat_id } = await req.json();
-    console.log('Received request:', { message, chat_id });
-
-    // If no chat_id is provided, start a new chat session
-    let sessionId = chat_id;
-    if (!sessionId) {
-      console.log('Starting new chat session');
-      const startResponse = await fetch(`${FASTAPI_URL}/chat/start`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!startResponse.ok) {
-        throw new Error(`Failed to start chat session: ${startResponse.status}`);
-      }
-
-      const session = await startResponse.json();
-      console.log('New chat session created:', session);
-      sessionId = session.id;
+    // Get the authorization header from the request
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
     }
 
-    // Send message to FastAPI backend using URL parameters as required by the API
-    const url = new URL(`${FASTAPI_URL}/chat/send_message`);
-    url.searchParams.append('session_id', sessionId);
-    url.searchParams.append('content', message);
-    
-    console.log('Sending message to FastAPI:', { url: url.toString(), sessionId, message });
-    
-    const response = await fetch(url, {
+    // Get the message and session_id from the request body
+    const { message, session_id } = await req.json();
+    console.log('Received request:', { message, session_id });
+
+    // Forward the request to your FastAPI backend
+    const response = await fetch('https://preview--frits-conversation-portal.lovable.app/chat/send_message', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-      }
+        'Authorization': authHeader, // Forward the JWT token
+      },
+      body: JSON.stringify({
+        message,
+        session_id,
+      }),
     });
 
     if (!response.ok) {
@@ -61,7 +46,7 @@ serve(async (req) => {
     console.log('FastAPI response:', data);
 
     return new Response(
-      JSON.stringify({ response: data.content }),
+      JSON.stringify(data),
       { 
         headers: { 
           ...corsHeaders,
@@ -74,7 +59,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        details: 'Error connecting to FastAPI backend'
+        details: 'Error processing chat request'
       }),
       { 
         status: 500,

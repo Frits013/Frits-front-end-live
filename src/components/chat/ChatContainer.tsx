@@ -67,32 +67,24 @@ const ChatContainer = ({
       created_at: new Date(),
     };
 
-    // Save message to database
-    const { error: messageError } = await supabase
-      .from('chat_messages')
-      .insert([{
-        session_id: currentChatId,
-        message: inputMessage,
-        role: 'user',
-        user_id: user.id
-      }]);
-
-    if (messageError) {
-      console.error('Error saving message:', messageError);
-      return;
-    }
-
     setMessages([...messages, newMessage]);
     setInputMessage("");
     setIsProcessing(true);
     isThinkingRef.current = true;
 
     try {
-      // Call Supabase Edge Function for chat response
+      // Get the session for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No active session');
+
+      // Call Edge Function with auth token
       const { data, error } = await supabase.functions.invoke('chat', {
         body: {
           message: inputMessage,
           session_id: currentChatId,
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
         },
       });
 
@@ -104,16 +96,6 @@ const ChatContainer = ({
         role: 'assistant',
         created_at: new Date(),
       };
-      
-      // Save agent response to database
-      await supabase
-        .from('chat_messages')
-        .insert([{
-          session_id: currentChatId,
-          message: agentResponse.message,
-          role: 'assistant',
-          user_id: user.id
-        }]);
 
       const updatedMessages = [...messages, newMessage, agentResponse];
       setMessages(updatedMessages);
