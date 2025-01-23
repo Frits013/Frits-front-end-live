@@ -73,6 +73,8 @@ const ChatContainer = ({
     isThinkingRef.current = true;
 
     try {
+      console.log('Sending message to FastAPI server...');
+      
       // Get the session for authentication
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No active session');
@@ -90,11 +92,16 @@ const ChatContainer = ({
         }),
       });
 
+      console.log('Response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('Received response:', data);
       
       const agentResponse: Message = {
         id: (Date.now() + 1).toString(),
@@ -109,7 +116,7 @@ const ChatContainer = ({
       // Generate and update chat title after the first exchange
       if (messages.length === 0) {
         const title = await generateChatTitle(updatedMessages);
-        if (title) {
+        if (title && currentChatId) {
           await updateChatTitle(currentChatId, title);
         }
       }
@@ -117,7 +124,7 @@ const ChatContainer = ({
       console.error('Error getting response:', error);
       toast({
         title: "Error",
-        description: "Failed to get response from AI",
+        description: error instanceof Error ? error.message : "Failed to get response from AI",
         variant: "destructive",
       });
     } finally {
