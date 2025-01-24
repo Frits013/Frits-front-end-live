@@ -88,15 +88,19 @@ const ChatContainer = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        }
+        },
+        body: JSON.stringify({
+          supabase_token: session.access_token
+        })
       });
 
       if (!tokenResponse.ok) {
+        const errorText = await tokenResponse.text();
+        console.error('Token error response:', errorText);
         throw new Error('Failed to get FastAPI token');
       }
 
-      const { token } = await tokenResponse.json();
+      const { access_token } = await tokenResponse.json();
       console.log('Successfully obtained FastAPI token');
       
       // Now use this token for the chat request
@@ -104,7 +108,7 @@ const ChatContainer = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${access_token}`,
         },
         body: JSON.stringify({
           message: inputMessage,
