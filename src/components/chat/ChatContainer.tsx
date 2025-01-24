@@ -50,7 +50,14 @@ const ChatContainer = ({
     e.preventDefault();
     if (!inputMessage.trim() || !currentChatId) return;
 
-    const { data: { session } } = await supabase.auth.getSession();
+    // Get the current session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    console.log('Session check:', session ? 'Session exists' : 'No session');
+    if (sessionError) {
+      console.error('Session error:', sessionError);
+    }
+
     if (!session) {
       toast({
         title: "Error",
@@ -73,8 +80,9 @@ const ChatContainer = ({
     isThinkingRef.current = true;
 
     try {
-      console.log('Sending message to FastAPI server...');
-      console.log('Session token:', session.access_token);
+      console.log('Preparing to send message to FastAPI server...');
+      console.log('Current chat ID:', currentChatId);
+      console.log('Access token available:', !!session.access_token);
       
       const response = await fetch('https://demo-fastapi-app.onrender.com/chat/send_message', {
         method: 'POST',
