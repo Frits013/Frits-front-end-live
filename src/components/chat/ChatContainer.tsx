@@ -88,10 +88,8 @@ const ChatContainer = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          supabase_token: session.access_token
-        })
+          'Authorization': `Bearer ${session.access_token}` // Send token in Authorization header
+        }
       });
 
       if (!tokenResponse.ok) {
