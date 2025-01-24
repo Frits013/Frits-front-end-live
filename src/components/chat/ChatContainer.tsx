@@ -49,7 +49,7 @@ const ChatContainer = ({
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputMessage.trim() || !currentChatId) return;
-
+  
     // Get the current session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
@@ -57,7 +57,7 @@ const ChatContainer = ({
     if (sessionError) {
       console.error('Session error:', sessionError);
     }
-
+  
     if (!session) {
       toast({
         title: "Error",
@@ -66,54 +66,59 @@ const ChatContainer = ({
       });
       return;
     }
-
+  
     const newMessage: Message = {
       id: Date.now().toString(),
       message: inputMessage,
       role: 'user',
       created_at: new Date(),
     };
-
+  
     setMessages([...messages, newMessage]);
     setInputMessage("");
     setIsProcessing(true);
     isThinkingRef.current = true;
-
+  
     try {
       console.log('Preparing to send message to FastAPI server...');
       console.log('Current chat ID:', currentChatId);
       
-      // First, get a token from your FastAPI server using the Supabase token
+      // Retrieve the Supabase access token from the session
+      const supabaseToken = session.access_token; // Ensure this is the correct token
+  
+      // First, get a FastAPI token from your FastAPI server using the Supabase token
       const tokenResponse = await fetch('https://demo-fastapi-app.onrender.com/auth/token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}` // Send token in Authorization header
-        }
+        },
+        body: JSON.stringify({
+          supabase_token: supabaseToken, // Correct field name
+        }),
       });
-
+  
       if (!tokenResponse.ok) {
         const errorText = await tokenResponse.text();
         console.error('Token error response:', errorText);
         throw new Error('Failed to get FastAPI token');
       }
-
+  
       const { access_token } = await tokenResponse.json();
       console.log('Successfully obtained FastAPI token');
       
-      // Now use this token for the chat request
+      // Now use this FastAPI token for the chat request
       const response = await fetch('https://demo-fastapi-app.onrender.com/chat/send_message', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${access_token}`,
+          'Authorization': `Bearer ${access_token}`, // Correct usage for authenticated requests
         },
         body: JSON.stringify({
           message: inputMessage,
           session_id: currentChatId,
         }),
       });
-
+  
       console.log('Response status:', response.status);
       
       if (!response.ok) {
@@ -121,7 +126,7 @@ const ChatContainer = ({
         console.error('Error response:', errorText);
         throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
       }
-
+  
       const data = await response.json();
       console.log('Received response:', data);
       
@@ -131,10 +136,10 @@ const ChatContainer = ({
         role: 'assistant',
         created_at: new Date(),
       };
-
+  
       const updatedMessages = [...messages, newMessage, agentResponse];
       setMessages(updatedMessages);
-
+  
       // Generate and update chat title after the first exchange
       if (messages.length === 0) {
         const title = await generateChatTitle(updatedMessages);
