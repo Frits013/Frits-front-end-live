@@ -50,8 +50,8 @@ const ChatContainer = ({
     e.preventDefault();
     if (!inputMessage.trim() || !currentChatId) return;
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
       toast({
         title: "Error",
         description: "You must be logged in to send messages",
@@ -74,12 +74,8 @@ const ChatContainer = ({
 
     try {
       console.log('Sending message to FastAPI server...');
+      console.log('Session token:', session.access_token);
       
-      // Get the session for authentication
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('No active session');
-
-      // Call FastAPI backend with the correct URL
       const response = await fetch('https://demo-fastapi-app.onrender.com/chat/send_message', {
         method: 'POST',
         headers: {

@@ -122,31 +122,31 @@ const Chat = () => {
         return;
       }
 
-      setChatSessions(sessions);
+      setChatSessions(sessions || []);
 
       // Create a new session if none exists
-      if (!currentSessionId && (!sessions || sessions.length === 0)) {
-        const { data: newSession, error: createError } = await supabase
-          .from('chat_sessions')
-          .insert([{
-            title: 'New Chat',
-            user_id: session.user.id
-          }])
-          .select()
-          .single();
-
-        if (createError) {
-          console.error('Error creating session:', createError);
-          return;
-        }
-
-        setCurrentSessionId(newSession.id);
-        setChatSessions([newSession]);
+      if (sessions?.length === 0) {
+        console.log('No existing sessions, creating new one...');
+        await createNewChat();
+      } else if (sessions && sessions.length > 0 && !currentSessionId) {
+        // Set the most recent session as current if no session is selected
+        setCurrentSessionId(sessions[0].id);
       }
     };
 
     checkAuth();
-  }, [navigate, currentSessionId]);
+
+    // Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN') {
+        checkAuth();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   // Load messages when session is selected
   useEffect(() => {
