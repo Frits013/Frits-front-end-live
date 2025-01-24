@@ -82,13 +82,29 @@ const ChatContainer = ({
     try {
       console.log('Preparing to send message to FastAPI server...');
       console.log('Current chat ID:', currentChatId);
-      console.log('Access token available:', !!session.access_token);
       
-      const response = await fetch('https://demo-fastapi-app.onrender.com/chat/send_message', {
+      // First, get a token from your FastAPI server using the Supabase token
+      const tokenResponse = await fetch('https://demo-fastapi-app.onrender.com/auth/token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
+        }
+      });
+
+      if (!tokenResponse.ok) {
+        throw new Error('Failed to get FastAPI token');
+      }
+
+      const { token } = await tokenResponse.json();
+      console.log('Successfully obtained FastAPI token');
+      
+      // Now use this token for the chat request
+      const response = await fetch('https://demo-fastapi-app.onrender.com/chat/send_message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           message: inputMessage,
