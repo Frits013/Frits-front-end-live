@@ -33,7 +33,14 @@ const ChatContainer = ({
   const [audioData, setAudioData] = useState<number[]>([]);
 
   const generateChatTitle = async (messages: Message[]) => {
+    // Skip title generation if there's no chat ID
+    if (!currentChatId) {
+      console.log('Skipping title generation - no chat ID');
+      return null;
+    }
+
     try {
+      console.log('Attempting to generate chat title...');
       const { data, error } = await supabase.functions.invoke('summarize-chat', {
         body: { messages },
       });
@@ -42,6 +49,8 @@ const ChatContainer = ({
         console.error('Error generating chat title:', error);
         return null;
       }
+      
+      console.log('Successfully generated chat title:', data?.summary);
       return data.summary;
     } catch (error) {
       console.error('Error generating chat title:', error);
@@ -141,10 +150,11 @@ const ChatContainer = ({
       setMessages(updatedMessages);
   
       // Only try to generate title after first message exchange and if we don't already have a title
-      if (messages.length === 0) {
+      if (messages.length === 0 && currentChatId) {
+        console.log('First message exchange - attempting to generate title');
         try {
           const title = await generateChatTitle(updatedMessages);
-          if (title && currentChatId) {
+          if (title) {
             await updateChatTitle(currentChatId, title).catch(error => {
               console.error('Error updating chat title:', error);
               // Don't throw - this is not critical functionality
