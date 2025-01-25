@@ -38,7 +38,10 @@ const ChatContainer = ({
         body: { messages },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error generating chat title:', error);
+        return null;
+      }
       return data.summary;
     } catch (error) {
       console.error('Error generating chat title:', error);
@@ -83,17 +86,15 @@ const ChatContainer = ({
       console.log('Preparing to send message to FastAPI server...');
       console.log('Current chat ID:', currentChatId);
       
-      // Retrieve the Supabase access token from the session
-      const supabaseToken = session.access_token; // Ensure this is the correct token
+      const supabaseToken = session.access_token;
   
-      // First, get a FastAPI token from your FastAPI server using the Supabase token
       const tokenResponse = await fetch('https://demo-fastapi-app.onrender.com/auth/token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          supabase_token: supabaseToken, // Correct field name
+          supabase_token: supabaseToken,
         }),
       });
   
@@ -106,12 +107,11 @@ const ChatContainer = ({
       const { access_token } = await tokenResponse.json();
       console.log('Successfully obtained FastAPI token');
       
-      // Now use this FastAPI token for the chat request
       const response = await fetch('https://demo-fastapi-app.onrender.com/chat/send_message', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${access_token}`, // Correct usage for authenticated requests
+          'Authorization': `Bearer ${access_token}`,
         },
         body: JSON.stringify({
           message: inputMessage,
@@ -140,11 +140,19 @@ const ChatContainer = ({
       const updatedMessages = [...messages, newMessage, agentResponse];
       setMessages(updatedMessages);
   
-      // Generate and update chat title after the first exchange
+      // Only try to generate title after first message exchange and if we don't already have a title
       if (messages.length === 0) {
-        const title = await generateChatTitle(updatedMessages);
-        if (title && currentChatId) {
-          await updateChatTitle(currentChatId, title);
+        try {
+          const title = await generateChatTitle(updatedMessages);
+          if (title && currentChatId) {
+            await updateChatTitle(currentChatId, title).catch(error => {
+              console.error('Error updating chat title:', error);
+              // Don't throw - this is not critical functionality
+            });
+          }
+        } catch (error) {
+          console.error('Error in title generation:', error);
+          // Don't throw - chat should continue working even if title generation fails
         }
       }
     } catch (error) {
