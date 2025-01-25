@@ -1,6 +1,5 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,22 +20,29 @@ serve(async (req) => {
       `${msg.sender === 'user' ? 'User' : 'Assistant'}: ${msg.content}`
     ).join('\n');
 
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAIApiKey) {
-      throw new Error('Missing OpenAI API key');
+    // Get Azure OpenAI configuration from environment variables
+    const apiKey = Deno.env.get('AZURE_OPENAI_API_KEY');
+    const apiBase = Deno.env.get('AZURE_OPENAI_API_BASE');
+    const modelName = Deno.env.get('AZURE_OPENAI_MODEL_NAME');
+    const modelVersion = Deno.env.get('AZURE_OPENAI_MODEL_VERSION');
+
+    if (!apiKey || !apiBase || !modelName || !modelVersion) {
+      throw new Error('Missing Azure OpenAI configuration');
     }
 
-    console.log('Generating summary for context:', context);
+    console.log('Generating summary using Azure OpenAI');
 
-    // Generate summary using OpenAI
-    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Construct the Azure OpenAI API URL
+    const apiUrl = `${apiBase}/openai/deployments/${modelName}/chat/completions?api-version=${modelVersion}`;
+
+    // Generate summary using Azure OpenAI
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'api-key': apiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
         messages: [
           {
             role: 'system',
@@ -52,11 +58,17 @@ serve(async (req) => {
       }),
     });
 
-    const data = await openAIResponse.json();
-    console.log('OpenAI response:', data);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Azure OpenAI API error:', errorText);
+      throw new Error(`Azure OpenAI API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Azure OpenAI response:', data);
 
     if (!data.choices?.[0]?.message?.content) {
-      throw new Error('Invalid response from OpenAI');
+      throw new Error('Invalid response from Azure OpenAI');
     }
 
     const summary = data.choices[0].message.content.trim();
