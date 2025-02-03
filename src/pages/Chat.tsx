@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import ChatHistoryComponent from "@/components/chat/ChatHistory";
 import ChatContainer from "@/components/chat/ChatContainer";
 import {
@@ -32,6 +33,7 @@ interface ChatSession {
 const Chat = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [messages, setMessages] = useState<Message[]>([]);
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -189,40 +191,65 @@ const Chat = () => {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-gradient-to-br from-purple-50/30 via-blue-50/30 to-purple-50/30">
-        <Sidebar>
-          <SidebarHeader className="p-4 space-y-2">
+      <div className="flex min-h-[100dvh] w-full bg-gradient-to-br from-purple-50/30 via-blue-50/30 to-purple-50/30">
+        {/* Sidebar - hidden on mobile by default */}
+        <div className={`${isMobile ? 'hidden' : 'block'}`}>
+          <Sidebar>
+            <SidebarHeader className="p-4 space-y-2">
+              <Button
+                onClick={createNewChat}
+                variant="default"
+                className="w-full flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                New Chat
+              </Button>
+              <Button
+                onClick={handleSignOut}
+                variant="outline"
+                className="w-full flex items-center gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </Button>
+            </SidebarHeader>
+            <SidebarContent>
+              <SidebarGroup>
+                <SidebarGroupLabel>Chat History</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <ChatHistoryComponent
+                    chatHistories={chatSessions}
+                    currentChatId={currentSessionId}
+                    setChatHistories={setChatSessions}
+                    setCurrentChatId={setCurrentSessionId}
+                  />
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </SidebarContent>
+          </Sidebar>
+        </div>
+
+        {/* Mobile header - only shown on mobile */}
+        {isMobile && (
+          <div className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b p-4 flex justify-between items-center">
             <Button
               onClick={createNewChat}
-              variant="default"
-              className="w-full flex items-center gap-2"
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8"
             >
               <Plus className="w-4 h-4" />
-              New Chat
             </Button>
             <Button
               onClick={handleSignOut}
-              variant="outline"
-              className="w-full flex items-center gap-2"
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8"
             >
               <LogOut className="w-4 h-4" />
-              Sign Out
             </Button>
-          </SidebarHeader>
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupLabel>Chat History</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <ChatHistoryComponent
-                  chatHistories={chatSessions}
-                  currentChatId={currentSessionId}
-                  setChatHistories={setChatSessions}
-                  setCurrentChatId={setCurrentSessionId}
-                />
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-        </Sidebar>
+          </div>
+        )}
 
         <ChatContainer
           messages={messages}

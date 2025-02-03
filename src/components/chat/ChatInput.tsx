@@ -1,6 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ChatInputProps {
   inputMessage: string;
@@ -9,6 +10,8 @@ interface ChatInputProps {
 }
 
 const ChatInput = ({ inputMessage, setInputMessage, handleSendMessage }: ChatInputProps) => {
+  const isMobile = useIsMobile();
+
   return (
     <form onSubmit={handleSendMessage} className="relative">
       <div className="relative group">
@@ -22,10 +25,12 @@ const ChatInput = ({ inputMessage, setInputMessage, handleSendMessage }: ChatInp
           />
           <Button 
             type="submit" 
-            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg hover:shadow-purple-500/50 transition-all duration-300"
+            className={`bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg hover:shadow-purple-500/50 transition-all duration-300 ${
+              isMobile ? 'px-3' : ''
+            }`}
           >
-            <Send className="w-4 h-4 mr-2" />
-            Send
+            <Send className="w-4 h-4" />
+            {!isMobile && <span className="ml-2">Send</span>}
           </Button>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
+import { useIsMobile } from "@/hooks/use-mobile";
 import ThreeScene from "@/components/chat/ThreeScene";
 import ChatMessages from "@/components/chat/ChatMessages";
 import ChatInput from "@/components/chat/ChatInput";
@@ -31,6 +32,7 @@ const ChatContainer = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const isThinkingRef = useRef(false);
   const [audioData, setAudioData] = useState<number[]>([]);
+  const isMobile = useIsMobile();
 
   const generateChatTitle = async (messages: Message[]) => {
     // Skip title generation if there's no chat ID
@@ -179,22 +181,30 @@ const ChatContainer = ({
   };
 
   return (
-    <div className="flex-1 p-4">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <div className="w-full max-w-[500px] mx-auto">
-          <ThreeScene isThinking={isThinkingRef.current} audioData={audioData} />
+    <div className="flex-1 flex flex-col h-[100dvh] w-full">
+      <div className="flex-1 overflow-hidden p-4 flex flex-col">
+        {/* ThreeScene wrapper with responsive sizing */}
+        <div className="w-full max-w-[500px] mx-auto mb-8">
+          <div className="aspect-square w-full">
+            <ThreeScene isThinking={isThinkingRef.current} audioData={audioData} />
+          </div>
         </div>
         
-        <Card className="p-6 bg-white/20 backdrop-blur-xl border-purple-100/50 shadow-xl rounded-xl relative overflow-hidden">
+        {/* Chat card with messages and input */}
+        <Card className="flex-1 flex flex-col bg-white/20 backdrop-blur-xl border-purple-100/50 shadow-xl rounded-xl relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-purple-50/30 pointer-events-none" />
           
-          <div className="relative z-10 space-y-6">
-            <ChatMessages messages={messages} />
-            <ChatInput
-              inputMessage={inputMessage}
-              setInputMessage={setInputMessage}
-              handleSendMessage={handleSendMessage}
-            />
+          <div className="relative z-10 flex flex-col h-full">
+            <div className="flex-1 overflow-y-auto">
+              <ChatMessages messages={messages} />
+            </div>
+            <div className="p-4 mt-auto">
+              <ChatInput
+                inputMessage={inputMessage}
+                setInputMessage={setInputMessage}
+                handleSendMessage={handleSendMessage}
+              />
+            </div>
           </div>
         </Card>
       </div>

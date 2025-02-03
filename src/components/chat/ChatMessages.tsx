@@ -11,7 +11,7 @@ interface ChatMessagesProps {
 
 const ChatMessages = ({ messages }: ChatMessagesProps) => {
   return (
-    <div className="h-[400px] overflow-y-auto mb-4 space-y-4 p-4 scrollbar-thin scrollbar-thumb-purple-200 dark:scrollbar-thumb-purple-800 scrollbar-track-transparent">
+    <div className="flex flex-col gap-4 p-4">
       {messages.map((message) => (
         <div
           key={message.id}
@@ -20,7 +20,7 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
           }`}
         >
           <div
-            className={`max-w-[80%] p-4 rounded-2xl shadow-sm ${
+            className={`max-w-[85%] p-4 rounded-2xl shadow-sm ${
               message.role === 'user'
                 ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white'
                 : 'bg-gradient-to-r from-gray-100/80 to-purple-50/80 dark:from-gray-800/80 dark:to-purple-900/80 text-gray-800 dark:text-gray-200'
