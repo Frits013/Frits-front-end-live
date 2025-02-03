@@ -29,6 +29,7 @@ const ChatHistoryComponent = ({
   const [editingTitle, setEditingTitle] = useState("");
 
   const updateChatTitle = async (chatId: string, newTitle: string) => {
+    console.log('Attempting to update chat title:', { chatId, newTitle });
     const { error } = await supabase
       .from('chat_sessions')
       .update({ title: newTitle })
@@ -47,21 +48,41 @@ const ChatHistoryComponent = ({
   };
 
   const handleDeleteChat = async (chatId: string) => {
-    const { error } = await supabase
-      .from('chat_sessions')
+    console.log('Attempting to delete chat:', chatId);
+    
+    // First, delete all messages associated with this chat session
+    const { error: messagesError } = await supabase
+      .from('chat_messages')
       .delete()
-      .eq('id', chatId);
+      .eq('session_id', chatId);
 
-    if (error) {
-      console.error('Error deleting chat:', error);
+    if (messagesError) {
+      console.error('Error deleting chat messages:', messagesError);
       toast({
         title: "Error",
-        description: "Failed to delete chat",
+        description: "Failed to delete chat messages",
         variant: "destructive",
       });
       return;
     }
 
+    // Then delete the chat session itself
+    const { error: sessionError } = await supabase
+      .from('chat_sessions')
+      .delete()
+      .eq('id', chatId);
+
+    if (sessionError) {
+      console.error('Error deleting chat session:', sessionError);
+      toast({
+        title: "Error",
+        description: "Failed to delete chat session",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log('Successfully deleted chat and its messages');
     setChatHistories(chatHistories.filter(chat => chat.id !== chatId));
     if (currentChatId === chatId) {
       setCurrentChatId(null);
