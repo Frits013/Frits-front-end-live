@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -27,7 +27,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
   const { toast } = useToast();
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
-  const [technicalLevel, setTechnicalLevel] = useState<string>("");
+  const [technicalLevel, setTechnicalLevel] = useState("");
   const [role, setRole] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -67,7 +67,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
         .update({
           display_name: displayName,
           username,
-          technical_level,
+          technical_level: technicalLevel,
           role,
         })
         .eq("id", session.user.id);
@@ -91,7 +91,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
     }
   };
 
-  useState(() => {
+  useEffect(() => {
     if (open) {
       loadProfile();
     }
