@@ -49,7 +49,7 @@ export type Database = {
             foreignKeyName: "chat_messages_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
@@ -63,7 +63,7 @@ export type Database = {
             foreignKeyName: "fk_user"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -92,45 +92,45 @@ export type Database = {
             foreignKeyName: "chat_sessions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "fk_user"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
       }
-      profiles: {
+      users: {
         Row: {
           created_at: string
           display_name: string | null
           id: string
-          role: string | null
+          name: string | null
+          role_description: string | null
           technical_level: string | null
           updated_at: string
-          username: string | null
         }
         Insert: {
           created_at?: string
           display_name?: string | null
           id: string
-          role?: string | null
+          name?: string | null
+          role_description?: string | null
           technical_level?: string | null
           updated_at?: string
-          username?: string | null
         }
         Update: {
           created_at?: string
           display_name?: string | null
           id?: string
-          role?: string | null
+          name?: string | null
+          role_description?: string | null
           technical_level?: string | null
           updated_at?: string
-          username?: string | null
         }
         Relationships: []
       }

@@ -1,7 +1,5 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { LogOut, Plus, User } from "lucide-react";
-import ProfileDialog from "./ProfileDialog";
+import { Plus } from "lucide-react";
 
 interface ChatHeaderProps {
   onNewChat: () => void;
@@ -9,40 +7,19 @@ interface ChatHeaderProps {
 }
 
 const ChatHeader = ({ onNewChat, onSignOut }: ChatHeaderProps) => {
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-b p-4 flex justify-between items-center">
+    <div className="flex items-center justify-between p-4 border-b">
       <Button
         onClick={onNewChat}
-        variant="ghost"
-        size="icon"
-        className="w-8 h-8"
+        variant="default"
+        className="flex items-center gap-2"
       >
         <Plus className="w-4 h-4" />
+        New Chat
       </Button>
-      <div className="flex gap-2">
-        <Button
-          onClick={() => setIsProfileOpen(true)}
-          variant="ghost"
-          size="icon"
-          className="w-8 h-8"
-        >
-          <User className="w-4 h-4" />
-        </Button>
-        <Button
-          onClick={onSignOut}
-          variant="ghost"
-          size="icon"
-          className="w-8 h-8"
-        >
-          <LogOut className="w-4 h-4" />
-        </Button>
-      </div>
-      <ProfileDialog 
-        open={isProfileOpen}
-        onOpenChange={setIsProfileOpen}
-      />
+      <Button onClick={onSignOut} variant="outline">
+        Sign Out
+      </Button>
     </div>
   );
 };
