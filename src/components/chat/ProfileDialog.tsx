@@ -122,7 +122,12 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="technicalLevel">Technical Level</Label>
+            <Label htmlFor="technicalLevel" className="flex flex-col">
+              <span>Technical Level</span>
+              <span className="text-sm text-muted-foreground">
+                Scale: 1 (new to AI adoption) to 5 (expert in AI adoption)
+              </span>
+            </Label>
             <Select
               value={technicalLevel}
               onValueChange={setTechnicalLevel}
@@ -131,9 +136,11 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
                 <SelectValue placeholder="Select your technical level" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="junior">Junior</SelectItem>
-                <SelectItem value="medior">Medior</SelectItem>
-                <SelectItem value="senior">Senior</SelectItem>
+                <SelectItem value="1">1</SelectItem>
+                <SelectItem value="2">2</SelectItem>
+                <SelectItem value="3">3</SelectItem>
+                <SelectItem value="4">4</SelectItem>
+                <SelectItem value="5">5</SelectItem>
               </SelectContent>
             </Select>
           </div>
