@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,9 +27,9 @@ interface ProfileDialogProps {
 const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
   const { toast } = useToast();
   const [displayName, setDisplayName] = useState("");
-  const [username, setUsername] = useState("");
+  const [name, setName] = useState("");
   const [technicalLevel, setTechnicalLevel] = useState("");
-  const [role, setRole] = useState("");
+  const [roleDescription, setRoleDescription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const loadProfile = async () => {
@@ -36,16 +37,16 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
     if (!session) return;
 
     const { data: profile } = await supabase
-      .from("profiles")
+      .from("users")
       .select("*")
       .eq("id", session.user.id)
       .single();
 
     if (profile) {
       setDisplayName(profile.display_name || "");
-      setUsername(profile.username || "");
+      setName(profile.name || "");
       setTechnicalLevel(profile.technical_level || "");
-      setRole(profile.role || "");
+      setRoleDescription(profile.role_description || "");
     }
   };
 
@@ -63,12 +64,12 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
       }
 
       const { error } = await supabase
-        .from("profiles")
+        .from("users")
         .update({
           display_name: displayName,
-          username,
+          name,
           technical_level: technicalLevel,
-          role,
+          role_description: roleDescription,
         })
         .eq("id", session.user.id);
 
@@ -105,11 +106,11 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor="name">Name</Label>
             <Input
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
             />
           </div>
           <div className="grid gap-2">
@@ -137,11 +138,11 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
             </Select>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="role">Role</Label>
+            <Label htmlFor="roleDescription">Role Description</Label>
             <Input
-              id="role"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
+              id="roleDescription"
+              value={roleDescription}
+              onChange={(e) => setRoleDescription(e.target.value)}
             />
           </div>
         </div>
