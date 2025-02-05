@@ -179,16 +179,12 @@ const Chat = () => {
             setChatSessions={setChatSessions}
             setCurrentSessionId={setCurrentSessionId}
             onNewChat={createNewChat}
-            onSignOut={handleSignOut}
           />
         }
         content={
           <>
             {isMobile && (
-              <ChatHeader
-                onNewChat={createNewChat}
-                onSignOut={handleSignOut}
-              />
+              <ChatHeader onSignOut={handleSignOut} />
             )}
             <ChatContainer
               messages={messages}
