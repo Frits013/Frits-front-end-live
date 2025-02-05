@@ -4,7 +4,10 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarHeader,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import ChatHistoryComponent from "./ChatHistory";
 
 interface ChatSession {
@@ -19,7 +22,6 @@ interface ChatSidebarProps {
   setChatSessions: (sessions: ChatSession[]) => void;
   setCurrentSessionId: (id: string | null) => void;
   onNewChat: () => void;
-  onSignOut: () => void;
 }
 
 const ChatSidebar = ({
@@ -27,9 +29,20 @@ const ChatSidebar = ({
   currentSessionId,
   setChatSessions,
   setCurrentSessionId,
+  onNewChat,
 }: ChatSidebarProps) => {
   return (
     <Sidebar>
+      <SidebarHeader className="p-4">
+        <Button
+          onClick={onNewChat}
+          variant="default"
+          className="w-full flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          New Chat
+        </Button>
+      </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Chat History</SidebarGroupLabel>

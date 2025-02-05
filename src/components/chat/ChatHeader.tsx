@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Plus, User } from "lucide-react";
+import { User } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,23 +11,14 @@ import ProfileDialog from "./ProfileDialog";
 import { useState } from "react";
 
 interface ChatHeaderProps {
-  onNewChat: () => void;
   onSignOut: () => void;
 }
 
-const ChatHeader = ({ onNewChat, onSignOut }: ChatHeaderProps) => {
+const ChatHeader = ({ onSignOut }: ChatHeaderProps) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   return (
-    <div className="flex items-center justify-between p-4 border-b">
-      <Button
-        onClick={onNewChat}
-        variant="default"
-        className="flex items-center gap-2"
-      >
-        <Plus className="w-4 h-4" />
-        New Chat
-      </Button>
+    <div className="flex items-center justify-end p-4 border-b">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="rounded-full">
