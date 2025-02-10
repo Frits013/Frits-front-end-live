@@ -34,20 +34,31 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const loadProfile = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
 
-    const { data: profile } = await supabase
-      .from("users")
-      .select("*")
-      .eq("id", session.user.id)
-      .single();
+      const { data: profile, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", session.user.id)
+        .maybeSingle();
 
-    if (profile) {
-      setCompanyInfo(profile.company_info || "");
-      setName(profile.name || "");
-      setTechnicalLevel(profile.technical_level || "");
-      setRoleDescription(profile.role_description || "");
+      if (error) throw error;
+
+      if (profile) {
+        setCompanyInfo(profile.company_info || "");
+        setName(profile.name || "");
+        setTechnicalLevel(profile.technical_level || "");
+        setRoleDescription(profile.role_description || "");
+      }
+    } catch (error) {
+      console.error("Error loading profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load profile",
+        variant: "destructive",
+      });
     }
   };
 
@@ -69,7 +80,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
         .update({
           company_info: companyInfo,
           name,
-          technical_level: technicalLevel,
+          technical_level: technicalLevel || null,
           role_description: roleDescription,
         })
         .eq("id", session.user.id);
@@ -165,12 +176,14 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
+            type="button"
           >
             Cancel
           </Button>
           <Button
             onClick={handleSave}
             disabled={isLoading}
+            type="button"
           >
             Save changes
           </Button>
