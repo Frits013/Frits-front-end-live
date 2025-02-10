@@ -183,9 +183,7 @@ const Chat = () => {
         }
         content={
           <>
-            {isMobile && (
-              <ChatHeader onSignOut={handleSignOut} />
-            )}
+            <ChatHeader onSignOut={handleSignOut} />
             <ChatContainer
               messages={messages}
               setMessages={setMessages}
