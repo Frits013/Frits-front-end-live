@@ -106,8 +106,8 @@ export type Database = {
       }
       users: {
         Row: {
+          company_info: string | null
           created_at: string
-          display_name: string | null
           id: string
           name: string | null
           role_description: string | null
@@ -115,8 +115,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          company_info?: string | null
           created_at?: string
-          display_name?: string | null
           id: string
           name?: string | null
           role_description?: string | null
@@ -124,8 +124,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          company_info?: string | null
           created_at?: string
-          display_name?: string | null
           id?: string
           name?: string | null
           role_description?: string | null

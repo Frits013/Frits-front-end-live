@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 interface ProfileDialogProps {
   open: boolean;
@@ -26,7 +27,7 @@ interface ProfileDialogProps {
 
 const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
   const { toast } = useToast();
-  const [displayName, setDisplayName] = useState("");
+  const [companyInfo, setCompanyInfo] = useState("");
   const [name, setName] = useState("");
   const [technicalLevel, setTechnicalLevel] = useState("");
   const [roleDescription, setRoleDescription] = useState("");
@@ -43,7 +44,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
       .single();
 
     if (profile) {
-      setDisplayName(profile.display_name || "");
+      setCompanyInfo(profile.company_info || "");
       setName(profile.name || "");
       setTechnicalLevel(profile.technical_level || "");
       setRoleDescription(profile.role_description || "");
@@ -66,7 +67,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
       const { error } = await supabase
         .from("users")
         .update({
-          display_name: displayName,
+          company_info: companyInfo,
           name,
           technical_level: technicalLevel,
           role_description: roleDescription,
@@ -100,7 +101,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Edit Profile</DialogTitle>
         </DialogHeader>
@@ -114,11 +115,18 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="displayName">Display Name</Label>
-            <Input
-              id="displayName"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
+            <Label htmlFor="companyInfo">
+              Company Info
+              <span className="block text-sm text-muted-foreground">
+                Max 500 words
+              </span>
+            </Label>
+            <Textarea
+              id="companyInfo"
+              value={companyInfo}
+              onChange={(e) => setCompanyInfo(e.target.value)}
+              className="min-h-[200px]"
+              placeholder="Create a headstart by providing more information about your organization! Example topics to help Frits make a more personal consult are AI strategy, company culture, employee's AI skills, data quality/availability, hardware, governance processes, and competitive environment."
             />
           </div>
           <div className="grid gap-2">
