@@ -1,3 +1,4 @@
+
 import { ReactNode, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -37,7 +38,9 @@ const ChatLayout = ({ sidebar, content }: ChatLayoutProps) => {
           {sidebar}
         </div>
       )}
-      {content}
+      <div className="relative flex-1">
+        {content}
+      </div>
     </div>
   );
 };

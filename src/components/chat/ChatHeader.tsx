@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { User } from "lucide-react";
 import {
@@ -18,7 +19,7 @@ const ChatHeader = ({ onSignOut }: ChatHeaderProps) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   return (
-    <div className="flex items-center justify-end p-4 border-b">
+    <div className="absolute top-4 right-4 z-50">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="rounded-full">
