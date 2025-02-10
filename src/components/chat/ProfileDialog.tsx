@@ -104,6 +104,10 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
     }
   };
 
+  const handleClose = () => {
+    onOpenChange(false);
+  };
+
   useEffect(() => {
     if (open) {
       loadProfile();
@@ -111,7 +115,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
   }, [open]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange} modal>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Edit Profile</DialogTitle>
@@ -175,7 +179,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
         <div className="flex justify-end gap-2">
           <Button
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={handleClose}
             type="button"
           >
             Cancel
