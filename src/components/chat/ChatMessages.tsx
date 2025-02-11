@@ -23,9 +23,13 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
         if (match) {
           const [, header, content] = match;
           return (
-            <div key={index} className="mb-4">
-              <div className="font-bold text-lg mb-1">{header}</div>
-              <div className="pl-4">{content}</div>
+            <div key={index} className="mb-6 last:mb-0">
+              <div className="font-bold text-lg mb-2 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                {header}
+              </div>
+              <div className="pl-6 border-l-2 border-purple-200 dark:border-purple-800">
+                {content}
+              </div>
             </div>
           );
         }

@@ -1,3 +1,4 @@
+
 import {
   Sidebar,
   SidebarContent,
@@ -40,12 +41,12 @@ const ChatSidebar = ({
           className="w-full flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
-          New Chat
+          Start New Consult
         </Button>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Chat History</SidebarGroupLabel>
+          <SidebarGroupLabel>Consult Session History</SidebarGroupLabel>
           <SidebarGroupContent>
             <ChatHistoryComponent
               chatHistories={chatSessions}

@@ -57,26 +57,33 @@ const Chat = () => {
     if (!session) {
       toast({
         title: "Error",
-        description: "You must be logged in to create a new chat",
+        description: "You must be logged in to create a new consult session",
         variant: "destructive",
       });
       return;
     }
 
+    const { count } = await supabase
+      .from('chat_sessions')
+      .select('*', { count: 'exact' })
+      .eq('user_id', session.user.id);
+
+    const sessionNumber = (count || 0) + 1;
+
     const { data: newSession, error } = await supabase
       .from('chat_sessions')
       .insert([{
-        title: 'New Chat',
+        title: `Consult Session ${sessionNumber}`,
         user_id: session.user.id
       }])
       .select()
       .single();
 
     if (error) {
-      console.error('Error creating new chat:', error);
+      console.error('Error creating new consult session:', error);
       toast({
         title: "Error",
-        description: "Failed to create new chat",
+        description: "Failed to create new consult session",
         variant: "destructive",
       });
       return;
@@ -87,7 +94,7 @@ const Chat = () => {
     setMessages([]);
     toast({
       title: "Success",
-      description: "New chat created",
+      description: "New consult session created",
     });
   };
 
