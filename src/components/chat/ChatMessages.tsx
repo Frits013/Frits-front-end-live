@@ -35,6 +35,28 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
         }
         return <div key={index}>{point}</div>;
       });
+    } 
+    // Check if the message follows the new "1. Header" format without **
+    else if (text.match(/\d+\.\s+[A-Z]/)) {
+      const points = text.split(/(?=\d+\.\s+[A-Z])/);
+      
+      return points.map((point, index) => {
+        const match = point.match(/(\d+\.\s+[^:]+):\s*(.*)/);
+        if (match) {
+          const [, header, content] = match;
+          return (
+            <div key={index} className="mb-6 last:mb-0">
+              <div className="font-bold text-lg mb-2 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                {header}
+              </div>
+              <div className="pl-6 border-l-2 border-purple-200 dark:border-purple-800">
+                {content}
+              </div>
+            </div>
+          );
+        }
+        return <div key={index}>{point}</div>;
+      });
     }
     return text;
   };
@@ -64,3 +86,4 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
 };
 
 export default ChatMessages;
+
