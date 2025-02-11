@@ -104,9 +104,21 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
     }
   };
 
+  const handleClose = () => {
+    // Reset form state when closing
+    if (!open) {
+      setCompanyInfo("");
+      setName("");
+      setTechnicalLevel("");
+      setRoleDescription("");
+    }
+  };
+
   useEffect(() => {
     if (open) {
       loadProfile();
+    } else {
+      handleClose();
     }
   }, [open]);
 
