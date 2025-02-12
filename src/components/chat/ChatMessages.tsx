@@ -11,37 +11,47 @@ interface ChatMessagesProps {
 }
 
 const ChatMessages = ({ messages }: ChatMessagesProps) => {
+  const formatText = (text: string) => {
+    // Handle bold text wrapped in **
+    return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  };
+
   const formatMessage = (text: string) => {
-    // Check if the message contains markdown-style headers
-    if (text.includes('###') || text.includes('**')) {
-      // Remove any ### markers
-      text = text.replace(/###/g, '');
-      
-      // Split by numbered points if they exist
-      const points = text.split(/(?=\d+\.\s+)/);
-      
-      return points.map((point, index) => {
-        // Extract header and content, handling both ** and plain text headers
-        const match = point.match(/(\d+\.\s+)?\**(.*?)\**:\s*(.*)/s);
-        if (match) {
-          const [, , header, content] = match;
-          return (
-            <div key={index} className="mb-6 last:mb-0">
-              <div className="font-bold text-lg mb-2 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                {header.trim()}
-              </div>
-              <div className="pl-6 border-l-2 border-purple-200 dark:border-purple-800">
-                {content.trim()}
-              </div>
+    // First, handle any markdown list numbers that might appear
+    text = text.replace(/^\d+\.\s+/gm, '');
+
+    // Split the text into sections based on ###
+    if (text.includes('###')) {
+      const sections = text.split('###').filter(Boolean);
+      return sections.map((section, index) => {
+        const [header, ...contentParts] = section.trim().split('\n');
+        const content = contentParts.join('\n');
+
+        return (
+          <div key={index} className="mb-6 last:mb-0">
+            <div className="font-bold text-lg mb-2 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              {header.trim()}
             </div>
-          );
-        }
-        return <div key={index} className="whitespace-pre-wrap">{point.trim()}</div>;
+            <div 
+              className="pl-6 border-l-2 border-purple-200 dark:border-purple-800"
+              dangerouslySetInnerHTML={{ 
+                __html: formatText(content.trim())
+              }}
+            />
+          </div>
+        );
       });
     }
-    
-    // If no special formatting, return the text with preserved whitespace
-    return <div className="whitespace-pre-wrap">{text}</div>;
+
+    // If there are no sections, just format the text with bold
+    return (
+      <div 
+        className="whitespace-pre-wrap"
+        dangerouslySetInnerHTML={{ 
+          __html: formatText(text)
+        }}
+      />
+    );
   };
 
   return (
