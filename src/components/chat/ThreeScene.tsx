@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { setupScene, setupLighting } from "./three/SceneSetup";
@@ -47,14 +48,9 @@ const ThreeScene = ({ isThinking, audioData }: ThreeSceneProps) => {
           const time = Date.now() * 0.001;
           brainRef.current.rotation.y += 0.01;
           brainRef.current.rotation.x += Math.sin(time) * 0.005;
-        } else {
-          const time = Date.now() * 0.001;
-          brainRef.current.rotation.y += 0.002;
-          brainRef.current.rotation.x = Math.sin(time * 0.5) * 0.1;
-          brainRef.current.position.y = Math.sin(time * 0.5) * 0.1;
         }
 
-        // Apply audio-reactive scaling to nodes
+        // Apply audio-reactive scaling to nodes or default pulsing animation
         if (audioData && audioData.length > 0) {
           nodesRef.current.forEach((node, i) => {
             const audioIndex = i % audioData.length;
