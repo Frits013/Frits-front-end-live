@@ -20,7 +20,7 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
     // First, handle any markdown list numbers that might appear
     text = text.replace(/^\d+\.\s+/gm, '');
 
-    // Split the text into sections based on ###
+    // Split the text into sections based on ###, but only if ### exists
     if (text.includes('###')) {
       const sections = text.split('###').filter(Boolean);
       return sections.map((section, index) => {
@@ -30,7 +30,7 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
         return (
           <div key={index} className="mb-6 last:mb-0">
             <div className="font-bold text-lg mb-2 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              {header.trim()}
+              {formatText(header.trim())}
             </div>
             <div 
               className="pl-6 border-l-2 border-purple-200 dark:border-purple-800"
@@ -43,7 +43,7 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
       });
     }
 
-    // If there are no sections, just format the text with bold
+    // If there are no ###, treat the entire text as regular content
     return (
       <div 
         className="whitespace-pre-wrap"
