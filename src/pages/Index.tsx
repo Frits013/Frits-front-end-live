@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
@@ -14,23 +15,43 @@ const Index = () => {
   useEffect(() => {
     // Check if user is already logged in
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate('/chat');
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Session error:", error);
+          // Clear any invalid session data
+          await supabase.auth.signOut();
+          return;
+        }
+
+        if (session) {
+          navigate('/chat');
+        }
+      } catch (error) {
+        console.error("Auth error:", error);
       }
     };
 
     checkUser();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event);
+      
       if (event === 'SIGNED_IN' && session) {
         toast({
           title: "Welcome!",
           description: "Successfully signed in. Redirecting to chat...",
         });
         navigate('/chat');
+      }
+
+      if (event === 'SIGNED_OUT') {
+        toast({
+          title: "Signed out",
+          description: "You have been signed out.",
+        });
       }
     });
 
