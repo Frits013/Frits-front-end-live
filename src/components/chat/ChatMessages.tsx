@@ -12,53 +12,36 @@ interface ChatMessagesProps {
 
 const ChatMessages = ({ messages }: ChatMessagesProps) => {
   const formatMessage = (text: string) => {
-    // Check if the message contains numbered points with headers
-    if (text.match(/\d+\.\s+\*\*.*?\*\*/)) {
-      // Split the text into points
-      const points = text.split(/(?=\d+\.\s+\*\*)/);
+    // Check if the message contains markdown-style headers
+    if (text.includes('###') || text.includes('**')) {
+      // Remove any ### markers
+      text = text.replace(/###/g, '');
+      
+      // Split by numbered points if they exist
+      const points = text.split(/(?=\d+\.\s+)/);
       
       return points.map((point, index) => {
-        // Extract header and content
-        const match = point.match(/\d+\.\s+\*\*(.*?)\*\*:\s*(.*)/);
+        // Extract header and content, handling both ** and plain text headers
+        const match = point.match(/(\d+\.\s+)?\**(.*?)\**:\s*(.*)/s);
         if (match) {
-          const [, header, content] = match;
+          const [, , header, content] = match;
           return (
             <div key={index} className="mb-6 last:mb-0">
               <div className="font-bold text-lg mb-2 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                {header}
+                {header.trim()}
               </div>
               <div className="pl-6 border-l-2 border-purple-200 dark:border-purple-800">
-                {content}
+                {content.trim()}
               </div>
             </div>
           );
         }
-        return <div key={index}>{point}</div>;
-      });
-    } 
-    // Check if the message follows the new "1. Header" format without **
-    else if (text.match(/\d+\.\s+[A-Z]/)) {
-      const points = text.split(/(?=\d+\.\s+[A-Z])/);
-      
-      return points.map((point, index) => {
-        const match = point.match(/(\d+\.\s+[^:]+):\s*(.*)/);
-        if (match) {
-          const [, header, content] = match;
-          return (
-            <div key={index} className="mb-6 last:mb-0">
-              <div className="font-bold text-lg mb-2 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                {header}
-              </div>
-              <div className="pl-6 border-l-2 border-purple-200 dark:border-purple-800">
-                {content}
-              </div>
-            </div>
-          );
-        }
-        return <div key={index}>{point}</div>;
+        return <div key={index} className="whitespace-pre-wrap">{point.trim()}</div>;
       });
     }
-    return text;
+    
+    // If no special formatting, return the text with preserved whitespace
+    return <div className="whitespace-pre-wrap">{text}</div>;
   };
 
   return (
@@ -86,4 +69,3 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
 };
 
 export default ChatMessages;
-
