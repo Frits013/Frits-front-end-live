@@ -30,7 +30,7 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
         return (
           <div key={index} className="mb-6 last:mb-0">
             <div className="font-bold text-lg mb-2 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              {formatText(header.trim())}
+              {header.trim()}
             </div>
             <div 
               className="pl-6 border-l-2 border-purple-200 dark:border-purple-800"
