@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import ThreeScene from "@/components/chat/ThreeScene";
@@ -6,6 +7,7 @@ import ChatInput from "@/components/chat/ChatInput";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Message } from "@/types/chat";
+import { config } from "@/config/environment";
 
 interface ChatContainerProps {
   messages: Message[];
@@ -25,31 +27,6 @@ const ChatContainer = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const isThinkingRef = useRef(false);
   const [audioData, setAudioData] = useState<number[]>([]);
-
-  const generateChatTitle = async (messages: Message[]) => {
-    if (!currentChatId) {
-      console.log('Skipping title generation - no chat ID');
-      return null;
-    }
-
-    try {
-      console.log('Attempting to generate chat title...');
-      const { data, error } = await supabase.functions.invoke('summarize-chat', {
-        body: { messages },
-      });
-
-      if (error) {
-        console.error('Error generating chat title:', error);
-        return null;
-      }
-      
-      console.log('Successfully generated chat title:', data?.summary);
-      return data.summary;
-    } catch (error) {
-      console.error('Error generating chat title:', error);
-      return null;
-    }
-  };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,7 +62,7 @@ const ChatContainer = ({
     try {
       const supabaseToken = session.access_token;
   
-      const tokenResponse = await fetch('https://demo-fastapi-app.onrender.com/auth/token', {
+      const tokenResponse = await fetch(config.authEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -103,7 +80,7 @@ const ChatContainer = ({
   
       const { access_token } = await tokenResponse.json();
       
-      const response = await fetch('https://demo-fastapi-app.onrender.com/chat/send_message', {
+      const response = await fetch(`${config.apiBaseUrl}/chat/send_message`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -130,19 +107,8 @@ const ChatContainer = ({
         created_at: new Date(),
       };
   
-      const updatedMessages = [...messages, newMessage, agentResponse];
-      setMessages(updatedMessages);
+      setMessages([...messages, newMessage, agentResponse]);
   
-      if (messages.length === 0 && currentChatId) {
-        try {
-          const title = await generateChatTitle(updatedMessages);
-          if (title) {
-            await updateChatTitle(currentChatId, title);
-          }
-        } catch (error) {
-          console.error('Error in title generation:', error);
-        }
-      }
     } catch (error) {
       console.error('Error getting response:', error);
       toast({
