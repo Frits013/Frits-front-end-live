@@ -70,20 +70,26 @@ export type Database = {
       }
       chat_sessions: {
         Row: {
+          content: string | null
           created_at: string | null
           id: string
+          role: string | null
           title: string | null
           user_id: string
         }
         Insert: {
+          content?: string | null
           created_at?: string | null
           id?: string
+          role?: string | null
           title?: string | null
           user_id: string
         }
         Update: {
+          content?: string | null
           created_at?: string | null
           id?: string
+          role?: string | null
           title?: string | null
           user_id?: string
         }

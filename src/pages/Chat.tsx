@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +15,8 @@ interface ChatSession {
   id: string;
   title: string;
   created_at: string;
+  role?: string;
+  content?: string;
 }
 
 const Chat = () => {
@@ -74,7 +77,9 @@ const Chat = () => {
       .from('chat_sessions')
       .insert([{
         title: `Consult Session ${sessionNumber}`,
-        user_id: session.user.id
+        user_id: session.user.id,
+        role: 'assistant', // Default role for new sessions
+        content: null // Will be populated when internal conversation occurs
       }])
       .select()
       .single();

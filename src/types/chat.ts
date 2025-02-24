@@ -1,3 +1,4 @@
+
 export interface Message {
   id: string;
   message: string;
@@ -9,4 +10,6 @@ export interface ChatSession {
   id: string;
   title: string;
   created_at: string;
+  role?: string;
+  content?: string;
 }
