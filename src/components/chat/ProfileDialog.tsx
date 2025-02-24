@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 
 interface ProfileDialogProps {
   open: boolean;
@@ -27,10 +28,12 @@ interface ProfileDialogProps {
 
 const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
   const { toast } = useToast();
+  const [companyName, setCompanyName] = useState("");
   const [companyInfo, setCompanyInfo] = useState("");
   const [name, setName] = useState("");
   const [technicalLevel, setTechnicalLevel] = useState("");
   const [roleDescription, setRoleDescription] = useState("");
+  const [ttsEnabled, setTtsEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const loadProfile = async () => {
@@ -46,11 +49,24 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
 
       if (error) throw error;
 
+      const { data: ttsFlag, error: ttsError } = await supabase
+        .from("TTS_flag")
+        .select("enabled")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      if (ttsError) throw ttsError;
+
       if (profile) {
+        setCompanyName(profile.company_name || "");
         setCompanyInfo(profile.company_info || "");
         setName(profile.name || "");
         setTechnicalLevel(profile.technical_level || "");
         setRoleDescription(profile.role_description || "");
+      }
+
+      if (ttsFlag) {
+        setTtsEnabled(ttsFlag.enabled);
       }
     } catch (error) {
       console.error("Error loading profile:", error);
@@ -75,9 +91,10 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
         return;
       }
 
-      const { error } = await supabase
+      const { error: profileError } = await supabase
         .from("users")
         .update({
+          company_name: companyName,
           company_info: companyInfo,
           name,
           technical_level: technicalLevel || null,
@@ -85,7 +102,16 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
         })
         .eq("id", session.user.id);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      const { error: ttsError } = await supabase
+        .from("TTS_flag")
+        .update({
+          enabled: ttsEnabled
+        })
+        .eq("id", session.user.id);
+
+      if (ttsError) throw ttsError;
 
       toast({
         title: "Success",
@@ -105,12 +131,13 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
   };
 
   const handleClose = () => {
-    // Reset form state when closing
     if (!open) {
+      setCompanyName("");
       setCompanyInfo("");
       setName("");
       setTechnicalLevel("");
       setRoleDescription("");
+      setTtsEnabled(false);
     }
   };
 
@@ -135,6 +162,14 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="companyName">Company Name</Label>
+            <Input
+              id="companyName"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
             />
           </div>
           <div className="grid gap-2">
@@ -176,12 +211,20 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
             </Select>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="roleDescription">Role Description</Label>
+            <Label htmlFor="roleDescription">Personal Role in Organization</Label>
             <Input
               id="roleDescription"
               value={roleDescription}
               onChange={(e) => setRoleDescription(e.target.value)}
             />
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="tts"
+              checked={ttsEnabled}
+              onCheckedChange={setTtsEnabled}
+            />
+            <Label htmlFor="tts">Enable Audio Summaries</Label>
           </div>
         </div>
         <div className="flex justify-end gap-2">
