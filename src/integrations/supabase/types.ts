@@ -128,6 +128,7 @@ export type Database = {
       users: {
         Row: {
           company_info: string | null
+          company_name: string | null
           created_at: string
           id: string
           name: string | null
@@ -137,6 +138,7 @@ export type Database = {
         }
         Insert: {
           company_info?: string | null
+          company_name?: string | null
           created_at?: string
           id: string
           name?: string | null
@@ -146,6 +148,7 @@ export type Database = {
         }
         Update: {
           company_info?: string | null
+          company_name?: string | null
           created_at?: string
           id?: string
           name?: string | null
