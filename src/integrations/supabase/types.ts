@@ -104,6 +104,27 @@ export type Database = {
           },
         ]
       }
+      tts_flag: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           company_info: string | null
