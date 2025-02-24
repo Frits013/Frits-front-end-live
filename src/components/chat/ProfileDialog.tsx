@@ -49,24 +49,13 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
 
       if (error) throw error;
 
-      const { data: ttsFlag, error: ttsError } = await supabase
-        .from("TTS_flag")
-        .select("enabled")
-        .eq("id", session.user.id)
-        .maybeSingle();
-
-      if (ttsError) throw ttsError;
-
       if (profile) {
         setCompanyName(profile.company_name || "");
         setCompanyInfo(profile.company_info || "");
         setName(profile.name || "");
         setTechnicalLevel(profile.technical_level || "");
         setRoleDescription(profile.role_description || "");
-      }
-
-      if (ttsFlag) {
-        setTtsEnabled(ttsFlag.enabled);
+        setTtsEnabled(profile.tts_enabled || false);
       }
     } catch (error) {
       console.error("Error loading profile:", error);
@@ -91,7 +80,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
         return;
       }
 
-      const { error: profileError } = await supabase
+      const { error } = await supabase
         .from("users")
         .update({
           company_name: companyName,
@@ -99,19 +88,11 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
           name,
           technical_level: technicalLevel || null,
           role_description: roleDescription,
+          tts_enabled: ttsEnabled
         })
         .eq("id", session.user.id);
 
-      if (profileError) throw profileError;
-
-      const { error: ttsError } = await supabase
-        .from("TTS_flag")
-        .update({
-          enabled: ttsEnabled
-        })
-        .eq("id", session.user.id);
-
-      if (ttsError) throw ttsError;
+      if (error) throw error;
 
       toast({
         title: "Success",
