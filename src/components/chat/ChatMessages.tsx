@@ -1,13 +1,8 @@
 
-interface Message {
-  id: string;
-  message: string;
-  role: 'user' | 'assistant';
-  created_at: Date;
-}
+import { ChatMessage } from "@/types/chat";
 
 interface ChatMessagesProps {
-  messages: Message[];
+  messages: ChatMessage[];
 }
 
 const ChatMessages = ({ messages }: ChatMessagesProps) => {
@@ -17,6 +12,8 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
   };
 
   const formatMessage = (text: string) => {
+    if (!text) return ''; // Add null check for text
+
     // First, handle any markdown list numbers that might appear
     text = text.replace(/^\d+\.\s+/gm, '');
 
@@ -70,7 +67,7 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
                 : 'bg-gradient-to-r from-gray-100/80 to-purple-50/80 dark:from-gray-800/80 dark:to-purple-900/80 text-gray-800 dark:text-gray-200'
             } transition-all duration-200 hover:shadow-md backdrop-blur-sm`}
           >
-            {formatMessage(message.message)}
+            {formatMessage(message.content)}
           </div>
         </div>
       ))}

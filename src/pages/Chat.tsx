@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Message } from "@/types/chat";
+import { ChatMessage } from "@/types/chat";
 import ChatLayout from "@/components/chat/ChatLayout";
 import ChatSidebar from "@/components/chat/ChatSidebar";
 import ChatContainer from "@/components/chat/ChatContainer";
@@ -23,7 +22,7 @@ const Chat = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
@@ -45,9 +44,9 @@ const Chat = () => {
       return;
     }
 
-    const formattedMessages: Message[] = chatMessages.map(msg => ({
+    const formattedMessages: ChatMessage[] = chatMessages.map(msg => ({
       id: msg.id,
-      message: msg.message,
+      content: msg.message,
       role: msg.role as 'user' | 'assistant',
       created_at: new Date(msg.created_at),
     }));
