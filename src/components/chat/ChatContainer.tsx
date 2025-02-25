@@ -6,12 +6,12 @@ import ChatMessageList from "@/components/chat/ChatMessageList";
 import ChatInput from "@/components/chat/ChatInput";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Message } from "@/types/chat";
+import { ChatMessage, MultiAgentState } from "@/types/chat";
 import { config } from "@/config/environment";
 
 interface ChatContainerProps {
-  messages: Message[];
-  setMessages: (messages: Message[]) => void;
+  messages: ChatMessage[];
+  setMessages: (messages: ChatMessage[]) => void;
   currentChatId: string | null;
   updateChatTitle: (chatId: string, newTitle: string) => Promise<boolean>;
 }
@@ -47,9 +47,9 @@ const ChatContainer = ({
       return;
     }
   
-    const newMessage: Message = {
+    const newMessage: ChatMessage = {
       id: Date.now().toString(),
-      message: inputMessage,
+      content: inputMessage,
       role: 'user',
       created_at: new Date(),
     };
@@ -99,13 +99,14 @@ const ChatContainer = ({
       }
   
       const data = await response.json();
+      const agentState: MultiAgentState = data.agent_state;
       
-      // Update the chat session with the internal conversation details
+      // Update the chat session with the internal conversation and state
       const { error: updateError } = await supabase
         .from('chat_sessions')
         .update({
-          role: data.internal_role,
-          content: data.internal_content
+          role: agentState.reviewer_feedback?.[0]?.role || 'system',
+          content: JSON.stringify(agentState) // Store the full agent state
         })
         .eq('id', currentChatId);
 
@@ -113,10 +114,10 @@ const ChatContainer = ({
         console.error('Error updating chat session:', updateError);
       }
 
-      // Only store the final response in chat_messages
-      const agentResponse: Message = {
+      // Store only the final response in chat_messages
+      const agentResponse: ChatMessage = {
         id: (Date.now() + 1).toString(),
-        message: data.response,
+        content: agentState.Final_response || "No response generated",
         role: 'assistant',
         created_at: new Date(),
       };
