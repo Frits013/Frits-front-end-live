@@ -100,6 +100,20 @@ const ChatContainer = ({
   
       const data = await response.json();
       
+      // Update the chat session with the internal conversation details
+      const { error: updateError } = await supabase
+        .from('chat_sessions')
+        .update({
+          role: data.internal_role,
+          content: data.internal_content
+        })
+        .eq('id', currentChatId);
+
+      if (updateError) {
+        console.error('Error updating chat session:', updateError);
+      }
+
+      // Only store the final response in chat_messages
       const agentResponse: Message = {
         id: (Date.now() + 1).toString(),
         message: data.response,
