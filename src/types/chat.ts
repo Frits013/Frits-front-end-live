@@ -28,3 +28,7 @@ export interface MultiAgentState {
   summary: string;
   summarizer_response: string[];
 }
+
+export interface ChatMessageWithState extends ChatMessage {
+  multi_agent_state?: MultiAgentState;
+}

@@ -1,14 +1,27 @@
 
-import { ChatMessage } from "@/types/chat";
+import { ChatMessage, ChatMessageWithState, MultiAgentState } from "@/types/chat";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown, ChevronUp, Brain } from "lucide-react";
 
 interface ChatMessagesProps {
-  messages: ChatMessage[];
+  messages: ChatMessageWithState[];
 }
 
 const ChatMessages = ({ messages }: ChatMessagesProps) => {
+  const [expandedStates, setExpandedStates] = useState<Record<string, boolean>>({});
+
   const formatText = (text: string) => {
     // Handle bold text wrapped in **
     return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  };
+
+  const toggleExpand = (messageId: string) => {
+    setExpandedStates(prev => ({
+      ...prev,
+      [messageId]: !prev[messageId]
+    }));
   };
 
   const formatMessage = (text: string) => {
@@ -51,6 +64,60 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
     );
   };
 
+  const renderMultiAgentState = (state: MultiAgentState, messageId: string) => {
+    const isExpanded = expandedStates[messageId] || false;
+    
+    return (
+      <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-3">
+        <Collapsible open={isExpanded} className="w-full">
+          <CollapsibleTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => toggleExpand(messageId)}
+              className="flex items-center gap-2 text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 w-full justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <Brain size={16} />
+                <span>AI Decision Process</span>
+              </div>
+              {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-2 text-sm space-y-3">
+            {state.summary && (
+              <div className="rounded-md bg-purple-50 dark:bg-purple-900/20 p-3">
+                <h4 className="font-medium mb-1">Summary</h4>
+                <p>{state.summary}</p>
+              </div>
+            )}
+            
+            {state.reviewer_feedback?.length > 0 && (
+              <div className="rounded-md bg-blue-50 dark:bg-blue-900/20 p-3">
+                <h4 className="font-medium mb-1">Reviewer Feedback</h4>
+                <ul className="list-disc list-inside">
+                  {state.reviewer_feedback.map((feedback, idx) => (
+                    <li key={idx}>
+                      <strong>{feedback.role}:</strong> {feedback.content}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            {state.RAG_input && state.RAG_response && (
+              <div className="rounded-md bg-green-50 dark:bg-green-900/20 p-3">
+                <h4 className="font-medium mb-1">Knowledge Lookup</h4>
+                <p><strong>Query:</strong> {state.RAG_input}</p>
+                <p><strong>Result:</strong> {state.RAG_response}</p>
+              </div>
+            )}
+          </CollapsibleContent>
+        </Collapsible>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col gap-4 p-4">
       {messages.map((message) => (
@@ -68,6 +135,11 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
             } transition-all duration-200 hover:shadow-md backdrop-blur-sm`}
           >
             {formatMessage(message.content)}
+            
+            {/* Render multi-agent state if available */}
+            {message.role === 'assistant' && message.multi_agent_state && 
+              renderMultiAgentState(message.multi_agent_state, message.id)
+            }
           </div>
         </div>
       ))}
