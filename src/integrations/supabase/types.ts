@@ -13,7 +13,7 @@ export type Database = {
         Row: {
           content: string
           created_at: string | null
-          id: string
+          message_id: string
           role: string
           session_id: string
           user_id: string
@@ -21,7 +21,7 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string | null
-          id?: string
+          message_id?: string
           role: string
           session_id: string
           user_id: string
@@ -29,19 +29,12 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string | null
-          id?: string
+          message_id?: string
           role?: string
           session_id?: string
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "chat_messages_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "chat_sessions"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "chat_messages_user_id_fkey"
             columns: ["user_id"]
@@ -50,13 +43,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "fk_session"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "chat_sessions"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "fk_user"
             columns: ["user_id"]
             isOneToOne: false
@@ -65,81 +51,71 @@ export type Database = {
           },
         ]
       }
-      chat_sessions: {
+      info_messages: {
         Row: {
-          content: string | null
-          created_at: string | null
-          id: string
-          role: string | null
-          title: string | null
-          user_id: string
+          category: string
+          content_dict: Json | null
+          content_str: string | null
+          created_at: string
+          info_id: string
+          message_id: string | null
         }
         Insert: {
-          content?: string | null
-          created_at?: string | null
-          id?: string
-          role?: string | null
-          title?: string | null
-          user_id: string
+          category: string
+          content_dict?: Json | null
+          content_str?: string | null
+          created_at?: string
+          info_id?: string
+          message_id?: string | null
         }
         Update: {
-          content?: string | null
-          created_at?: string | null
-          id?: string
-          role?: string | null
-          title?: string | null
-          user_id?: string
+          category?: string
+          content_dict?: Json | null
+          content_str?: string | null
+          created_at?: string
+          info_id?: string
+          message_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "chat_sessions_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "info_message_id_fkey"
+            columns: ["message_id"]
             isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_user"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
+            referencedRelation: "chat_messages"
+            referencedColumns: ["message_id"]
           },
         ]
       }
       users: {
         Row: {
-          company_info: string | null
           company_name: string | null
           created_at: string
           id: string
-          name: string | null
-          role_description: string | null
-          technical_level: string | null
           tts_enabled: boolean | null
           updated_at: string
+          user_AIR_info: string | null
+          user_description: string | null
+          user_provided_company_info: string | null
         }
         Insert: {
-          company_info?: string | null
           company_name?: string | null
           created_at?: string
           id: string
-          name?: string | null
-          role_description?: string | null
-          technical_level?: string | null
           tts_enabled?: boolean | null
           updated_at?: string
+          user_AIR_info?: string | null
+          user_description?: string | null
+          user_provided_company_info?: string | null
         }
         Update: {
-          company_info?: string | null
           company_name?: string | null
           created_at?: string
           id?: string
-          name?: string | null
-          role_description?: string | null
-          technical_level?: string | null
           tts_enabled?: boolean | null
           updated_at?: string
+          user_AIR_info?: string | null
+          user_description?: string | null
+          user_provided_company_info?: string | null
         }
         Relationships: []
       }

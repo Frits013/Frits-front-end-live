@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -141,23 +142,27 @@ const Chat = () => {
         return;
       }
       
-      const { data: sessions, error } = await supabase
-        .from('chat_sessions')
-        .select('*')
-        .order('created_at', { ascending: false });
+      try {
+        const { data: sessions, error } = await supabase
+          .from('chat_sessions')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching sessions:', error);
-        return;
-      }
+        if (error) {
+          console.error('Error fetching sessions:', error);
+          return;
+        }
 
-      setChatSessions(sessions || []);
+        setChatSessions(sessions || []);
 
-      if (sessions?.length === 0) {
-        console.log('No existing sessions, creating new one...');
-        await createNewChat();
-      } else if (sessions && sessions.length > 0 && !currentSessionId) {
-        setCurrentSessionId(sessions[0].id);
+        if (sessions?.length === 0) {
+          console.log('No existing sessions, creating new one...');
+          await createNewChat();
+        } else if (sessions && sessions.length > 0 && !currentSessionId) {
+          setCurrentSessionId(sessions[0].id);
+        }
+      } catch (error) {
+        console.error('Error in checkAuth:', error);
       }
     };
 
