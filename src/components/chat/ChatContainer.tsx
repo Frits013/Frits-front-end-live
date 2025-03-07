@@ -60,6 +60,21 @@ const ChatContainer = ({
     isThinkingRef.current = true;
   
     try {
+      // Save the user message to Supabase
+      const { error: saveError } = await supabase
+        .from('chat_messages')
+        .insert({
+          content: inputMessage,
+          role: 'user',
+          user_id: session.user.id,
+          session_id: currentChatId,
+        });
+
+      if (saveError) {
+        console.error('Error saving message:', saveError);
+        throw new Error('Failed to save message');
+      }
+
       const supabaseToken = session.access_token;
   
       const tokenResponse = await fetch(config.authEndpoint, {
@@ -101,20 +116,21 @@ const ChatContainer = ({
       const data = await response.json();
       const agentState: MultiAgentState = data.agent_state;
       
-      // Update the chat session with the internal conversation and state
-      const { error: updateError } = await supabase
-        .from('chat_sessions')
-        .update({
-          role: agentState.reviewer_feedback?.[0]?.role || 'system',
-          content: JSON.stringify(agentState) // Store the full agent state
-        })
-        .eq('id', currentChatId);
+      // Store the assistant response in the database
+      const { error: responseError } = await supabase
+        .from('chat_messages')
+        .insert({
+          content: agentState.Final_response || "No response generated",
+          role: 'assistant',
+          user_id: session.user.id,
+          session_id: currentChatId,
+        });
 
-      if (updateError) {
-        console.error('Error updating chat session:', updateError);
+      if (responseError) {
+        console.error('Error saving assistant response:', responseError);
       }
 
-      // Store only the final response in chat_messages
+      // Create the assistant response for UI
       const agentResponse: ChatMessage = {
         id: (Date.now() + 1).toString(),
         content: agentState.Final_response || "No response generated",

@@ -10,8 +10,6 @@ export interface ChatSession {
   id: string;
   title: string;
   created_at: string;
-  role?: string;
-  content?: string;
 }
 
 export interface MultiAgentState {

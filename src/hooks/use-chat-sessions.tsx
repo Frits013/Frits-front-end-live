@@ -22,36 +22,38 @@ export const useChatSessions = () => {
       return;
     }
 
-    const { count } = await supabase
-      .from('chat_sessions')
-      .select('*', { count: 'exact' })
-      .eq('user_id', session.user.id);
-
-    const sessionNumber = (count || 0) + 1;
-
-    const { data: newSession, error } = await supabase
-      .from('chat_sessions')
+    // Group messages by session ID to create virtual "chat sessions"
+    const { data: newMessage, error } = await supabase
+      .from('chat_messages')
       .insert([{
-        title: `Consult Session ${sessionNumber}`,
+        content: "", // Empty initial message
+        role: 'system',
         user_id: session.user.id,
-        role: 'assistant', // Default role for new sessions
-        content: null // Will be populated when internal conversation occurs
+        session_id: crypto.randomUUID(), // Generate a new session ID
       }])
       .select()
       .single();
 
     if (error) {
-      console.error('Error creating new consult session:', error);
+      console.error('Error creating new chat session:', error);
       toast({
         title: "Error",
-        description: "Failed to create new consult session",
+        description: "Failed to create new chat session",
         variant: "destructive",
       });
       return;
     }
 
+    // Create a virtual session from the message
+    const newSession: ChatSession = {
+      id: newMessage.session_id,
+      title: `Consult Session ${Date.now()}`,
+      created_at: newMessage.created_at,
+    };
+
     setCurrentSessionId(newSession.id);
     setChatSessions([newSession, ...chatSessions]);
+    
     toast({
       title: "Success",
       description: "New consult session created",
@@ -59,28 +61,15 @@ export const useChatSessions = () => {
   };
 
   const updateSessionTitle = async (sessionId: string, newTitle: string) => {
-    const { error } = await supabase
-      .from('chat_sessions')
-      .update({ title: newTitle })
-      .eq('id', sessionId);
-
-    if (error) {
-      console.error('Error updating session title:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update chat title",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    const { data: updatedSessions } = await supabase
-      .from('chat_sessions')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (updatedSessions) {
-      setChatSessions(updatedSessions);
-    }
+    // Since we don't have a chat_sessions table, we'll update the title 
+    // in our local state only
+    setChatSessions(prevSessions => 
+      prevSessions.map(session => 
+        session.id === sessionId 
+          ? { ...session, title: newTitle } 
+          : session
+      )
+    );
     return true;
   };
 
@@ -92,9 +81,10 @@ export const useChatSessions = () => {
     }
     
     try {
-      const { data: sessions, error } = await supabase
-        .from('chat_sessions')
-        .select('*')
+      // Query all distinct session_ids from chat_messages
+      const { data: messages, error } = await supabase
+        .from('chat_messages')
+        .select('session_id, created_at')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -102,12 +92,26 @@ export const useChatSessions = () => {
         return;
       }
 
+      // Create virtual sessions from the distinct session_ids
+      const uniqueSessions = new Map<string, ChatSession>();
+      
+      messages?.forEach(message => {
+        if (message.session_id && !uniqueSessions.has(message.session_id)) {
+          uniqueSessions.set(message.session_id, {
+            id: message.session_id,
+            title: `Consult Session ${uniqueSessions.size + 1}`,
+            created_at: message.created_at
+          });
+        }
+      });
+
+      const sessions = Array.from(uniqueSessions.values());
       setChatSessions(sessions || []);
 
-      if (sessions?.length === 0) {
+      if (sessions.length === 0) {
         console.log('No existing sessions, creating new one...');
         await createNewChat();
-      } else if (sessions && sessions.length > 0 && !currentSessionId) {
+      } else if (sessions.length > 0 && !currentSessionId) {
         setCurrentSessionId(sessions[0].id);
       }
     } catch (error) {

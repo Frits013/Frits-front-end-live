@@ -27,8 +27,8 @@ export const useChatMessages = (sessionId: string | null) => {
     }
 
     const formattedMessages: ChatMessage[] = chatMessages.map(msg => ({
-      id: msg.id,
-      content: msg.message,
+      id: msg.message_id || msg.id, // Use message_id if available, fallback to id
+      content: msg.content,
       role: msg.role as 'user' | 'assistant',
       created_at: new Date(msg.created_at),
     }));

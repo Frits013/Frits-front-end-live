@@ -29,28 +29,20 @@ const ChatHistoryComponent = ({
   const [editingTitle, setEditingTitle] = useState("");
 
   const updateChatTitle = async (chatId: string, newTitle: string) => {
-    console.log('Attempting to update chat title:', { chatId, newTitle });
-    const { error } = await supabase
-      .from('chat_sessions')
-      .update({ title: newTitle })
-      .eq('id', chatId);
-
-    if (error) {
-      console.error('Error updating chat title:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update chat title",
-        variant: "destructive",
-      });
-      return false;
-    }
+    console.log('Updating chat title:', { chatId, newTitle });
+    
+    // Update the title in local state since we don't have a chat_sessions table
+    setChatHistories(chatHistories.map(chat =>
+      chat.id === chatId ? { ...chat, title: newTitle.trim() } : chat
+    ));
+    
     return true;
   };
 
   const handleDeleteChat = async (chatId: string) => {
     console.log('Attempting to delete chat:', chatId);
     
-    // First, delete all messages associated with this chat session
+    // Delete all messages associated with this session ID
     const { error: messagesError } = await supabase
       .from('chat_messages')
       .delete()
@@ -66,23 +58,7 @@ const ChatHistoryComponent = ({
       return;
     }
 
-    // Then delete the chat session itself
-    const { error: sessionError } = await supabase
-      .from('chat_sessions')
-      .delete()
-      .eq('id', chatId);
-
-    if (sessionError) {
-      console.error('Error deleting chat session:', sessionError);
-      toast({
-        title: "Error",
-        description: "Failed to delete chat session",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    console.log('Successfully deleted chat and its messages');
+    console.log('Successfully deleted chat messages');
     setChatHistories(chatHistories.filter(chat => chat.id !== chatId));
     if (currentChatId === chatId) {
       setCurrentChatId(null);
