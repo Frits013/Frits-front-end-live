@@ -22,14 +22,13 @@ export const useChatSessions = () => {
       return;
     }
 
-    // Group messages by session ID to create virtual "chat sessions"
-    const { data: newMessage, error } = await supabase
-      .from('chat_messages')
+    // Create a new session in the chat_sessions table
+    const { data: newSession, error } = await supabase
+      .from('chat_sessions')
       .insert([{
-        content: "", // Empty initial message
-        role: 'system',
         user_id: session.user.id,
-        session_id: crypto.randomUUID(), // Generate a new session ID
+        session_name: `New Consult Session ${Date.now()}`,
+        finished: false
       }])
       .select()
       .single();
@@ -44,12 +43,19 @@ export const useChatSessions = () => {
       return;
     }
 
-    // Create a virtual session from the message
-    const newSession: ChatSession = {
-      id: newMessage.session_id,
-      title: `Consult Session ${Date.now()}`,
-      created_at: newMessage.created_at,
-    };
+    // Add a system message to identify the new chat session
+    const { error: messageError } = await supabase
+      .from('chat_messages')
+      .insert([{
+        content: "", // Empty initial message
+        role: 'system',
+        user_id: session.user.id,
+        session_id: newSession.id,
+      }]);
+
+    if (messageError) {
+      console.error('Error creating initial message:', messageError);
+    }
 
     setCurrentSessionId(newSession.id);
     setChatSessions([newSession, ...chatSessions]);
@@ -61,12 +67,27 @@ export const useChatSessions = () => {
   };
 
   const updateSessionTitle = async (sessionId: string, newTitle: string) => {
-    // Since we don't have a chat_sessions table, we'll update the title 
-    // in our local state only
+    // Update the title in the chat_sessions table
+    const { error } = await supabase
+      .from('chat_sessions')
+      .update({ session_name: newTitle })
+      .eq('id', sessionId);
+
+    if (error) {
+      console.error('Error updating session title:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update session title",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // Update the title in local state
     setChatSessions(prevSessions => 
       prevSessions.map(session => 
         session.id === sessionId 
-          ? { ...session, title: newTitle } 
+          ? { ...session, session_name: newTitle } 
           : session
       )
     );
@@ -81,10 +102,10 @@ export const useChatSessions = () => {
     }
     
     try {
-      // Query all distinct session_ids from chat_messages
-      const { data: messages, error } = await supabase
-        .from('chat_messages')
-        .select('session_id, created_at')
+      // Query sessions from the chat_sessions table
+      const { data: sessions, error } = await supabase
+        .from('chat_sessions')
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -92,26 +113,12 @@ export const useChatSessions = () => {
         return;
       }
 
-      // Create virtual sessions from the distinct session_ids
-      const uniqueSessions = new Map<string, ChatSession>();
-      
-      messages?.forEach(message => {
-        if (message.session_id && !uniqueSessions.has(message.session_id)) {
-          uniqueSessions.set(message.session_id, {
-            id: message.session_id,
-            title: `Consult Session ${uniqueSessions.size + 1}`,
-            created_at: message.created_at
-          });
-        }
-      });
-
-      const sessions = Array.from(uniqueSessions.values());
       setChatSessions(sessions || []);
 
-      if (sessions.length === 0) {
+      if (sessions && sessions.length === 0) {
         console.log('No existing sessions, creating new one...');
         await createNewChat();
-      } else if (sessions.length > 0 && !currentSessionId) {
+      } else if (sessions && sessions.length > 0 && !currentSessionId) {
         setCurrentSessionId(sessions[0].id);
       }
     } catch (error) {

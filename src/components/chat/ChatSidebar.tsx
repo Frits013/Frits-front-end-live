@@ -10,12 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import ChatHistoryComponent from "./ChatHistory";
-
-interface ChatSession {
-  id: string;
-  title: string;
-  created_at: string;
-}
+import { ChatSession } from "@/types/chat";
 
 interface ChatSidebarProps {
   chatSessions: ChatSession[];

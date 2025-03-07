@@ -8,8 +8,10 @@ export interface ChatMessage {
 
 export interface ChatSession {
   id: string;
-  title: string;
+  session_name: string;
   created_at: string;
+  finished: boolean;
+  user_id: string;
 }
 
 export interface MultiAgentState {

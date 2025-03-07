@@ -43,6 +43,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_session"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "chat_sessions"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_user"
             columns: ["user_id"]
             isOneToOne: false
@@ -50,6 +57,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      chat_sessions: {
+        Row: {
+          created_at: string
+          finished: boolean
+          id: string
+          session_name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          finished?: boolean
+          id?: string
+          session_name?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          finished?: boolean
+          id?: string
+          session_name?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       info_messages: {
         Row: {

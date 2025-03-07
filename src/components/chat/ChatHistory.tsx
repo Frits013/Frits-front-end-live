@@ -1,20 +1,16 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { SidebarMenu, SidebarMenuItem } from "@/components/ui/sidebar";
 import ChatHistoryItem from "./ChatHistoryItem";
 import ChatHistoryEditItem from "./ChatHistoryEditItem";
-
-interface ChatHistory {
-  id: string;
-  title: string;
-  created_at: string;
-}
+import { ChatSession } from "@/types/chat";
 
 interface ChatHistoryProps {
-  chatHistories: ChatHistory[];
+  chatHistories: ChatSession[];
   currentChatId: string | null;
-  setChatHistories: (chats: ChatHistory[]) => void;
+  setChatHistories: (chats: ChatSession[]) => void;
   setCurrentChatId: (id: string | null) => void;
 }
 
@@ -31,10 +27,21 @@ const ChatHistoryComponent = ({
   const updateChatTitle = async (chatId: string, newTitle: string) => {
     console.log('Updating chat title:', { chatId, newTitle });
     
-    // Update the title in local state since we don't have a chat_sessions table
-    setChatHistories(chatHistories.map(chat =>
-      chat.id === chatId ? { ...chat, title: newTitle.trim() } : chat
-    ));
+    // Update the title in the database
+    const { error } = await supabase
+      .from('chat_sessions')
+      .update({ session_name: newTitle.trim() })
+      .eq('id', chatId);
+    
+    if (error) {
+      console.error('Error updating chat title:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update chat title",
+        variant: "destructive",
+      });
+      return false;
+    }
     
     return true;
   };
@@ -42,23 +49,23 @@ const ChatHistoryComponent = ({
   const handleDeleteChat = async (chatId: string) => {
     console.log('Attempting to delete chat:', chatId);
     
-    // Delete all messages associated with this session ID
-    const { error: messagesError } = await supabase
-      .from('chat_messages')
+    // Delete the session (cascade will delete messages)
+    const { error } = await supabase
+      .from('chat_sessions')
       .delete()
-      .eq('session_id', chatId);
+      .eq('id', chatId);
 
-    if (messagesError) {
-      console.error('Error deleting chat messages:', messagesError);
+    if (error) {
+      console.error('Error deleting chat session:', error);
       toast({
         title: "Error",
-        description: "Failed to delete chat messages",
+        description: "Failed to delete chat session",
         variant: "destructive",
       });
       return;
     }
 
-    console.log('Successfully deleted chat messages');
+    console.log('Successfully deleted chat session');
     setChatHistories(chatHistories.filter(chat => chat.id !== chatId));
     if (currentChatId === chatId) {
       setCurrentChatId(null);
@@ -70,9 +77,9 @@ const ChatHistoryComponent = ({
     });
   };
 
-  const handleEditTitle = (chat: ChatHistory) => {
+  const handleEditTitle = (chat: ChatSession) => {
     setEditingChatId(chat.id);
-    setEditingTitle(chat.title);
+    setEditingTitle(chat.session_name);
   };
 
   const handleSaveTitle = async (chatId: string) => {
@@ -80,7 +87,7 @@ const ChatHistoryComponent = ({
       const success = await updateChatTitle(chatId, editingTitle.trim());
       if (success) {
         setChatHistories(chatHistories.map(chat =>
-          chat.id === chatId ? { ...chat, title: editingTitle.trim() } : chat
+          chat.id === chatId ? { ...chat, session_name: editingTitle.trim() } : chat
         ));
       }
     }
@@ -107,7 +114,7 @@ const ChatHistoryComponent = ({
           ) : (
             <ChatHistoryItem
               id={chat.id}
-              title={chat.title}
+              title={chat.session_name}
               isActive={currentChatId === chat.id}
               onSelect={() => setCurrentChatId(chat.id)}
               onEdit={() => handleEditTitle(chat)}
