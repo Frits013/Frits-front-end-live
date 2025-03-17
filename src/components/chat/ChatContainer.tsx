@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import ThreeScene from "@/components/chat/ThreeScene";
@@ -5,7 +6,7 @@ import ChatMessageList from "@/components/chat/ChatMessageList";
 import ChatInput from "@/components/chat/ChatInput";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ChatMessage, MultiAgentState } from "@/types/chat";
+import { ChatMessage } from "@/types/chat";
 import { config } from "@/config/environment";
 
 interface ChatContainerProps {
@@ -113,17 +114,18 @@ const ChatContainer = ({
       }
   
       const data = await response.json();
-      const agentState: MultiAgentState | undefined = data.agent_state;
+      
+      // Handle the new API response format which just has 'response' instead of agent_state
+      const responseContent = data.response || "No response generated";
       
       // Store the assistant response in the database
       const { error: responseError } = await supabase
         .from('chat_messages')
         .insert({
-          content: agentState?.Final_response || "No response generated",
+          content: responseContent,
           role: 'assistant',
           user_id: session.user.id,
           session_id: currentChatId,
-          multi_agent_state: agentState
         });
 
       if (responseError) {
@@ -133,7 +135,7 @@ const ChatContainer = ({
       // Create the assistant response for UI
       const agentResponse: ChatMessage = {
         id: (Date.now() + 1).toString(),
-        content: agentState?.Final_response || "No response generated",
+        content: responseContent,
         role: 'assistant',
         created_at: new Date(),
       };
