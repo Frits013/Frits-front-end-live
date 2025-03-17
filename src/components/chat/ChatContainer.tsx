@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import ThreeScene from "@/components/chat/ThreeScene";
@@ -114,16 +113,17 @@ const ChatContainer = ({
       }
   
       const data = await response.json();
-      const agentState: MultiAgentState = data.agent_state;
+      const agentState: MultiAgentState | undefined = data.agent_state;
       
       // Store the assistant response in the database
       const { error: responseError } = await supabase
         .from('chat_messages')
         .insert({
-          content: agentState.Final_response || "No response generated",
+          content: agentState?.Final_response || "No response generated",
           role: 'assistant',
           user_id: session.user.id,
           session_id: currentChatId,
+          multi_agent_state: agentState
         });
 
       if (responseError) {
@@ -133,7 +133,7 @@ const ChatContainer = ({
       // Create the assistant response for UI
       const agentResponse: ChatMessage = {
         id: (Date.now() + 1).toString(),
-        content: agentState.Final_response || "No response generated",
+        content: agentState?.Final_response || "No response generated",
         role: 'assistant',
         created_at: new Date(),
       };

@@ -122,7 +122,7 @@ export type Database = {
           company_name: string | null
           created_at: string
           id: string
-          tts_enabled: boolean | null
+          TTS_flag: boolean | null
           updated_at: string
           user_AIR_info: string | null
           user_description: string | null
@@ -132,7 +132,7 @@ export type Database = {
           company_name?: string | null
           created_at?: string
           id: string
-          tts_enabled?: boolean | null
+          TTS_flag?: boolean | null
           updated_at?: string
           user_AIR_info?: string | null
           user_description?: string | null
@@ -142,7 +142,7 @@ export type Database = {
           company_name?: string | null
           created_at?: string
           id?: string
-          tts_enabled?: boolean | null
+          TTS_flag?: boolean | null
           updated_at?: string
           user_AIR_info?: string | null
           user_description?: string | null
