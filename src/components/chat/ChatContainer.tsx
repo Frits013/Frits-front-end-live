@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import ThreeScene from "@/components/chat/ThreeScene";
@@ -148,7 +149,8 @@ const ChatContainer = ({
       );
       
       if (!existingMessage) {
-        setMessages(prevMessages => [...prevMessages, agentResponse]);
+        // Fix the TypeScript error by creating a new array directly instead of using a callback function
+        setMessages([...messages, agentResponse]);
       }
   
     } catch (error) {
