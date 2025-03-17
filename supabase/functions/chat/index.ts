@@ -46,9 +46,12 @@ serve(async (req) => {
     const data = await response.json();
     console.log('FastAPI response:', data);
 
-    // Just forward the simple response format, don't expose internal conversation data
+    // Only return the clean response from the backend
     return new Response(
-      JSON.stringify(data),
+      JSON.stringify({
+        response: data.response,
+        session_id: data.session_id
+      }),
       { 
         headers: { 
           ...corsHeaders,

@@ -26,16 +26,36 @@ export const useChatMessages = (sessionId: string | null) => {
       return;
     }
 
-    const formattedMessages: ChatMessage[] = chatMessages.map(msg => {
-      return {
-        id: msg.message_id || msg.id, // Use message_id if available, fallback to id
-        content: msg.content,
-        role: msg.role as 'user' | 'assistant',
-        created_at: new Date(msg.created_at),
-      };
+    // Process messages to remove duplicates and internal conversation
+    const processedMessages: ChatMessage[] = [];
+    const messageMap = new Map(); // Track messages by content to avoid duplicates
+
+    chatMessages.forEach(msg => {
+      // Skip messages with content that looks like internal conversation
+      const content = msg.content;
+      if (!content || content.includes('Agent') || content.includes('multi_agent_state')) {
+        return;
+      }
+
+      // Only include user messages and assistant responses
+      if (msg.role === 'user' || msg.role === 'assistant') {
+        const formattedMessage: ChatMessage = {
+          id: msg.message_id || msg.id,
+          content: content,
+          role: msg.role as 'user' | 'assistant',
+          created_at: new Date(msg.created_at),
+        };
+
+        // Check if we already have a similar message (to avoid duplicates)
+        const messageKey = `${msg.role}-${content}`;
+        if (!messageMap.has(messageKey)) {
+          messageMap.set(messageKey, true);
+          processedMessages.push(formattedMessage);
+        }
+      }
     });
 
-    setMessages(formattedMessages);
+    setMessages(processedMessages);
   };
 
   useEffect(() => {

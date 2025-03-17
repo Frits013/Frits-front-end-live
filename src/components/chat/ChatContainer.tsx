@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import ThreeScene from "@/components/chat/ThreeScene";
@@ -118,7 +117,7 @@ const ChatContainer = ({
   
       const data = await response.json();
       
-      // Get the response content directly from the API response
+      // Get the clean response directly from the API response
       const responseContent = data.response || "No response generated";
       
       // Store the assistant response in the database
@@ -143,8 +142,14 @@ const ChatContainer = ({
         created_at: new Date(),
       };
   
-      // Update the messages array with both the user message and the AI response
-      setMessages([...messages, newMessage, agentResponse]);
+      // Ensure we don't add duplicate messages by checking if we already have this response
+      const existingMessage = messages.find(m => 
+        m.role === 'assistant' && m.content === responseContent
+      );
+      
+      if (!existingMessage) {
+        setMessages(prevMessages => [...prevMessages, agentResponse]);
+      }
   
     } catch (error) {
       console.error('Error getting response:', error);
