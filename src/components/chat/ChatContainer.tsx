@@ -47,6 +47,7 @@ const ChatContainer = ({
       return;
     }
   
+    // Create a new user message for immediate UI feedback
     const newMessage: ChatMessage = {
       id: Date.now().toString(),
       content: inputMessage,
@@ -54,6 +55,7 @@ const ChatContainer = ({
       created_at: new Date(),
     };
   
+    // Add only the user message to the UI
     setMessages([...messages, newMessage]);
     setInputMessage("");
     setIsProcessing(true);
@@ -95,6 +97,7 @@ const ChatContainer = ({
   
       const { access_token } = await tokenResponse.json();
       
+      // Call the backend with the message
       const response = await fetch(`${config.apiBaseUrl}/chat/send_message`, {
         method: 'POST',
         headers: {
@@ -115,7 +118,7 @@ const ChatContainer = ({
   
       const data = await response.json();
       
-      // Handle the new API response format which just has 'response' instead of agent_state
+      // Get the response content directly from the API response
       const responseContent = data.response || "No response generated";
       
       // Store the assistant response in the database
@@ -140,6 +143,7 @@ const ChatContainer = ({
         created_at: new Date(),
       };
   
+      // Update the messages array with both the user message and the AI response
       setMessages([...messages, newMessage, agentResponse]);
   
     } catch (error) {

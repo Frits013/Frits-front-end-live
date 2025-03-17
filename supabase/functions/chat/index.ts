@@ -46,6 +46,7 @@ serve(async (req) => {
     const data = await response.json();
     console.log('FastAPI response:', data);
 
+    // Just forward the simple response format, don't expose internal conversation data
     return new Response(
       JSON.stringify(data),
       { 
