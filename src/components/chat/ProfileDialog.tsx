@@ -154,18 +154,14 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
                     To get better results, you can provide a summary about yourself including your name, 
                     role at the company, hobbies, characteristics, and any other relevant information. 
                     This helps the AI consultant better understand your background.
+                    <div className="mt-2 italic font-semibold">
+                      PRO TIP: Ask ChatGPT to write a summary of you with detailed information 
+                      that a consultant can read to prepare for an interview.
+                    </div>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </Label>
-            <div className="text-sm text-muted-foreground mb-2">
-              To get better results, you can provide a summary about yourself including your name, role at the company, 
-              hobbies, characteristics, and any other relevant information.
-              <div className="mt-1 italic bg-muted/30 p-2 rounded-md">
-                <strong>PRO TIP:</strong> Ask ChatGPT to write a summary of you with detailed information 
-                that a consultant can read to prepare for an interview.
-              </div>
-            </div>
             <Textarea
               id="userDescription"
               value={userDescription}
@@ -189,17 +185,13 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
                   <TooltipContent className="max-w-xs">
                     To help assess AI readiness, you can provide information about your organization's culture, 
                     structure, current technologies, and goals. This context helps the consultant give more tailored advice.
+                    <div className="mt-2 italic font-semibold">
+                      PRO TIP: You can ask ChatGPT for a start again based on your ChatGPT profile.
+                    </div>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </Label>
-            <div className="text-sm text-muted-foreground mb-2">
-              To help assess AI readiness, you can provide information about your organization that would be useful for a consultant. 
-              Consider including details about company culture, structure, current technologies, and goals.
-              <div className="mt-1 italic bg-muted/30 p-2 rounded-md">
-                <strong>PRO TIP:</strong> You can ask ChatGPT for a start again based on your ChatGPT profile.
-              </div>
-            </div>
             <Textarea
               id="companyInfo"
               value={companyInfo}
