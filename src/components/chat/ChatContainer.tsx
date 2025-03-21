@@ -122,7 +122,9 @@ const ChatContainer = ({
       // Get the clean response from the API
       const responseContent = data.response || "No response generated";
       
-      // Store the assistant response in the database
+      // The backend saves the assistant response, so we don't need to save it again
+      // Removing this code to prevent duplicates in the database:
+      /*
       const { error: responseError } = await supabase
         .from('chat_messages')
         .insert({
@@ -135,6 +137,7 @@ const ChatContainer = ({
       if (responseError) {
         console.error('Error saving assistant response:', responseError);
       }
+      */
 
       // Create the assistant response message
       const agentResponse: ChatMessage = {
