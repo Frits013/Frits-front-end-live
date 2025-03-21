@@ -47,16 +47,17 @@ const ChatContainer = ({
       return;
     }
   
-    // Create a new user message for immediate UI feedback
-    const newMessage: ChatMessage = {
+    // Create a new user message
+    const newUserMessage: ChatMessage = {
       id: Date.now().toString(),
       content: inputMessage,
       role: 'user',
       created_at: new Date(),
     };
   
-    // Add only the user message to the UI
-    setMessages([...messages, newMessage]);
+    // Update UI with user message
+    const updatedMessages = [...messages, newUserMessage];
+    setMessages(updatedMessages);
     setInputMessage("");
     setIsProcessing(true);
     isThinkingRef.current = true;
@@ -118,7 +119,7 @@ const ChatContainer = ({
   
       const data = await response.json();
       
-      // Get the clean response directly from the API response
+      // Get the clean response from the API
       const responseContent = data.response || "No response generated";
       
       // Store the assistant response in the database
@@ -135,7 +136,7 @@ const ChatContainer = ({
         console.error('Error saving assistant response:', responseError);
       }
 
-      // Create the assistant response for UI
+      // Create the assistant response message
       const agentResponse: ChatMessage = {
         id: (Date.now() + 1).toString(),
         content: responseContent,
@@ -143,14 +144,14 @@ const ChatContainer = ({
         created_at: new Date(),
       };
   
-      // Ensure we don't add duplicate messages by checking if we already have this response
-      const existingMessage = messages.find(m => 
+      // Check for duplicate messages
+      const existingMessage = updatedMessages.find(m => 
         m.role === 'assistant' && m.content === responseContent
       );
       
       if (!existingMessage) {
-        // Fix the TypeScript error by creating a new array directly instead of using a callback function
-        setMessages([...messages, agentResponse]);
+        // Update messages including both user message and assistant response
+        setMessages([...updatedMessages, agentResponse]);
       }
   
     } catch (error) {
