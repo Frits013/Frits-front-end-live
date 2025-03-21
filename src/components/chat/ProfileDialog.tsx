@@ -10,16 +10,10 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { InfoCircledIcon } from "@radix-ui/react-icons";
 
 interface ProfileDialogProps {
   open: boolean;
@@ -29,10 +23,8 @@ interface ProfileDialogProps {
 const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
   const { toast } = useToast();
   const [companyName, setCompanyName] = useState("");
+  const [userDescription, setUserDescription] = useState("");
   const [companyInfo, setCompanyInfo] = useState("");
-  const [name, setName] = useState("");
-  const [technicalLevel, setTechnicalLevel] = useState("");
-  const [roleDescription, setRoleDescription] = useState("");
   const [ttsEnabled, setTtsEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -51,11 +43,9 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
 
       if (profile) {
         setCompanyName(profile.company_name || "");
-        setCompanyInfo(profile.company_info || "");
-        setName(profile.name || "");
-        setTechnicalLevel(profile.technical_level || "");
-        setRoleDescription(profile.role_description || "");
-        setTtsEnabled(profile.tts_enabled || false);
+        setUserDescription(profile.user_description || "");
+        setCompanyInfo(profile.user_provided_company_info || "");
+        setTtsEnabled(profile.TTS_flag || false);
       }
     } catch (error) {
       console.error("Error loading profile:", error);
@@ -84,11 +74,9 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
         .from("users")
         .update({
           company_name: companyName,
-          company_info: companyInfo,
-          name,
-          technical_level: technicalLevel || null,
-          role_description: roleDescription,
-          tts_enabled: ttsEnabled
+          user_description: userDescription,
+          user_provided_company_info: companyInfo,
+          TTS_flag: ttsEnabled
         })
         .eq("id", session.user.id);
 
@@ -114,10 +102,8 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
   const handleClose = () => {
     if (!open) {
       setCompanyName("");
+      setUserDescription("");
       setCompanyInfo("");
-      setName("");
-      setTechnicalLevel("");
-      setRoleDescription("");
       setTtsEnabled(false);
     }
   };
@@ -132,73 +118,74 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Profile</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-6 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="companyName">Company Name</Label>
+            <Label htmlFor="companyName">Name of your company</Label>
             <Input
               id="companyName"
               value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
+              onChange={(e) => setCompanyName(e.target.value.slice(0, 50))}
+              maxLength={50}
             />
+            <div className="text-xs text-muted-foreground text-right">
+              {companyName.length}/50 characters
+            </div>
           </div>
+          
           <div className="grid gap-2">
-            <Label htmlFor="companyInfo">
-              Company Info
-              <span className="block text-sm text-muted-foreground">
-                Max 500 words
-              </span>
+            <Label htmlFor="userDescription" className="flex items-center gap-2">
+              Personal Summary 
+              <InfoCircledIcon className="h-4 w-4 text-muted-foreground" />
             </Label>
+            <div className="text-sm text-muted-foreground mb-2">
+              Provide a summary about yourself including your name, role at the company, 
+              hobbies, characteristics, and any other relevant information.
+              <div className="mt-1 italic bg-muted/30 p-2 rounded-md">
+                <strong>PRO TIP:</strong> Ask ChatGPT to write a summary of you with detailed information 
+                that a consultant can read to prepare for an interview.
+              </div>
+            </div>
+            <Textarea
+              id="userDescription"
+              value={userDescription}
+              onChange={(e) => setUserDescription(e.target.value)}
+              className="min-h-[200px] resize-y"
+              placeholder="Share details about yourself that would help a consultant understand your background and perspective..."
+            />
+            <div className="text-xs text-muted-foreground">
+              Maximum 1000 words
+            </div>
+          </div>
+          
+          <div className="grid gap-2">
+            <Label htmlFor="companyInfo" className="flex items-center gap-2">
+              Information on the organization
+              <InfoCircledIcon className="h-4 w-4 text-muted-foreground" />
+            </Label>
+            <div className="text-sm text-muted-foreground mb-2">
+              Provide information about your organization that would be useful for a consultant 
+              trying to assess AI readiness. Include details about company culture, structure, 
+              current technologies, and goals.
+              <div className="mt-1 italic bg-muted/30 p-2 rounded-md">
+                <strong>PRO TIP:</strong> You can ask ChatGPT for a start again based on your ChatGPT profile.
+              </div>
+            </div>
             <Textarea
               id="companyInfo"
               value={companyInfo}
               onChange={(e) => setCompanyInfo(e.target.value)}
-              className="min-h-[200px]"
-              placeholder="Create a headstart by providing more information about your organization! Example topics to help Frits make a more personal consult are AI strategy, company culture, employee's AI skills, data quality/availability, hardware, governance processes, and competitive environment."
+              className="min-h-[200px] resize-y"
+              placeholder="Share information about your organization's structure, culture, technologies, and goals that would help assess AI readiness..."
             />
+            <div className="text-xs text-muted-foreground">
+              Maximum 1000 words
+            </div>
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="technicalLevel" className="flex flex-col">
-              <span>Technical Level</span>
-              <span className="text-sm text-muted-foreground">
-                Scale: 1 (new to AI adoption) to 5 (expert in AI adoption)
-              </span>
-            </Label>
-            <Select
-              value={technicalLevel}
-              onValueChange={setTechnicalLevel}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select your technical level" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">1</SelectItem>
-                <SelectItem value="2">2</SelectItem>
-                <SelectItem value="3">3</SelectItem>
-                <SelectItem value="4">4</SelectItem>
-                <SelectItem value="5">5</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="roleDescription">Personal Role in Organization</Label>
-            <Input
-              id="roleDescription"
-              value={roleDescription}
-              onChange={(e) => setRoleDescription(e.target.value)}
-            />
-          </div>
+          
           <div className="flex items-center space-x-2">
             <Switch
               id="tts"

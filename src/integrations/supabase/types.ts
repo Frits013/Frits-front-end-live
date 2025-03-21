@@ -121,30 +121,33 @@ export type Database = {
         Row: {
           company_name: string | null
           created_at: string
+          distilled_company_AIR_info: string | null
+          distilled_user_AIR_info: string | null
           id: string
           TTS_flag: boolean | null
           updated_at: string
-          user_AIR_info: string | null
           user_description: string | null
           user_provided_company_info: string | null
         }
         Insert: {
           company_name?: string | null
           created_at?: string
+          distilled_company_AIR_info?: string | null
+          distilled_user_AIR_info?: string | null
           id: string
           TTS_flag?: boolean | null
           updated_at?: string
-          user_AIR_info?: string | null
           user_description?: string | null
           user_provided_company_info?: string | null
         }
         Update: {
           company_name?: string | null
           created_at?: string
+          distilled_company_AIR_info?: string | null
+          distilled_user_AIR_info?: string | null
           id?: string
           TTS_flag?: boolean | null
           updated_at?: string
-          user_AIR_info?: string | null
           user_description?: string | null
           user_provided_company_info?: string | null
         }
