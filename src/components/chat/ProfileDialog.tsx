@@ -14,6 +14,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { InfoCircledIcon } from "@radix-ui/react-icons";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ProfileDialogProps {
   open: boolean;
@@ -139,10 +145,21 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
           <div className="grid gap-2">
             <Label htmlFor="userDescription" className="flex items-center gap-2">
               Personal Summary 
-              <InfoCircledIcon className="h-4 w-4 text-muted-foreground" />
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <InfoCircledIcon className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    To get better results, you can provide a summary about yourself including your name, 
+                    role at the company, hobbies, characteristics, and any other relevant information. 
+                    This helps the AI consultant better understand your background.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </Label>
             <div className="text-sm text-muted-foreground mb-2">
-              Provide a summary about yourself including your name, role at the company, 
+              To get better results, you can provide a summary about yourself including your name, role at the company, 
               hobbies, characteristics, and any other relevant information.
               <div className="mt-1 italic bg-muted/30 p-2 rounded-md">
                 <strong>PRO TIP:</strong> Ask ChatGPT to write a summary of you with detailed information 
@@ -164,12 +181,21 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
           <div className="grid gap-2">
             <Label htmlFor="companyInfo" className="flex items-center gap-2">
               Information on the organization
-              <InfoCircledIcon className="h-4 w-4 text-muted-foreground" />
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <InfoCircledIcon className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    To help assess AI readiness, you can provide information about your organization's culture, 
+                    structure, current technologies, and goals. This context helps the consultant give more tailored advice.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </Label>
             <div className="text-sm text-muted-foreground mb-2">
-              Provide information about your organization that would be useful for a consultant 
-              trying to assess AI readiness. Include details about company culture, structure, 
-              current technologies, and goals.
+              To help assess AI readiness, you can provide information about your organization that would be useful for a consultant. 
+              Consider including details about company culture, structure, current technologies, and goals.
               <div className="mt-1 italic bg-muted/30 p-2 rounded-md">
                 <strong>PRO TIP:</strong> You can ask ChatGPT for a start again based on your ChatGPT profile.
               </div>
@@ -192,7 +218,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
               checked={ttsEnabled}
               onCheckedChange={setTtsEnabled}
             />
-            <Label htmlFor="tts">Enable Audio Summaries</Label>
+            <Label htmlFor="tts">Enable audio responses</Label>
           </div>
         </div>
         <div className="flex justify-end gap-2">
