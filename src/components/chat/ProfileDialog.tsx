@@ -42,7 +42,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
       const { data: profile, error } = await supabase
         .from("users")
         .select("*")
-        .eq("id", session.user.id)
+        .eq("user_id", session.user.id)
         .maybeSingle();
 
       if (error) throw error;
@@ -84,7 +84,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
           user_provided_company_info: companyInfo,
           TTS_flag: ttsEnabled
         })
-        .eq("id", session.user.id);
+        .eq("user_id", session.user.id);
 
       if (error) throw error;
 
