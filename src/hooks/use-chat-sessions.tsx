@@ -27,7 +27,7 @@ export const useChatSessions = () => {
       .from('chat_sessions')
       .insert([{
         user_id: session.user.id,
-        session_name: `New Consult Session ${Date.now()}`,
+        session_name: `Consult Session ${Date.now()}`,
         finished: false
       }])
       .select()
