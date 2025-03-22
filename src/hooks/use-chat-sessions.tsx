@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ChatSession } from "@/types/chat";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 
 export const useChatSessions = () => {
   const { toast } = useToast();
@@ -22,12 +23,15 @@ export const useChatSessions = () => {
       return;
     }
 
+    // Format current date and time in a readable format
+    const formattedDateTime = format(new Date(), "MMM d, yyyy h:mm a");
+
     // Create a new session in the chat_sessions table
     const { data: newSession, error } = await supabase
       .from('chat_sessions')
       .insert([{
         user_id: session.user.id,
-        session_name: `Consult Session ${Date.now()}`,
+        session_name: `Consult Session - ${formattedDateTime}`,
         finished: false
       }])
       .select()
