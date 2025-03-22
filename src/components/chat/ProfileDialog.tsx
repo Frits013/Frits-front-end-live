@@ -124,7 +124,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Profile</DialogTitle>
         </DialogHeader>
@@ -136,6 +136,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value.slice(0, 50))}
               maxLength={50}
+              className="w-full"
             />
             <div className="text-xs text-muted-foreground text-right">
               {companyName.length}/50 characters
@@ -166,7 +167,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
               id="userDescription"
               value={userDescription}
               onChange={(e) => setUserDescription(e.target.value)}
-              className="min-h-[200px] resize-y"
+              className="min-h-[250px] resize-y w-full"
               placeholder="Share details about yourself that would help a consultant understand your background and perspective..."
             />
             <div className="text-xs text-muted-foreground">
@@ -196,7 +197,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
               id="companyInfo"
               value={companyInfo}
               onChange={(e) => setCompanyInfo(e.target.value)}
-              className="min-h-[200px] resize-y"
+              className="min-h-[250px] resize-y w-full"
               placeholder="Share information about your organization's structure, culture, technologies, and goals that would help assess AI readiness..."
             />
             <div className="text-xs text-muted-foreground">
