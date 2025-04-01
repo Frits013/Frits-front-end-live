@@ -33,12 +33,13 @@ export const useChatMessages = (sessionId: string | null) => {
     chatMessages.forEach(msg => {
       // Skip messages with content that looks like internal conversation
       const content = msg.content;
-      if (!content || content.includes('Agent') || content.includes('multi_agent_state')) {
+      if (!content || content.includes('multi_agent_state')) {
         return;
       }
 
-      // Only include user messages and assistant responses
-      if (msg.role === 'user' || msg.role === 'assistant') {
+      // Include user messages and any assistant/AI responses
+      // Removed filter that excluded messages with "Agent" content
+      if (msg.role === 'user' || msg.role === 'assistant' || msg.role === 'writer') {
         const formattedMessage: ChatMessage = {
           id: msg.message_id || msg.id,
           content: content,
