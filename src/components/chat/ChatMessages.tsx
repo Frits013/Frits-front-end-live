@@ -1,6 +1,5 @@
 
 import { ChatMessage } from "@/types/chat";
-import { useState } from "react";
 
 interface ChatMessagesProps {
   messages: ChatMessage[];

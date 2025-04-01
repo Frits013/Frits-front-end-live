@@ -37,13 +37,12 @@ export const useChatMessages = (sessionId: string | null) => {
         return;
       }
 
-      // Include user messages and any assistant/AI responses
-      // Removed filter that excluded messages with "Agent" content
+      // Include user messages and any writer/assistant responses
       if (msg.role === 'user' || msg.role === 'assistant' || msg.role === 'writer') {
         const formattedMessage: ChatMessage = {
           id: msg.message_id || msg.id,
           content: content,
-          role: msg.role as 'user' | 'assistant',
+          role: msg.role,
           created_at: new Date(msg.created_at),
         };
 
@@ -56,6 +55,7 @@ export const useChatMessages = (sessionId: string | null) => {
       }
     });
 
+    console.log('Processed messages:', processedMessages);
     setMessages(processedMessages);
   };
 
