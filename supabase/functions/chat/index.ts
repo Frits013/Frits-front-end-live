@@ -20,12 +20,11 @@ serve(async (req) => {
       throw new Error('No authorization header');
     }
 
-    // Get the message and session_id from the request body
-    const { message, session_id } = await req.json();
-    console.log('Received request:', { message, session_id });
+    // Get the message, session_id, and message_id from the request body
+    const { message, session_id, message_id } = await req.json();
+    console.log('Received request:', { message, session_id, message_id });
 
-    // Forward the request to your FastAPI backend
-    // Note: Not sending any user email data in the payload
+    // Forward the request to your FastAPI backend with the SAME message_id that was sent from the client
     const response = await fetch('https://preview--frits-conversation-portal.lovable.app/chat/send_message', {
       method: 'POST',
       headers: {
@@ -35,7 +34,7 @@ serve(async (req) => {
       body: JSON.stringify({
         message,
         session_id,
-        message_id: crypto.randomUUID(), // Add a UUID for the message_id
+        message_id, // Use the same message_id that was passed from the client
         // Email is intentionally not included in the payload
       }),
     });

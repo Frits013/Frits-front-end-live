@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import ThreeScene from "@/components/chat/ThreeScene";
@@ -47,9 +46,12 @@ const ChatContainer = ({
       return;
     }
   
+    // Generate a unique message_id using crypto.randomUUID()
+    const message_id = crypto.randomUUID();
+    
     // Create a new user message
     const newUserMessage: ChatMessage = {
-      id: Date.now().toString(),
+      id: message_id, // Use the generated message_id
       content: inputMessage,
       role: 'user',
       created_at: new Date(),
@@ -67,6 +69,7 @@ const ChatContainer = ({
       const { error: saveError } = await supabase
         .from('chat_messages')
         .insert({
+          message_id, // Use the same message_id
           content: inputMessage,
           role: 'user',
           user_id: session.user.id,
@@ -98,7 +101,7 @@ const ChatContainer = ({
   
       const { access_token } = await tokenResponse.json();
       
-      // Call the backend with the message
+      // Call the backend with the message and message_id
       const response = await fetch(`${config.apiBaseUrl}/chat/send_message`, {
         method: 'POST',
         headers: {
@@ -108,6 +111,7 @@ const ChatContainer = ({
         body: JSON.stringify({
           message: inputMessage,
           session_id: currentChatId,
+          message_id, // Pass the same message_id to the API
         }),
       });
       
