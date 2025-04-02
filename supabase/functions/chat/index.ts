@@ -25,6 +25,7 @@ serve(async (req) => {
     console.log('Received request:', { message, session_id });
 
     // Forward the request to your FastAPI backend
+    // Note: Not sending any user email data in the payload
     const response = await fetch('https://preview--frits-conversation-portal.lovable.app/chat/send_message', {
       method: 'POST',
       headers: {
@@ -34,6 +35,7 @@ serve(async (req) => {
       body: JSON.stringify({
         message,
         session_id,
+        // Email is intentionally not included in the payload
       }),
     });
 

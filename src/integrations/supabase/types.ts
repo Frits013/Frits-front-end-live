@@ -123,6 +123,7 @@ export type Database = {
           created_at: string
           distilled_company_AIR_info: string | null
           distilled_user_AIR_info: string | null
+          email: string | null
           TTS_flag: boolean | null
           updated_at: string
           user_description: string | null
@@ -134,6 +135,7 @@ export type Database = {
           created_at?: string
           distilled_company_AIR_info?: string | null
           distilled_user_AIR_info?: string | null
+          email?: string | null
           TTS_flag?: boolean | null
           updated_at?: string
           user_description?: string | null
@@ -145,6 +147,7 @@ export type Database = {
           created_at?: string
           distilled_company_AIR_info?: string | null
           distilled_user_AIR_info?: string | null
+          email?: string | null
           TTS_flag?: boolean | null
           updated_at?: string
           user_description?: string | null
