@@ -35,6 +35,7 @@ serve(async (req) => {
       body: JSON.stringify({
         message,
         session_id,
+        message_id: crypto.randomUUID(), // Add a UUID for the message_id
         // Email is intentionally not included in the payload
       }),
     });
