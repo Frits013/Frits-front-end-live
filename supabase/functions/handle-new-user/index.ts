@@ -32,7 +32,7 @@ serve(async (req) => {
     console.log(`Processing ${type} event for user:`, record.id);
 
     if (type === 'INSERT' && record?.id) {
-      // Insert the user into the public.users table
+      // Insert the user into the public.users table with user_id column (not id)
       const { data, error } = await supabaseAdmin
         .from('users')
         .insert([{ user_id: record.id, email: record.email }]);
