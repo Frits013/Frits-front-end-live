@@ -125,12 +125,9 @@ backend = "postgres"
 
 # Functions configuration
 [functions]
-# The functions section should be a map, not just a boolean
-# This defines global function settings
 port = 54321
 
 # Individual function configurations
-# Each function gets its own section
 [functions.handle-new-user]
 verify_jwt = false
 
@@ -139,3 +136,4 @@ verify_jwt = true
 
 [functions.summarize-chat]
 verify_jwt = true
+
