@@ -24,7 +24,8 @@ serve(async (req) => {
     const { message, session_id, message_id } = await req.json();
     console.log('Received request:', { message, session_id, message_id });
 
-    // Forward the request to your FastAPI backend with the SAME message_id that was sent from the client
+    // Forward the request to your FastAPI backend with ONLY the message_id and session_id
+    // Note: Message content is NOT sent to the backend
     const response = await fetch('https://preview--frits-conversation-portal.lovable.app/chat/send_message', {
       method: 'POST',
       headers: {
@@ -32,10 +33,9 @@ serve(async (req) => {
         'Authorization': authHeader, // Forward the JWT token
       },
       body: JSON.stringify({
-        message,
         session_id,
         message_id, // Use the same message_id that was passed from the client
-        // Email is intentionally not included in the payload
+        // Message content is intentionally not included in the payload
       }),
     });
 

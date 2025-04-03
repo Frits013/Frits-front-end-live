@@ -101,7 +101,7 @@ const ChatContainer = ({
   
       const { access_token } = await tokenResponse.json();
       
-      // Call the backend with the message and message_id
+      // Call the backend with ONLY the message_id and session_id, not the message content
       const response = await fetch(`${config.apiBaseUrl}/chat/send_message`, {
         method: 'POST',
         headers: {
@@ -109,9 +109,9 @@ const ChatContainer = ({
           'Authorization': `Bearer ${access_token}`,
         },
         body: JSON.stringify({
-          message: inputMessage,
           session_id: currentChatId,
           message_id, // Pass the same message_id to the API
+          // Message content is intentionally not included in the payload
         }),
       });
       
@@ -126,23 +126,6 @@ const ChatContainer = ({
       // Get the clean response from the API
       const responseContent = data.response || "No response generated";
       
-      // The backend saves the assistant response, so we don't need to save it again
-      // Removing this code to prevent duplicates in the database:
-      /*
-      const { error: responseError } = await supabase
-        .from('chat_messages')
-        .insert({
-          content: responseContent,
-          role: 'assistant',
-          user_id: session.user.id,
-          session_id: currentChatId,
-        });
-
-      if (responseError) {
-        console.error('Error saving assistant response:', responseError);
-      }
-      */
-
       // Create the assistant response message
       const agentResponse: ChatMessage = {
         id: (Date.now() + 1).toString(),
