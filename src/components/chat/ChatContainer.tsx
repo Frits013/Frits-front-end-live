@@ -36,6 +36,12 @@ const ChatContainer = ({
     
     if (sessionError) {
       console.error('Session error:', sessionError);
+      toast({
+        title: "Error",
+        description: "Session error: " + sessionError.message,
+        variant: "destructive",
+      });
+      return;
     }
   
     if (!session) {
@@ -82,7 +88,13 @@ const ChatContainer = ({
         throw new Error('Failed to save message');
       }
 
-      // Call the Supabase Edge Function directly
+      // Get the JWT token
+      const token = session.access_token;
+      
+      console.log('Making chat function call with session id:', currentChatId);
+      console.log('Message ID:', message_id);
+
+      // Call the Supabase Edge Function with the JWT token
       const { data, error } = await supabase.functions.invoke('chat', {
         body: {
           session_id: currentChatId,
@@ -95,6 +107,8 @@ const ChatContainer = ({
         console.error('Error from edge function:', error);
         throw new Error(`Edge function error: ${error.message}`);
       }
+      
+      console.log('Edge function response:', data);
       
       // Get the clean response from the API
       const responseContent = data?.response || "No response generated";

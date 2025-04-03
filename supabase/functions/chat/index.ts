@@ -17,6 +17,7 @@ serve(async (req) => {
     // Get the authorization header from the request
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
+      console.error('No authorization header');
       throw new Error('No authorization header');
     }
 
@@ -30,7 +31,7 @@ serve(async (req) => {
       throw new Error('Invalid authorization header format. Expected Bearer token');
     }
 
-    // Forward the request to your FastAPI backend with ONLY the message_id and session_id
+    // Forward the request to the FastAPI backend with ONLY the message_id and session_id
     // Note: Message content is NOT sent to the backend
     const response = await fetch('https://preview--frits-conversation-portal.lovable.app/chat/send_message', {
       method: 'POST',
