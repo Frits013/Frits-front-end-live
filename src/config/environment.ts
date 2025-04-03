@@ -10,8 +10,8 @@ interface EnvironmentConfig {
 
 const environments: Record<Environment, EnvironmentConfig> = {
   development: {
-    apiBaseUrl: 'https://demo-fastapi-app.onrender.com',
-    authEndpoint: 'https://demo-fastapi-app.onrender.com/auth/token',
+    apiBaseUrl: 'https://eqjsrvbisiuysboukgnt.supabase.co/functions/v1',
+    authEndpoint: 'https://eqjsrvbisiuysboukgnt.supabase.co/functions/v1/chat/auth/token',
   },
   staging: {
     apiBaseUrl: 'http://localhost:8000',

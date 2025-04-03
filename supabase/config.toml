@@ -136,4 +136,3 @@ verify_jwt = true
 
 [functions.summarize-chat]
 verify_jwt = true
-

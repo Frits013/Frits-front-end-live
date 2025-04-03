@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import ThreeScene from "@/components/chat/ThreeScene";
@@ -81,50 +82,22 @@ const ChatContainer = ({
         throw new Error('Failed to save message');
       }
 
-      const supabaseToken = session.access_token;
-  
-      const tokenResponse = await fetch(config.authEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          supabase_token: supabaseToken,
-        }),
-      });
-  
-      if (!tokenResponse.ok) {
-        const errorText = await tokenResponse.text();
-        console.error('Token error response:', errorText);
-        throw new Error('Failed to get FastAPI token');
-      }
-  
-      const { access_token } = await tokenResponse.json();
-      
-      // Call the backend with ONLY the message_id and session_id, not the message content
-      const response = await fetch(`${config.apiBaseUrl}/chat/send_message`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${access_token}`,
-        },
-        body: JSON.stringify({
+      // Call the Supabase Edge Function directly
+      const { data, error } = await supabase.functions.invoke('chat', {
+        body: {
           session_id: currentChatId,
-          message_id, // Pass the same message_id to the API
-          // Message content is intentionally not included in the payload
-        }),
+          message_id,
+          message: inputMessage // Include the message in the edge function call
+        },
       });
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (error) {
+        console.error('Error from edge function:', error);
+        throw new Error(`Edge function error: ${error.message}`);
       }
-  
-      const data = await response.json();
       
       // Get the clean response from the API
-      const responseContent = data.response || "No response generated";
+      const responseContent = data?.response || "No response generated";
       
       // Create the assistant response message
       const agentResponse: ChatMessage = {

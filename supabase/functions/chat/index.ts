@@ -24,6 +24,12 @@ serve(async (req) => {
     const { message, session_id, message_id } = await req.json();
     console.log('Received request:', { message, session_id, message_id });
 
+    // Check if auth header has the JWT token format
+    if (!authHeader.startsWith('Bearer ')) {
+      console.error('Invalid authorization header format');
+      throw new Error('Invalid authorization header format. Expected Bearer token');
+    }
+
     // Forward the request to your FastAPI backend with ONLY the message_id and session_id
     // Note: Message content is NOT sent to the backend
     const response = await fetch('https://preview--frits-conversation-portal.lovable.app/chat/send_message', {
