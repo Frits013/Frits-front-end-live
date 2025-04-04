@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import ThreeScene from "@/components/chat/ThreeScene";
@@ -100,6 +99,9 @@ const ChatContainer = ({
           session_id: currentChatId,
           message_id,
           message: inputMessage // Include the message in the edge function call
+        },
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
       });
       

@@ -18,7 +18,13 @@ serve(async (req) => {
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
       console.error('No authorization header');
-      throw new Error('No authorization header');
+      return new Response(
+        JSON.stringify({ code: 401, message: "Missing authorization header" }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
     // Get the message, session_id, and message_id from the request body
@@ -28,7 +34,13 @@ serve(async (req) => {
     // Check if auth header has the JWT token format
     if (!authHeader.startsWith('Bearer ')) {
       console.error('Invalid authorization header format');
-      throw new Error('Invalid authorization header format. Expected Bearer token');
+      return new Response(
+        JSON.stringify({ code: 401, message: "Invalid authorization header format. Expected Bearer token" }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
     // Forward the request to the FastAPI backend with ONLY the message_id and session_id
