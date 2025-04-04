@@ -123,11 +123,6 @@ vector_port = 54328
 # Configure one of the supported backends: `postgres`, `bigquery`
 backend = "postgres"
 
-# Functions configuration
-[functions]
-# Port to use for the Functions API URL
-port = 54321
-
 # Individual function configurations
 [functions.handle-new-user]
 verify_jwt = false
