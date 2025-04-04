@@ -124,7 +124,7 @@ vector_port = 54328
 backend = "postgres"
 
 # Functions configuration
-[functions]
+[functions.config]
 # Port to use for the Functions API URL
 port = 54321
 
