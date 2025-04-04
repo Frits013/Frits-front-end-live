@@ -1,10 +1,21 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// Follow this format:
+// 1. Create a new Deno project:
+//    mkdir supabase/functions/summarize-chat
+//    cd supabase/functions/summarize-chat
+//    supabase functions new summarize-chat
+// 2. Paste this code into supabase/functions/summarize-chat/index.ts
+// 3. Deploy the function:
+//    supabase functions deploy summarize-chat
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { corsHeaders } from "../_shared/cors.ts";
+import { SupabaseClient, createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import OpenAI from "https://deno.land/x/openai@v4.24.1/mod.ts";
+
+interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -13,75 +24,91 @@ serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    // Extract the session ID from the request body
+    const { session_id } = await req.json();
 
-    // Create a context from the first few messages (up to 3)
-    const context = messages.slice(0, 3).map(msg => 
-      `${msg.sender === 'user' ? 'User' : 'Assistant'}: ${msg.content}`
-    ).join('\n');
-
-    // Get Azure OpenAI configuration from environment variables
-    const apiKey = Deno.env.get('AZURE_OPENAI_API_KEY');
-    const apiBase = Deno.env.get('AZURE_OPENAI_API_BASE');
-    const modelName = Deno.env.get('AZURE_OPENAI_MODEL_NAME');
-    const modelVersion = Deno.env.get('AZURE_OPENAI_MODEL_VERSION');
-
-    if (!apiKey || !apiBase || !modelName || !modelVersion) {
-      throw new Error('Missing Azure OpenAI configuration');
+    if (!session_id) {
+      console.error('Session ID is missing');
+      return new Response(JSON.stringify({ error: 'Session ID is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    console.log('Generating summary using Azure OpenAI');
+    // Initialize Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
 
-    // Construct the Azure OpenAI API URL
-    const apiUrl = `${apiBase}/openai/deployments/${modelName}/chat/completions?api-version=${modelVersion}`;
+    // Fetch chat messages for the given session ID
+    const { data: messages, error: messagesError } = await supabaseClient
+      .from('chat_messages')
+      .select('*')
+      .eq('session_id', session_id)
+      .order('created_at', { ascending: true });
 
-    // Generate summary using Azure OpenAI
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'api-key': apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a helpful assistant that generates very short (2-3 words) titles for conversations based on their content. Focus on the main topic or theme.'
-          },
-          {
-            role: 'user',
-            content: `Please generate a very short (2-3 words) title for this conversation:\n\n${context}`
-          }
-        ],
-        max_tokens: 50,
-        temperature: 0.7
-      }),
+    if (messagesError) {
+      console.error('Error fetching messages:', messagesError);
+      return new Response(JSON.stringify({ error: 'Failed to fetch chat messages' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Format messages for OpenAI
+    const formattedMessages: ChatMessage[] = messages.map(msg => ({
+      role: msg.role === 'user' ? 'user' : 'assistant',
+      content: msg.content,
+    }));
+
+    // Initialize OpenAI client
+    const openai = new OpenAI({
+      apiKey: Deno.env.get('OPENAI_API_KEY'),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Azure OpenAI API error:', errorText);
-      throw new Error(`Azure OpenAI API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log('Azure OpenAI response:', data);
-
-    if (!data.choices?.[0]?.message?.content) {
-      throw new Error('Invalid response from Azure OpenAI');
-    }
-
-    const summary = data.choices[0].message.content.trim();
-    console.log('Generated summary:', summary);
-
-    return new Response(JSON.stringify({ summary }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    // Call OpenAI API to summarize the chat
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "You are a helpful assistant that summarizes chat conversations. Please provide a concise summary of the following conversation:",
+        },
+        ...formattedMessages,
+      ],
     });
+
+    const summary = completion.choices[0]?.message?.content;
+
+    if (!summary) {
+      console.error('Failed to generate summary');
+      return new Response(JSON.stringify({ error: 'Failed to generate summary' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Return the summary
+    return new Response(
+      JSON.stringify({ summary }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
   } catch (error) {
     console.error('Error in summarize-chat function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
 });
