@@ -32,7 +32,8 @@ serve(async (req) => {
 
     // Get the message, session_id, and message_id from the request body
     const { message, session_id, message_id } = await req.json();
-    console.log('Received request:', { message, session_id, message_id });
+    console.log('Received request:', { session_id, message_id });
+    console.log('Message content:', message);
 
     // Check if auth header has the JWT token format
     if (!authHeader.startsWith('Bearer ')) {
@@ -48,27 +49,85 @@ serve(async (req) => {
 
     // Forward the request to the FastAPI backend with ONLY the message_id and session_id
     // Note: Message content is NOT sent to the backend
-    const response = await fetch('https://preview--frits-conversation-portal.lovable.app/chat/send_message', {
+    const fastApiUrl = 'https://preview--frits-conversation-portal.lovable.app/chat/send_message';
+    console.log(`Calling FastAPI at: ${fastApiUrl}`);
+    console.log(`With headers: Authorization: ${authHeader.substring(0, 20)}...`);
+    
+    const requestBody = JSON.stringify({
+      session_id,
+      message_id,
+      // Message content is intentionally not included in the payload
+    });
+    console.log('Request body:', requestBody);
+    
+    const response = await fetch(fastApiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': authHeader, // Forward the JWT token
       },
-      body: JSON.stringify({
-        session_id,
-        message_id, // Use the same message_id that was passed from the client
-        // Message content is intentionally not included in the payload
-      }),
+      body: requestBody,
     });
 
+    console.log('FastAPI response status:', response.status);
+    console.log('FastAPI response headers:', Object.fromEntries(response.headers.entries()));
+    
+    // Check if the response is OK
     if (!response.ok) {
-      console.error('FastAPI error:', response.status);
-      const errorText = await response.text();
-      throw new Error(`FastAPI responded with status: ${response.status}, error: ${errorText}`);
+      // Try to get the response text for debugging
+      const responseText = await response.text();
+      console.error('FastAPI error response text:', responseText);
+      
+      try {
+        // Try to parse the response text as JSON
+        const errorData = JSON.parse(responseText);
+        return new Response(
+          JSON.stringify({ 
+            error: `FastAPI error: ${response.status}`, 
+            details: errorData 
+          }),
+          { 
+            status: response.status, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      } catch (parseError) {
+        // If parsing fails, return the raw response text
+        return new Response(
+          JSON.stringify({ 
+            error: `FastAPI responded with non-JSON: ${response.status}`, 
+            details: responseText.substring(0, 200) + (responseText.length > 200 ? '...' : '')
+          }),
+          { 
+            status: 500, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
     }
 
-    const data = await response.json();
-    console.log('FastAPI response:', data);
+    // Try to get the response as text first
+    const responseText = await response.text();
+    console.log('FastAPI response text sample:', responseText.substring(0, 100) + (responseText.length > 100 ? '...' : ''));
+    
+    let data;
+    try {
+      // Try to parse as JSON
+      data = JSON.parse(responseText);
+      console.log('FastAPI parsed JSON response:', data);
+    } catch (parseError) {
+      console.error('Error parsing JSON response:', parseError);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid JSON response from FastAPI',
+          details: responseText.substring(0, 200) + (responseText.length > 200 ? '...' : '')
+        }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
 
     // Only return the clean response from the backend
     return new Response(

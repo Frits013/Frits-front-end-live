@@ -94,27 +94,37 @@ const ChatContainer = ({
       console.log('Making chat function call with session id:', currentChatId);
       console.log('Message ID:', message_id);
       console.log('Authorization token set with:', `Bearer ${token}`);
+      
+      console.log('Session object available:', !!session);
+      console.log('Access token type:', typeof token);
+      console.log('Access token length:', token.length);
+      console.log('Access token prefix:', token.substring(0, 15) + '...');
 
       // Call the Supabase Edge Function with the JWT token
-      const { data, error } = await supabase.functions.invoke('chat', {
+      const functionResponse = await supabase.functions.invoke('chat', {
         body: {
           session_id: currentChatId,
           message_id,
-          message: inputMessage // Include the message in the edge function call
+          message: inputMessage // Include the message for debugging, will be filtered out in edge function
         },
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       
-      if (error) {
-        console.error('Error from edge function:', error);
-        throw new Error(`Edge function error: ${error.message}`);
+      if (functionResponse.error) {
+        console.error('Error from edge function:', functionResponse.error);
+        throw new Error(`Edge function error: ${functionResponse.error.message || 'Unknown error'}`);
       }
       
-      console.log('Edge function response:', data);
+      console.log('Edge function full response:', functionResponse);
       
       // Get the clean response from the API
+      const data = functionResponse.data;
+      if (!data) {
+        throw new Error('No data returned from edge function');
+      }
+      
       const responseContent = data?.response || "No response generated";
       
       // Create the assistant response message
