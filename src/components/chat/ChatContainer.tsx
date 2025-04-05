@@ -88,36 +88,36 @@ const ChatContainer = ({
         throw new Error('Failed to save message');
       }
 
-      // Get the JWT token
+      // Log token details for debugging
       const token = session.access_token;
-      
-      console.log('Making chat function call with session id:', currentChatId);
-      console.log('Message ID:', message_id);
-      console.log('Authorization token set with:', `Bearer ${token}`);
-      
       console.log('Session object available:', !!session);
       console.log('Access token type:', typeof token);
       console.log('Access token length:', token.length);
       console.log('Access token prefix:', token.substring(0, 15) + '...');
-
+      
+      console.log('Making chat function call with:', {
+        session_id: currentChatId,
+        message_id: message_id,
+      });
+      
       // Call the Supabase Edge Function with the JWT token
       const functionResponse = await supabase.functions.invoke('chat', {
         body: {
           session_id: currentChatId,
           message_id,
-          message: inputMessage // Include the message for debugging, will be filtered out in edge function
+          // Do not include the full message content
         },
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       
+      console.log('Function response received:', functionResponse);
+      
       if (functionResponse.error) {
         console.error('Error from edge function:', functionResponse.error);
         throw new Error(`Edge function error: ${functionResponse.error.message || 'Unknown error'}`);
       }
-      
-      console.log('Edge function full response:', functionResponse);
       
       // Get the clean response from the API
       const data = functionResponse.data;

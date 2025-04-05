@@ -47,11 +47,14 @@ serve(async (req) => {
       );
     }
 
+    // Extract token for debugging
+    const token = authHeader.split(' ')[1];
+    console.log('Token length:', token.length);
+    console.log('Token prefix:', token.substring(0, 20) + '...');
+
     // Forward the request to the FastAPI backend with ONLY the message_id and session_id
-    // Note: Message content is NOT sent to the backend
-    const fastApiUrl = 'https://preview--frits-conversation-portal.lovable.app/chat/send_message';
+    const fastApiUrl = Deno.env.get('STAGING_FASTAPI_URL') || 'https://preview--frits-conversation-portal.lovable.app/chat/send_message';
     console.log(`Calling FastAPI at: ${fastApiUrl}`);
-    console.log(`With headers: Authorization: ${authHeader.substring(0, 20)}...`);
     
     const requestBody = JSON.stringify({
       session_id,
@@ -60,42 +63,32 @@ serve(async (req) => {
     });
     console.log('Request body:', requestBody);
     
-    const response = await fetch(fastApiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': authHeader, // Forward the JWT token
-      },
-      body: requestBody,
-    });
-
-    console.log('FastAPI response status:', response.status);
-    console.log('FastAPI response headers:', Object.fromEntries(response.headers.entries()));
-    
-    // Check if the response is OK
-    if (!response.ok) {
-      // Try to get the response text for debugging
-      const responseText = await response.text();
-      console.error('FastAPI error response text:', responseText);
+    try {
+      console.log('Making fetch request to FastAPI...');
       
-      try {
-        // Try to parse the response text as JSON
-        const errorData = JSON.parse(responseText);
+      const response = await fetch(fastApiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authHeader, // Forward the JWT token
+        },
+        body: requestBody,
+      });
+
+      console.log('FastAPI response status:', response.status);
+      console.log('FastAPI response headers:', Object.fromEntries(response.headers.entries()));
+      
+      // Get the raw response text first for debugging
+      const responseText = await response.text();
+      console.log('FastAPI raw response text (first 200 chars):', 
+        responseText.substring(0, 200) + (responseText.length > 200 ? '...' : ''));
+      
+      // Check if the response appears to be HTML (which indicates an error)
+      if (responseText.trim().startsWith('<!DOCTYPE html>') || responseText.trim().startsWith('<html>')) {
+        console.error('Received HTML response instead of JSON');
         return new Response(
           JSON.stringify({ 
-            error: `FastAPI error: ${response.status}`, 
-            details: errorData 
-          }),
-          { 
-            status: response.status, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        );
-      } catch (parseError) {
-        // If parsing fails, return the raw response text
-        return new Response(
-          JSON.stringify({ 
-            error: `FastAPI responded with non-JSON: ${response.status}`, 
+            error: 'Invalid JSON response from FastAPI',
             details: responseText.substring(0, 200) + (responseText.length > 200 ? '...' : '')
           }),
           { 
@@ -104,23 +97,45 @@ serve(async (req) => {
           }
         );
       }
-    }
+      
+      // Try to parse the response as JSON
+      let data;
+      try {
+        data = JSON.parse(responseText);
+        console.log('FastAPI parsed JSON response:', data);
+      } catch (parseError) {
+        console.error('Error parsing JSON response:', parseError);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Invalid JSON response from FastAPI',
+            details: responseText.substring(0, 200) + (responseText.length > 200 ? '...' : '')
+          }),
+          { 
+            status: 500, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
 
-    // Try to get the response as text first
-    const responseText = await response.text();
-    console.log('FastAPI response text sample:', responseText.substring(0, 100) + (responseText.length > 100 ? '...' : ''));
-    
-    let data;
-    try {
-      // Try to parse as JSON
-      data = JSON.parse(responseText);
-      console.log('FastAPI parsed JSON response:', data);
-    } catch (parseError) {
-      console.error('Error parsing JSON response:', parseError);
+      // Only return the clean response from the backend
+      return new Response(
+        JSON.stringify({
+          response: data.response,
+          session_id: data.session_id
+        }),
+        { 
+          headers: { 
+            ...corsHeaders,
+            'Content-Type': 'application/json'
+          } 
+        }
+      );
+    } catch (fetchError) {
+      console.error('Fetch error:', fetchError);
       return new Response(
         JSON.stringify({ 
-          error: 'Invalid JSON response from FastAPI',
-          details: responseText.substring(0, 200) + (responseText.length > 200 ? '...' : '')
+          error: 'Failed to communicate with FastAPI backend',
+          details: fetchError.message
         }),
         { 
           status: 500, 
@@ -128,20 +143,6 @@ serve(async (req) => {
         }
       );
     }
-
-    // Only return the clean response from the backend
-    return new Response(
-      JSON.stringify({
-        response: data.response,
-        session_id: data.session_id
-      }),
-      { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        } 
-      }
-    );
   } catch (error) {
     console.error('Error in chat function:', error);
     return new Response(
