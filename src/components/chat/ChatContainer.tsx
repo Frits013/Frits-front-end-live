@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import ThreeScene from "@/components/chat/ThreeScene";
@@ -92,6 +93,7 @@ const ChatContainer = ({
       
       console.log('Making chat function call with session id:', currentChatId);
       console.log('Message ID:', message_id);
+      console.log('Authorization token set with:', `Bearer ${token}`);
 
       // Call the Supabase Edge Function with the JWT token
       const { data, error } = await supabase.functions.invoke('chat', {

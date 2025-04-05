@@ -14,6 +14,9 @@ serve(async (req) => {
   }
 
   try {
+    // Log all headers to debug
+    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+    
     // Get the authorization header from the request
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
