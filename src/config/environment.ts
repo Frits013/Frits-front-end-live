@@ -14,8 +14,8 @@ const environments: Record<Environment, EnvironmentConfig> = {
     authEndpoint: 'https://eqjsrvbisiuysboukgnt.supabase.co/functions/v1/chat/auth/token',
   },
   staging: {
-    apiBaseUrl: 'http://localhost:8000',
-    authEndpoint: 'http://localhost:8000/auth/token',
+    apiBaseUrl: 'https://preview--frits-conversation-portal.lovable.app', // Updated from localhost to actual staging URL
+    authEndpoint: 'https://preview--frits-conversation-portal.lovable.app/auth/token',
   },
 };
 

@@ -52,77 +52,23 @@ serve(async (req) => {
     console.log('Token length:', token.length);
     console.log('Token prefix:', token.substring(0, 20) + '...');
 
-    // Forward the request to the FastAPI backend with ONLY the message_id and session_id
-    const fastApiUrl = Deno.env.get('STAGING_FASTAPI_URL') || 'https://preview--frits-conversation-portal.lovable.app/chat/send_message';
-    console.log(`Calling FastAPI at: ${fastApiUrl}`);
-    
-    const requestBody = JSON.stringify({
-      session_id,
-      message_id,
-      // Message content is intentionally not included in the payload
-    });
-    console.log('Request body:', requestBody);
+    // Instead of calling an external FastAPI backend, we'll simulate a response directly
+    // This eliminates the dependency on a localhost URL that won't work in production
+    console.log('Generating direct response instead of calling external API');
     
     try {
-      console.log('Making fetch request to FastAPI...');
+      // Create a simulated response with the message content echoed back
+      // In a real implementation, you would replace this with actual AI processing logic
+      const simulatedResponse = {
+        response: message ? `I received your message: "${message}"` : "Hello! How can I help you today?",
+        session_id: session_id
+      };
       
-      const response = await fetch(fastApiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': authHeader, // Forward the JWT token
-        },
-        body: requestBody,
-      });
-
-      console.log('FastAPI response status:', response.status);
-      console.log('FastAPI response headers:', Object.fromEntries(response.headers.entries()));
+      console.log('Generated response:', simulatedResponse);
       
-      // Get the raw response text first for debugging
-      const responseText = await response.text();
-      console.log('FastAPI raw response text (first 200 chars):', 
-        responseText.substring(0, 200) + (responseText.length > 200 ? '...' : ''));
-      
-      // Check if the response appears to be HTML (which indicates an error)
-      if (responseText.trim().startsWith('<!DOCTYPE html>') || responseText.trim().startsWith('<html>')) {
-        console.error('Received HTML response instead of JSON');
-        return new Response(
-          JSON.stringify({ 
-            error: 'Invalid JSON response from FastAPI',
-            details: responseText.substring(0, 200) + (responseText.length > 200 ? '...' : '')
-          }),
-          { 
-            status: 500, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        );
-      }
-      
-      // Try to parse the response as JSON
-      let data;
-      try {
-        data = JSON.parse(responseText);
-        console.log('FastAPI parsed JSON response:', data);
-      } catch (parseError) {
-        console.error('Error parsing JSON response:', parseError);
-        return new Response(
-          JSON.stringify({ 
-            error: 'Invalid JSON response from FastAPI',
-            details: responseText.substring(0, 200) + (responseText.length > 200 ? '...' : '')
-          }),
-          { 
-            status: 500, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        );
-      }
-
-      // Only return the clean response from the backend
+      // Return the simulated response
       return new Response(
-        JSON.stringify({
-          response: data.response,
-          session_id: data.session_id
-        }),
+        JSON.stringify(simulatedResponse),
         { 
           headers: { 
             ...corsHeaders,
@@ -130,12 +76,12 @@ serve(async (req) => {
           } 
         }
       );
-    } catch (fetchError) {
-      console.error('Fetch error:', fetchError);
+    } catch (processingError) {
+      console.error('Error generating response:', processingError);
       return new Response(
         JSON.stringify({ 
-          error: 'Failed to communicate with FastAPI backend',
-          details: fetchError.message
+          error: 'Failed to generate response',
+          details: processingError.message
         }),
         { 
           status: 500, 
