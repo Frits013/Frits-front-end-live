@@ -48,9 +48,9 @@ serve(async (req) => {
     }
 
     // Extract token for debugging
-    const token = authHeader.split(' ')[1];
-    console.log('Token length:', token.length);
-    console.log('Token prefix:', token.substring(0, 20) + '...');
+    const supabaseToken = authHeader.split(' ')[1];
+    console.log('Supabase token length:', supabaseToken.length);
+    console.log('Supabase token prefix:', supabaseToken.substring(0, 20) + '...');
 
     // Get the development FastAPI URL from environment variables
     const fastApiUrl = Deno.env.get('DEVELOPMENT_FASTAPI_URL');
@@ -78,25 +78,69 @@ serve(async (req) => {
       );
     }
     
-    // If we have a FastAPI URL, forward the request
-    console.log(`Calling FastAPI at: ${fastApiUrl}/chat/send_message`);
-    
-    const requestBody = JSON.stringify({
-      session_id,
-      message_id,
-      message // Include message now for the FastAPI to process
-    });
-    
-    console.log('Request body:', requestBody);
+    // If we have a FastAPI URL, first get a FastAPI token by exchanging the Supabase token
+    console.log(`Exchanging Supabase token at: ${fastApiUrl}/auth/token`);
     
     try {
-      console.log('Making fetch request to FastAPI...');
+      // Step 1: Exchange Supabase token for FastAPI token
+      console.log('Making token exchange request...');
+      const tokenResponse = await fetch(`${fastApiUrl}/auth/token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authHeader, // Send the Supabase token
+        },
+        body: JSON.stringify({ session_id }),
+      });
+
+      console.log('Token exchange response status:', tokenResponse.status);
+      
+      if (!tokenResponse.ok) {
+        const errorText = await tokenResponse.text();
+        console.error('Token exchange failed:', errorText);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Failed to authenticate with FastAPI backend',
+            details: errorText.substring(0, 200) + (errorText.length > 200 ? '...' : '')
+          }),
+          { 
+            status: tokenResponse.status, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      
+      // Parse the token response
+      const tokenData = await tokenResponse.json();
+      console.log('Token exchange successful, received FastAPI token');
+      
+      if (!tokenData.access_token) {
+        console.error('No access token in response');
+        return new Response(
+          JSON.stringify({ error: 'Invalid token response from FastAPI' }),
+          { 
+            status: 500, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      
+      // Step 2: Call the chat endpoint with the new FastAPI token
+      console.log(`Calling FastAPI chat endpoint at: ${fastApiUrl}/chat/send_message`);
+      
+      const requestBody = JSON.stringify({
+        session_id,
+        message_id,
+        message
+      });
+      
+      console.log('Chat request body:', requestBody);
       
       const response = await fetch(`${fastApiUrl}/chat/send_message`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': authHeader, // Forward the JWT token
+          'Authorization': `Bearer ${tokenData.access_token}`, // Use the FastAPI token
         },
         body: requestBody,
       });
