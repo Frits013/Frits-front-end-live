@@ -131,7 +131,7 @@ const ChatContainer = ({
         throw new Error('No data returned from edge function');
       }
       
-      // Handle both standard responses and error responses from the unified model
+      // Handle errors in the data response
       if (data.error) {
         console.error('Error in response data:', data.error);
         setErrorMessage(data.message || data.details || data.error || 'Error from backend');
