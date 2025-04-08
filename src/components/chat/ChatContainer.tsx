@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ChatMessage } from "@/types/chat";
 import { config } from "@/config/environment";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 interface ChatContainerProps {
   messages: ChatMessage[];
@@ -27,11 +28,15 @@ const ChatContainer = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const isThinkingRef = useRef(false);
   const [audioData, setAudioData] = useState<number[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputMessage.trim() || !currentChatId) return;
   
+    // Clear any previous error message
+    setErrorMessage(null);
+
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError) {
@@ -120,18 +125,21 @@ const ChatContainer = ({
         throw new Error(`Edge function error: ${functionResponse.error.message || 'Unknown error'}`);
       }
       
-      // Check for errors in the data payload (for unified HTTP 200 response model)
+      // Check for errors in the data payload
       const data = functionResponse.data;
       if (!data) {
         throw new Error('No data returned from edge function');
       }
       
+      // Handle both standard responses and error responses from the unified model
       if (data.error) {
         console.error('Error in response data:', data.error);
-        throw new Error(data.message || data.details || data.error || 'Error from backend');
+        setErrorMessage(data.message || data.details || data.error || 'Error from backend');
+        // Don't throw here - we'll still display this in the UI
       }
       
-      const responseContent = data?.response || "No response generated";
+      // Get response content, prioritizing the 'response' field
+      const responseContent = data.response || "No response generated";
       
       // Create the assistant response message
       const agentResponse: ChatMessage = {
@@ -153,6 +161,10 @@ const ChatContainer = ({
   
     } catch (error) {
       console.error('Error getting response:', error);
+      
+      // Set detailed error message for UI display
+      setErrorMessage(error instanceof Error ? error.message : "Failed to get response from AI");
+      
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to get response from AI",
@@ -177,12 +189,22 @@ const ChatContainer = ({
           <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-purple-50/30 pointer-events-none" />
           
           <div className="relative z-10 flex flex-col h-full">
+            {errorMessage && (
+              <Alert variant="destructive" className="mx-4 mt-4">
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>
+                  {errorMessage}
+                </AlertDescription>
+              </Alert>
+            )}
+            
             <ChatMessageList messages={messages} />
             <div className="p-4 mt-auto">
               <ChatInput
                 inputMessage={inputMessage}
                 setInputMessage={setInputMessage}
                 handleSendMessage={handleSendMessage}
+                isProcessing={isProcessing}
               />
             </div>
           </div>

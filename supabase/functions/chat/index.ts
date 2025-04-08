@@ -212,16 +212,15 @@ serve(async (req) => {
         );
       }
 
-      // Check if the response contains an error, even with HTTP 200
-      if (data.error || data.code >= 400) {
-        console.error('Backend reported an error:', data.error || data.message);
-        // Pass through the backend error message directly
+      // Handle the unified response model (always HTTP 200, but may contain error information)
+      // Check if response has a normal message or an error message
+      if (!data.response) {
+        console.error('Backend response missing expected "response" field:', data);
         return new Response(
           JSON.stringify({
-            error: data.error || 'Error from backend',
-            code: data.code || 500,
-            message: data.message || 'No additional details available',
-            details: data.details || data.detail || null
+            error: 'Invalid backend response format',
+            details: 'Response did not contain expected fields',
+            raw_response: data
           }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -229,7 +228,25 @@ serve(async (req) => {
         );
       }
 
-      // Return the clean response from the backend
+      // Special case for known error messages
+      if (data.response === "An error occurred while processing your request.") {
+        console.warn('Backend returned a generic error message');
+        // Return a more specific error if possible
+        return new Response(
+          JSON.stringify({
+            error: 'Backend processing error',
+            message: data.response,
+            details: 'The backend was unable to process this request. Please try again with different input.',
+            session_id: data.session_id
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+
+      // Return the response from the backend as-is
+      // Your frontend should handle showing error messages appropriately
       return new Response(
         JSON.stringify({
           response: data.response,

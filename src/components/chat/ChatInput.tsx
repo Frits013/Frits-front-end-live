@@ -1,3 +1,4 @@
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
@@ -7,9 +8,10 @@ interface ChatInputProps {
   inputMessage: string;
   setInputMessage: (message: string) => void;
   handleSendMessage: (e: React.FormEvent) => void;
+  isProcessing?: boolean;
 }
 
-const ChatInput = ({ inputMessage, setInputMessage, handleSendMessage }: ChatInputProps) => {
+const ChatInput = ({ inputMessage, setInputMessage, handleSendMessage, isProcessing = false }: ChatInputProps) => {
   const isMobile = useIsMobile();
 
   return (
@@ -22,15 +24,17 @@ const ChatInput = ({ inputMessage, setInputMessage, handleSendMessage }: ChatInp
             onChange={(e) => setInputMessage(e.target.value)}
             placeholder="Type your message..."
             className="flex-1 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-purple-200 dark:border-purple-800 focus:ring-purple-500 dark:focus:ring-purple-400 transition-all duration-300"
+            disabled={isProcessing}
           />
           <Button 
             type="submit" 
             className={`bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg hover:shadow-purple-500/50 transition-all duration-300 ${
               isMobile ? 'px-3' : ''
             }`}
+            disabled={isProcessing}
           >
             <Send className="w-4 h-4" />
-            {!isMobile && <span className="ml-2">Send</span>}
+            {!isMobile && <span className="ml-2">{isProcessing ? "Processing..." : "Send"}</span>}
           </Button>
         </div>
       </div>
