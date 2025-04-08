@@ -105,7 +105,7 @@ const ChatContainer = ({
         body: {
           session_id: currentChatId,
           message_id,
-          // Do not include the full message content
+          message: inputMessage, // Include the message content
         },
         headers: {
           Authorization: `Bearer ${token}`,
@@ -114,15 +114,21 @@ const ChatContainer = ({
       
       console.log('Function response received:', functionResponse);
       
+      // Check for errors in the response
       if (functionResponse.error) {
         console.error('Error from edge function:', functionResponse.error);
         throw new Error(`Edge function error: ${functionResponse.error.message || 'Unknown error'}`);
       }
       
-      // Get the clean response from the API
+      // Check for errors in the data payload (for unified HTTP 200 response model)
       const data = functionResponse.data;
       if (!data) {
         throw new Error('No data returned from edge function');
+      }
+      
+      if (data.error) {
+        console.error('Error in response data:', data.error);
+        throw new Error(data.message || data.details || data.error || 'Error from backend');
       }
       
       const responseContent = data?.response || "No response generated";

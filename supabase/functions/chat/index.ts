@@ -95,35 +95,60 @@ serve(async (req) => {
 
       console.log('Token exchange response status:', tokenResponse.status);
       
-      if (!tokenResponse.ok) {
-        const errorText = await tokenResponse.text();
-        console.error('Token exchange failed:', errorText);
+      // Get the token response as text first for better debugging
+      const tokenResponseText = await tokenResponse.text();
+      console.log('Token exchange raw response text:', tokenResponseText.substring(0, 200) + (tokenResponseText.length > 200 ? '...' : ''));
+      
+      let tokenData;
+      try {
+        // Try to parse the response as JSON
+        tokenData = JSON.parse(tokenResponseText);
+      } catch (parseError) {
+        console.error('Failed to parse token response as JSON:', parseError);
+        // Return the raw response for debugging
         return new Response(
           JSON.stringify({ 
-            error: 'Failed to authenticate with FastAPI backend',
-            details: errorText.substring(0, 200) + (errorText.length > 200 ? '...' : '')
+            error: 'Failed to parse authentication response',
+            raw_response: tokenResponseText.substring(0, 500)
           }),
-          { 
-            status: tokenResponse.status, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        );
-      }
-      
-      // Parse the token response
-      const tokenData = await tokenResponse.json();
-      console.log('Token exchange successful, received FastAPI token');
-      
-      if (!tokenData.access_token) {
-        console.error('No access token in response');
-        return new Response(
-          JSON.stringify({ error: 'Invalid token response from FastAPI' }),
           { 
             status: 500, 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
           }
         );
       }
+      
+      // Check if the token response contains any error
+      if (!tokenResponse.ok || tokenData.error) {
+        console.error('Token exchange failed:', tokenData.error || 'Unknown error');
+        // Pass through the backend error message directly
+        return new Response(
+          JSON.stringify({ 
+            error: tokenData.error || 'Failed to authenticate with backend',
+            details: tokenData.message || tokenData.detail || 'No additional details available'
+          }),
+          { 
+            status: tokenResponse.status || 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      
+      if (!tokenData.access_token) {
+        console.error('No access token in response');
+        return new Response(
+          JSON.stringify({ 
+            error: 'Invalid token response from backend',
+            details: 'Response did not contain an access token'
+          }),
+          { 
+            status: 500, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      
+      console.log('Token exchange successful, received FastAPI token');
       
       // Step 2: Call the chat endpoint with the new FastAPI token
       console.log(`Calling FastAPI chat endpoint at: ${fastApiUrl}/chat/send_message`);
@@ -158,8 +183,8 @@ serve(async (req) => {
         console.error('Received HTML response instead of JSON');
         return new Response(
           JSON.stringify({ 
-            error: 'Invalid JSON response from FastAPI',
-            details: responseText.substring(0, 200) + (responseText.length > 200 ? '...' : '')
+            error: 'Received HTML response instead of JSON',
+            details: responseText.substring(0, 500)
           }),
           { 
             status: 500, 
@@ -177,11 +202,28 @@ serve(async (req) => {
         console.error('Error parsing JSON response:', parseError);
         return new Response(
           JSON.stringify({ 
-            error: 'Invalid JSON response from FastAPI',
-            details: responseText.substring(0, 200) + (responseText.length > 200 ? '...' : '')
+            error: 'Failed to parse backend response as JSON',
+            details: responseText.substring(0, 500)
           }),
           { 
             status: 500, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+
+      // Check if the response contains an error, even with HTTP 200
+      if (data.error || data.code >= 400) {
+        console.error('Backend reported an error:', data.error || data.message);
+        // Pass through the backend error message directly
+        return new Response(
+          JSON.stringify({
+            error: data.error || 'Error from backend',
+            code: data.code || 500,
+            message: data.message || 'No additional details available',
+            details: data.details || data.detail || null
+          }),
+          { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
           }
         );
@@ -204,7 +246,7 @@ serve(async (req) => {
       console.error('Fetch error:', fetchError);
       return new Response(
         JSON.stringify({ 
-          error: 'Failed to communicate with FastAPI backend',
+          error: 'Failed to communicate with backend',
           details: fetchError.message
         }),
         { 
