@@ -151,7 +151,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
                   <TooltipTrigger asChild>
                     <InfoCircledIcon className="h-4 w-4 text-muted-foreground cursor-help" />
                   </TooltipTrigger>
-                  <TooltipContent className="max-w-xs">
+                  <TooltipContent className="max-w-[600px] w-[95vw] md:w-[500px]">
                     To get better results, you can provide a summary about yourself including your name, 
                     role at the company, hobbies, characteristics, and any other relevant information. 
                     This helps the AI consultant better understand your background.
@@ -183,7 +183,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
                   <TooltipTrigger asChild>
                     <InfoCircledIcon className="h-4 w-4 text-muted-foreground cursor-help" />
                   </TooltipTrigger>
-                  <TooltipContent className="max-w-xs">
+                  <TooltipContent className="max-w-[600px] w-[95vw] md:w-[500px]">
                     To help assess AI readiness, you can provide information about your organization's culture, 
                     structure, current technologies, and goals. This context helps the consultant give more tailored advice.
                     <div className="mt-2 italic font-semibold">
