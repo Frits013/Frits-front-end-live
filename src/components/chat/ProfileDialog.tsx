@@ -48,11 +48,19 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
       if (profile) {
         setUserDescription(profile.user_description || "");
         setTtsEnabled(profile.TTS_flag || false);
-        if (profile.companies && Array.isArray(profile.companies) && profile.companies.length > 0) {
-          setCompanyCode(profile.companies[0].code || "");
-        } else if (profile.companies && profile.companies.code) {
-          // Handle case where companies is returned as an object rather than array
-          setCompanyCode(profile.companies.code || "");
+        
+        // Handle the companies data structure correctly
+        if (profile.companies) {
+          if (Array.isArray(profile.companies) && profile.companies.length > 0) {
+            // If companies is an array, get the code from the first item
+            const company = profile.companies[0];
+            if (company && typeof company === 'object' && 'code' in company) {
+              setCompanyCode(company.code || "");
+            }
+          } else if (typeof profile.companies === 'object' && 'code' in profile.companies) {
+            // If companies is an object with a code property
+            setCompanyCode(profile.companies.code || "");
+          }
         }
       }
     } catch (error) {
