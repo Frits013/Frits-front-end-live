@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -82,7 +82,7 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
 
   return (
     <Dialog open={open}>
-      <DialogContent className="sm:max-w-[600px]" onClose={() => {}}>
+      <DialogContent className="sm:max-w-[600px]">
         <div className="grid gap-6 py-4">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-semibold">Welcome!</h2>
