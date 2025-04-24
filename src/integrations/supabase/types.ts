@@ -87,16 +87,19 @@ export type Database = {
           code: string
           company_description: string | null
           company_id: string
+          company_name: string | null
         }
         Insert: {
           code: string
           company_description?: string | null
           company_id?: string
+          company_name?: string | null
         }
         Update: {
           code?: string
           company_description?: string | null
           company_id?: string
+          company_name?: string | null
         }
         Relationships: []
       }

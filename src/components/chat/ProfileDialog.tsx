@@ -13,13 +13,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { InfoCircledIcon } from "@radix-ui/react-icons";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface ProfileDialogProps {
   open: boolean;
@@ -28,9 +21,8 @@ interface ProfileDialogProps {
 
 const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
   const { toast } = useToast();
-  const [companyName, setCompanyName] = useState("");
+  const [companyCode, setCompanyCode] = useState("");
   const [userDescription, setUserDescription] = useState("");
-  const [companyInfo, setCompanyInfo] = useState("");
   const [ttsEnabled, setTtsEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -41,17 +33,24 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
 
       const { data: profile, error } = await supabase
         .from("users")
-        .select("*")
+        .select(`
+          user_description,
+          TTS_flag,
+          companies!inner(
+            code
+          )
+        `)
         .eq("user_id", session.user.id)
         .maybeSingle();
 
       if (error) throw error;
 
       if (profile) {
-        setCompanyName(profile.company_name || "");
         setUserDescription(profile.user_description || "");
-        setCompanyInfo(profile.user_provided_company_info || "");
         setTtsEnabled(profile.TTS_flag || false);
+        if (profile.companies) {
+          setCompanyCode(profile.companies.code || "");
+        }
       }
     } catch (error) {
       console.error("Error loading profile:", error);
@@ -79,9 +78,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
       const { error } = await supabase
         .from("users")
         .update({
-          company_name: companyName,
           user_description: userDescription,
-          user_provided_company_info: companyInfo,
           TTS_flag: ttsEnabled
         })
         .eq("user_id", session.user.id);
@@ -105,20 +102,9 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
     }
   };
 
-  const handleClose = () => {
-    if (!open) {
-      setCompanyName("");
-      setUserDescription("");
-      setCompanyInfo("");
-      setTtsEnabled(false);
-    }
-  };
-
   useEffect(() => {
     if (open) {
       loadProfile();
-    } else {
-      handleClose();
     }
   }, [open]);
 
@@ -130,79 +116,26 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
         </DialogHeader>
         <div className="grid gap-6 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="companyName">Name of your company</Label>
+            <Label htmlFor="companyCode">Company Code</Label>
             <Input
-              id="companyName"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value.slice(0, 50))}
-              maxLength={50}
-              className="w-full"
+              id="companyCode"
+              value={companyCode}
+              disabled
+              className="w-full font-mono bg-muted"
             />
-            <div className="text-xs text-muted-foreground text-right">
-              {companyName.length}/50 characters
-            </div>
           </div>
           
           <div className="grid gap-2">
-            <Label htmlFor="userDescription" className="flex items-center gap-2">
-              Personal Summary 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <InfoCircledIcon className="h-4 w-4 text-muted-foreground cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-[600px] w-[95vw] md:w-[500px]">
-                    To get better results, you can provide a summary about yourself including your name, 
-                    role at the company, hobbies, characteristics, and any other relevant information. 
-                    This helps the AI consultant better understand your background.
-                    <div className="mt-2 italic font-semibold">
-                      PRO TIP: Ask ChatGPT to write a summary of you with detailed information 
-                      that a consultant can read to prepare for an interview.
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </Label>
+            <Label htmlFor="userDescription">Personal Summary</Label>
             <Textarea
               id="userDescription"
               value={userDescription}
               onChange={(e) => setUserDescription(e.target.value)}
               className="min-h-[250px] resize-y w-full"
-              placeholder="Share details about yourself that would help a consultant understand your background and perspective..."
+              placeholder="You can provide a summary about yourself including your name, role at the company, hobbies, characteristics, and any other relevant information. This helps the AI consultant better understand your background.
+
+PRO TIP: Ask ChatGPT to write a summary of you with detailed information that a consultant can read to prepare for an interview."
             />
-            <div className="text-xs text-muted-foreground">
-              Maximum 1000 words
-            </div>
-          </div>
-          
-          <div className="grid gap-2">
-            <Label htmlFor="companyInfo" className="flex items-center gap-2">
-              Information on the organization
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <InfoCircledIcon className="h-4 w-4 text-muted-foreground cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-[600px] w-[95vw] md:w-[500px]">
-                    To help assess AI readiness, you can provide information about your organization's culture, 
-                    structure, current technologies, and goals. This context helps the consultant give more tailored advice.
-                    <div className="mt-2 italic font-semibold">
-                      PRO TIP: You can ask ChatGPT for a start again based on your ChatGPT profile.
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </Label>
-            <Textarea
-              id="companyInfo"
-              value={companyInfo}
-              onChange={(e) => setCompanyInfo(e.target.value)}
-              className="min-h-[250px] resize-y w-full"
-              placeholder="Share information about your organization's structure, culture, technologies, and goals that would help assess AI readiness..."
-            />
-            <div className="text-xs text-muted-foreground">
-              Maximum 1000 words
-            </div>
           </div>
           
           <div className="flex items-center space-x-2">
