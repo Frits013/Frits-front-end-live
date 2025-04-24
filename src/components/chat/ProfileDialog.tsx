@@ -36,7 +36,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
         .select(`
           user_description,
           TTS_flag,
-          companies!inner(
+          companies(
             code
           )
         `)
@@ -48,7 +48,10 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
       if (profile) {
         setUserDescription(profile.user_description || "");
         setTtsEnabled(profile.TTS_flag || false);
-        if (profile.companies) {
+        if (profile.companies && Array.isArray(profile.companies) && profile.companies.length > 0) {
+          setCompanyCode(profile.companies[0].code || "");
+        } else if (profile.companies && profile.companies.code) {
+          // Handle case where companies is returned as an object rather than array
           setCompanyCode(profile.companies.code || "");
         }
       }
