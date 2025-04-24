@@ -7,6 +7,8 @@ import ChatContainer from "@/components/chat/ChatContainer";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
 import { useChatMessages } from "@/hooks/use-chat-messages";
 import { useAuthOperations } from "@/hooks/use-auth-operations";
+import { useOnboarding } from "@/hooks/use-onboarding";
+import OnboardingWizard from "@/components/onboarding/OnboardingWizard";
 
 const Chat = () => {
   const {
@@ -20,6 +22,7 @@ const Chat = () => {
 
   const { messages, setMessages } = useChatMessages(currentSessionId);
   const { handleSignOut } = useAuthOperations();
+  const { showOnboarding, setShowOnboarding } = useOnboarding();
 
   return (
     <SidebarProvider>
@@ -41,6 +44,10 @@ const Chat = () => {
               setMessages={setMessages}
               currentChatId={currentSessionId}
               updateChatTitle={updateSessionTitle}
+            />
+            <OnboardingWizard
+              open={showOnboarding}
+              onComplete={() => setShowOnboarding(false)}
             />
           </>
         }

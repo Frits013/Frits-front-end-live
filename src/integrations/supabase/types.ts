@@ -82,6 +82,24 @@ export type Database = {
         }
         Relationships: []
       }
+      companies: {
+        Row: {
+          code: string
+          company_description: string | null
+          company_id: string
+        }
+        Insert: {
+          code: string
+          company_description?: string | null
+          company_id?: string
+        }
+        Update: {
+          code?: string
+          company_description?: string | null
+          company_id?: string
+        }
+        Relationships: []
+      }
       info_messages: {
         Row: {
           category: string
@@ -119,42 +137,50 @@ export type Database = {
       }
       users: {
         Row: {
-          company_name: string | null
+          company_id: string | null
           created_at: string
           distilled_company_AIR_info: string | null
           distilled_user_AIR_info: string | null
           email: string | null
+          onboarding_complete: boolean | null
           TTS_flag: boolean | null
           updated_at: string
           user_description: string | null
           user_id: string
-          user_provided_company_info: string | null
         }
         Insert: {
-          company_name?: string | null
+          company_id?: string | null
           created_at?: string
           distilled_company_AIR_info?: string | null
           distilled_user_AIR_info?: string | null
           email?: string | null
+          onboarding_complete?: boolean | null
           TTS_flag?: boolean | null
           updated_at?: string
           user_description?: string | null
           user_id: string
-          user_provided_company_info?: string | null
         }
         Update: {
-          company_name?: string | null
+          company_id?: string | null
           created_at?: string
           distilled_company_AIR_info?: string | null
           distilled_user_AIR_info?: string | null
           email?: string | null
+          onboarding_complete?: boolean | null
           TTS_flag?: boolean | null
           updated_at?: string
           user_description?: string | null
           user_id?: string
-          user_provided_company_info?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "users_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["company_id"]
+          },
+        ]
       }
     }
     Views: {

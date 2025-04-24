@@ -1,0 +1,143 @@
+
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+
+interface OnboardingWizardProps {
+  open: boolean;
+  onComplete: () => void;
+}
+
+const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
+  const [step, setStep] = useState(1);
+  const [companyCode, setCompanyCode] = useState("");
+  const [userDescription, setUserDescription] = useState("");
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleNext = () => setStep(2);
+  const handlePrevious = () => setStep(1);
+
+  const handleSave = async () => {
+    try {
+      setIsSubmitting(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      let company_id = null;
+
+      // If company code was provided, try to find the matching company
+      if (companyCode) {
+        const { data: company } = await supabase
+          .from('companies')
+          .select('company_id')
+          .eq('code', companyCode)
+          .maybeSingle();
+
+        if (company) {
+          company_id = company.company_id;
+        } else {
+          toast({
+            title: "Invalid Company Code",
+            description: "The company code you entered was not found.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      // Update user profile
+      const { error } = await supabase
+        .from('users')
+        .update({
+          user_description: userDescription,
+          company_id,
+          onboarding_complete: true
+        })
+        .eq('user_id', session.user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been successfully updated.",
+      });
+      
+      onComplete();
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save your profile. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open}>
+      <DialogContent className="sm:max-w-[600px]" onClose={() => {}}>
+        <div className="grid gap-6 py-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-semibold">Welcome!</h2>
+            <div className="text-sm text-muted-foreground">
+              Step {step} of 2
+            </div>
+          </div>
+
+          {step === 1 ? (
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-medium mb-2">Company Code</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  If you have an 8-digit company code, enter it below. Otherwise, you can skip this step.
+                </p>
+                <Input
+                  placeholder="Enter company code"
+                  value={companyCode}
+                  onChange={(e) => setCompanyCode(e.target.value.slice(0, 8).toUpperCase())}
+                  className="font-mono"
+                  maxLength={8}
+                />
+              </div>
+              <div className="flex justify-end">
+                <Button onClick={handleNext}>Next</Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-medium mb-2">Tell Us About Yourself</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Please provide a brief description about yourself, including your role, expertise, and interests.
+                </p>
+                <Textarea
+                  placeholder="Enter your description..."
+                  value={userDescription}
+                  onChange={(e) => setUserDescription(e.target.value)}
+                  className="min-h-[200px]"
+                />
+              </div>
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={handlePrevious}>
+                  Previous
+                </Button>
+                <Button onClick={handleSave} disabled={isSubmitting}>
+                  {isSubmitting ? "Saving..." : "Save & Close"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default OnboardingWizard;
