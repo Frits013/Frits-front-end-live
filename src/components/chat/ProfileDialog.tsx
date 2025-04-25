@@ -1,6 +1,5 @@
+
 import { useEffect, useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
@@ -8,178 +7,32 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import CompanyCodeField from "../profile/CompanyCodeField";
+import { useProfile } from "@/hooks/use-profile";
 
 interface ProfileDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-interface CompanyData {
-  company_id: string;
-  code: number;
-  company_name?: string;
-}
-
 const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
-  const { toast } = useToast();
-  const [companyCode, setCompanyCode] = useState("");
-  const [userDescription, setUserDescription] = useState("");
-  const [ttsEnabled, setTtsEnabled] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [codeError, setCodeError] = useState("");
   const [isEditingCode, setIsEditingCode] = useState(false);
-
-  const loadProfile = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      // Query the users table with company code information
-      const { data: profile, error } = await supabase
-        .from("users")
-        .select(`
-          user_description,
-          TTS_flag,
-          company_id
-        `)
-        .eq("user_id", session.user.id)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (profile) {
-        setUserDescription(profile.user_description || "");
-        setTtsEnabled(profile.TTS_flag || false);
-        
-        // If there's a company_id, get the code from company_codes view
-        if (profile.company_id) {
-          const { data: companyCode } = await supabase
-            .from('company_codes')
-            .select('code')
-            .eq('code', profile.company_id)
-            .maybeSingle();
-            
-          if (companyCode) {
-            setCompanyCode(companyCode.code.toString());
-          } else {
-            setCompanyCode("");
-          }
-        } else {
-          setCompanyCode("");
-        }
-      }
-    } catch (error) {
-      console.error("Error loading profile:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load profile",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const validateCompanyCode = async (code: string) => {
-    if (!code) return true;
-    
-    if (!/^\d{1,8}$/.test(code)) {
-      setCodeError("Company code must be an 8-digit number");
-      return false;
-    }
-    
-    setCodeError("");
-    
-    const numericCode = parseInt(code);
-    const { data: validCode } = await supabase
-      .from('company_codes')
-      .select('code')
-      .eq('code', numericCode)
-      .maybeSingle();
-
-    if (!validCode) {
-      setCodeError("Company code not found");
-      return false;
-    }
-    
-    return true;
-  };
-
-  const handleSave = async () => {
-    setIsLoading(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to update your profile",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // If editing code, validate and update company_id
-      if (isEditingCode) {
-        if (companyCode && !(await validateCompanyCode(companyCode))) {
-          setIsLoading(false);
-          return;
-        }
-
-        if (companyCode) {
-          const { data: success, error: functionError } = await supabase
-            .rpc('set_user_company', {
-              user_uuid: session.user.id,
-              company_code: companyCode
-            });
-
-          if (functionError) throw functionError;
-          if (!success) {
-            setCodeError("Failed to link company code");
-            setIsLoading(false);
-            return;
-          }
-        } else {
-          // If no company code provided, remove company association
-          const { error: updateError } = await supabase
-            .from("users")
-            .update({ company_id: null })
-            .eq("user_id", session.user.id);
-
-          if (updateError) throw updateError;
-        }
-      }
-
-      // Update other user fields
-      const { error } = await supabase
-        .from("users")
-        .update({
-          user_description: userDescription,
-          TTS_flag: ttsEnabled
-        })
-        .eq("user_id", session.user.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
-      });
-      
-      setIsEditingCode(false);
-      onOpenChange(false);
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update profile",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    companyCode,
+    setCompanyCode,
+    userDescription,
+    setUserDescription,
+    ttsEnabled,
+    setTtsEnabled,
+    isLoading,
+    codeError,
+    setCodeError,
+    loadProfile,
+    saveProfile,
+  } = useProfile();
 
   useEffect(() => {
     if (open) {
@@ -189,6 +42,14 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
     }
   }, [open]);
 
+  const handleSave = async () => {
+    const success = await saveProfile(isEditingCode);
+    if (success) {
+      setIsEditingCode(false);
+      onOpenChange(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
@@ -196,64 +57,18 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
           <DialogTitle>Edit Profile</DialogTitle>
         </DialogHeader>
         <div className="grid gap-6 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="companyCode">Company Code</Label>
-            {isEditingCode ? (
-              <div className="space-y-2">
-                <Input
-                  id="companyCode"
-                  value={companyCode}
-                  onChange={(e) => {
-                    // Only allow numeric input with max 8 digits
-                    const value = e.target.value.replace(/\D/g, '').slice(0, 8);
-                    setCompanyCode(value);
-                    setCodeError("");
-                  }}
-                  className="w-full font-mono"
-                  placeholder="Enter 8-digit company code"
-                  maxLength={8}
-                  inputMode="numeric"
-                />
-                {codeError && (
-                  <p className="text-sm text-destructive">{codeError}</p>
-                )}
-                <div className="flex space-x-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setIsEditingCode(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    onClick={async () => {
-                      if (await validateCompanyCode(companyCode)) {
-                        setIsEditingCode(false);
-                      }
-                    }}
-                  >
-                    Confirm
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-2">
-                <Input
-                  id="companyCode"
-                  value={companyCode}
-                  disabled
-                  className="w-full font-mono bg-muted"
-                />
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsEditingCode(true)}
-                >
-                  Edit
-                </Button>
-              </div>
-            )}
-          </div>
+          <CompanyCodeField
+            companyCode={companyCode}
+            isEditingCode={isEditingCode}
+            codeError={codeError}
+            onCodeChange={(value) => {
+              setCompanyCode(value);
+              setCodeError("");
+            }}
+            onEditClick={() => setIsEditingCode(true)}
+            onCancelEdit={() => setIsEditingCode(false)}
+            onConfirmEdit={() => setIsEditingCode(false)}
+          />
           
           <div className="grid gap-2">
             <Label htmlFor="userDescription">Personal Summary</Label>
