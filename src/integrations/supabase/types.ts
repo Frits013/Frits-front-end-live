@@ -84,19 +84,19 @@ export type Database = {
       }
       companies: {
         Row: {
-          code: string
+          code: number
           company_description: string | null
           company_id: string
           company_name: string | null
         }
         Insert: {
-          code: string
+          code: number
           company_description?: string | null
           company_id?: string
           company_name?: string | null
         }
         Update: {
-          code?: string
+          code?: number
           company_description?: string | null
           company_id?: string
           company_name?: string | null

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
@@ -68,16 +69,16 @@ const Index = () => {
       const { data: existingCompany } = await supabase
         .from('companies')
         .select('*')
-        .eq('code', 'TEST1234')
+        .eq('code', 12345678)
         .maybeSingle();
 
       if (!existingCompany) {
         await supabase.from('companies').insert({
-          code: 'TEST1234',
+          code: 12345678,
           company_name: 'Test Company',
           company_description: 'This is a test company for development purposes'
         });
-        console.log('Added test company with code: TEST1234');
+        console.log('Added test company with code: 12345678');
       }
     };
     

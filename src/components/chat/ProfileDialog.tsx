@@ -20,7 +20,8 @@ interface ProfileDialogProps {
 }
 
 interface CompanyData {
-  code: string;
+  code: number;
+  company_name?: string;
 }
 
 const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
@@ -55,12 +56,16 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
         setUserDescription(profile.user_description || "");
         setTtsEnabled(profile.TTS_flag || false);
         
-        // Handle the companies data structure correctly
+        // Handle the companies data structure correctly with proper type checking
         if (profile.companies) {
+          // Convert any numerical code to string for display
           if (Array.isArray(profile.companies) && profile.companies.length > 0) {
-            setCompanyCode(profile.companies[0].code || "");
+            const code = profile.companies[0]?.code;
+            setCompanyCode(code ? code.toString() : "");
           } else if (!Array.isArray(profile.companies) && profile.companies) {
-            setCompanyCode(profile.companies.code || "");
+            const companyData = profile.companies as unknown as CompanyData;
+            const code = companyData.code;
+            setCompanyCode(code ? code.toString() : "");
           }
         } else {
           setCompanyCode("");
@@ -80,13 +85,19 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
   const validateCompanyCode = async (code: string) => {
     if (!code) return true; // Empty code is allowed (will remove company association)
     
+    // Make sure code only contains numbers and is at most 8 digits
+    if (!/^\d{1,8}$/.test(code)) {
+      setCodeError("Company code must be an 8-digit number");
+      return false;
+    }
+    
     setCodeError("");
     console.log("Validating company code:", code);
     
     const { data: company, error } = await supabase
       .from('companies')
       .select('company_id')
-      .eq('code', code.trim())
+      .eq('code', parseInt(code))
       .maybeSingle();
       
     if (error) {
@@ -132,7 +143,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
           const { data: company } = await supabase
             .from('companies')
             .select('company_id')
-            .eq('code', companyCode.trim())
+            .eq('code', parseInt(companyCode))
             .maybeSingle();
 
           console.log("Company lookup result:", company);
@@ -208,12 +219,15 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
                   id="companyCode"
                   value={companyCode}
                   onChange={(e) => {
-                    setCompanyCode(e.target.value.slice(0, 8).toUpperCase());
+                    // Only allow numeric input with max 8 digits
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 8);
+                    setCompanyCode(value);
                     setCodeError("");
                   }}
                   className="w-full font-mono"
-                  placeholder="Enter company code"
+                  placeholder="Enter 8-digit company code"
                   maxLength={8}
+                  inputMode="numeric"
                 />
                 {codeError && (
                   <p className="text-sm text-destructive">{codeError}</p>

@@ -26,13 +26,19 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
   const validateCompanyCode = async (code: string) => {
     if (!code) return true; // Empty code is allowed (will not link to company)
     
+    // Make sure code only contains numbers and is at most 8 digits
+    if (!/^\d{1,8}$/.test(code)) {
+      setCodeError("Company code must be an 8-digit number");
+      return false;
+    }
+    
     setCodeError("");
     console.log("Validating company code:", code);
     
     const { data: company, error } = await supabase
       .from('companies')
       .select('company_id')
-      .eq('code', code.trim())
+      .eq('code', parseInt(code))
       .maybeSingle();
       
     if (error) {
@@ -72,7 +78,7 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
         const { data: company } = await supabase
           .from('companies')
           .select('company_id')
-          .eq('code', companyCode.trim())
+          .eq('code', parseInt(companyCode))
           .maybeSingle();
 
         console.log("Company lookup result:", company);
@@ -131,14 +137,17 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
                   If you have an 8-digit company code, enter it below. Otherwise, you can skip this step.
                 </p>
                 <Input
-                  placeholder="Enter company code"
+                  placeholder="Enter 8-digit company code"
                   value={companyCode}
                   onChange={(e) => {
-                    setCompanyCode(e.target.value.slice(0, 8).toUpperCase());
+                    // Only allow numeric input with max 8 digits
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 8);
+                    setCompanyCode(value);
                     setCodeError("");
                   }}
                   className="font-mono"
                   maxLength={8}
+                  inputMode="numeric"
                 />
                 {codeError && (
                   <p className="text-sm text-destructive mt-2">{codeError}</p>
