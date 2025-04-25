@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -40,19 +39,11 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
     console.log("Converted to numeric code:", numericCode);
     
     // Query the company_codes view instead of the companies table
-    const { data: validCode, error } = await supabase
+    const { data: validCode } = await supabase
       .from('company_codes')
       .select('code')
       .eq('code', numericCode)
       .maybeSingle();
-      
-    if (error) {
-      console.error('Error validating company code:', error);
-      setCodeError("Error checking company code");
-      return false;
-    }
-
-    console.log("Company code validation result:", validCode);
 
     if (!validCode) {
       setCodeError("Company code not found");
@@ -75,46 +66,32 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      let company_id = null;
-
-      // If company code was provided, retrieve the company ID
+      // If company code was provided, use the set_user_company function
       if (companyCode) {
-        console.log("Looking up company with code:", companyCode);
-        const numericCode = parseInt(companyCode);
-        
-        // First validate against the company_codes view
-        const { data: validCode } = await supabase
-          .from('company_codes')
-          .select('code')
-          .eq('code', numericCode)
-          .maybeSingle();
+        const { data: success, error: functionError } = await supabase
+          .rpc('set_user_company', {
+            user_uuid: session.user.id,
+            company_code: companyCode
+          });
 
-        if (validCode) {
-          // If valid, use a server-side function to securely get and set the company_id
-          const { data: updatedUser, error: updateError } = await supabase
-            .from('users')
-            .update({
-              user_description: userDescription,
-              company_id: numericCode, // The RLS policy will handle the mapping to actual company_id
-              onboarding_complete: true
-            })
-            .eq('user_id', session.user.id);
-
-          if (updateError) throw updateError;
+        if (functionError) throw functionError;
+        if (!success) {
+          setCodeError("Failed to link company code");
+          setIsSubmitting(false);
+          return;
         }
-      } else {
-        // If no company code, just update user description
-        const { error } = await supabase
-          .from('users')
-          .update({
-            user_description: userDescription,
-            company_id: null,
-            onboarding_complete: true
-          })
-          .eq('user_id', session.user.id);
-
-        if (error) throw error;
       }
+
+      // Update user description and onboarding status
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          user_description: userDescription,
+          onboarding_complete: true
+        })
+        .eq('user_id', session.user.id);
+
+      if (updateError) throw updateError;
 
       toast({
         title: "Profile Updated",

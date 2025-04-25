@@ -83,7 +83,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
   };
 
   const validateCompanyCode = async (code: string) => {
-    if (!code) return true; // Empty code is allowed (will remove company association)
+    if (!code) return true; // Empty code is allowed
     
     // Make sure code only contains numbers and is at most 8 digits
     if (!/^\d{1,8}$/.test(code)) {
@@ -92,27 +92,18 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
     }
     
     setCodeError("");
-    console.log("Validating company code:", code);
     
     // Convert string code to number before querying
     const numericCode = parseInt(code);
-    console.log("Converted to numeric code:", numericCode);
     
-    const { data: company, error } = await supabase
+    // Query the company_codes view
+    const { data: validCode } = await supabase
       .from('company_codes')
       .select('code')
       .eq('code', numericCode)
       .maybeSingle();
-      
-    if (error) {
-      console.error('Error validating company code:', error);
-      setCodeError("Error checking company code");
-      return false;
-    }
 
-    console.log("Company search result:", company);
-
-    if (!company) {
+    if (!validCode) {
       setCodeError("Company code not found");
       return false;
     }
@@ -141,47 +132,40 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
           return;
         }
 
-        let company_id = null;
         if (companyCode) {
-          // Look up company_id from the code
-          const numericCode = parseInt(companyCode);
-          
-          const { data: company } = await supabase
-            .from('company_codes')
-            .select('code')
-            .eq('code', numericCode)
-            .maybeSingle();
+          const { data: success, error: functionError } = await supabase
+            .rpc('set_user_company', {
+              user_uuid: session.user.id,
+              company_code: companyCode
+            });
 
-          console.log("Company lookup result:", company);
-
-          if (company) {
-            company_id = company.code;
+          if (functionError) throw functionError;
+          if (!success) {
+            setCodeError("Failed to link company code");
+            setIsLoading(false);
+            return;
           }
+        } else {
+          // If no company code provided, remove company association
+          const { error: updateError } = await supabase
+            .from("users")
+            .update({ company_id: null })
+            .eq("user_id", session.user.id);
+
+          if (updateError) throw updateError;
         }
-
-        // Update user with the new company_id
-        const { error } = await supabase
-          .from("users")
-          .update({
-            user_description: userDescription,
-            TTS_flag: ttsEnabled,
-            company_id
-          })
-          .eq("user_id", session.user.id);
-
-        if (error) throw error;
-      } else {
-        // Not editing code, just update other fields
-        const { error } = await supabase
-          .from("users")
-          .update({
-            user_description: userDescription,
-            TTS_flag: ttsEnabled
-          })
-          .eq("user_id", session.user.id);
-
-        if (error) throw error;
       }
+
+      // Update other user fields
+      const { error } = await supabase
+        .from("users")
+        .update({
+          user_description: userDescription,
+          TTS_flag: ttsEnabled
+        })
+        .eq("user_id", session.user.id);
+
+      if (error) throw error;
 
       toast({
         title: "Success",

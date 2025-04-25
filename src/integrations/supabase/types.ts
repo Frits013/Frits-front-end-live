@@ -183,6 +183,13 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["company_id"]
           },
+          {
+            foreignKeyName: "users_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company_codes"
+            referencedColumns: ["company_id"]
+          },
         ]
       }
     }
@@ -190,18 +197,24 @@ export type Database = {
       company_codes: {
         Row: {
           code: number | null
+          company_id: string | null
         }
         Insert: {
           code?: number | null
+          company_id?: string | null
         }
         Update: {
           code?: number | null
+          company_id?: string | null
         }
         Relationships: []
       }
     }
     Functions: {
-      [_ in never]: never
+      set_user_company: {
+        Args: { user_uuid: string; company_code: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
