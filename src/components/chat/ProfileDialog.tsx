@@ -19,6 +19,10 @@ interface ProfileDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+interface CompanyData {
+  code: string;
+}
+
 const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
   const { toast } = useToast();
   const [companyCode, setCompanyCode] = useState("");
@@ -51,15 +55,11 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
         
         // Handle the companies data structure correctly
         if (profile.companies) {
-          if (Array.isArray(profile.companies) && profile.companies.length > 0) {
-            // If companies is an array, get the code from the first item
-            const company = profile.companies[0];
-            if (company && typeof company === 'object' && 'code' in company) {
-              setCompanyCode(company.code || "");
-            }
-          } else if (typeof profile.companies === 'object' && 'code' in profile.companies) {
-            // If companies is an object with a code property
-            setCompanyCode(profile.companies.code || "");
+          const companiesData = profile.companies as CompanyData | CompanyData[];
+          if (Array.isArray(companiesData) && companiesData.length > 0) {
+            setCompanyCode(companiesData[0].code || "");
+          } else if (!Array.isArray(companiesData) && 'code' in companiesData) {
+            setCompanyCode(companiesData.code || "");
           }
         }
       }
