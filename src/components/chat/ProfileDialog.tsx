@@ -83,9 +83,8 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
   };
 
   const validateCompanyCode = async (code: string) => {
-    if (!code) return true; // Empty code is allowed
+    if (!code) return true;
     
-    // Make sure code only contains numbers and is at most 8 digits
     if (!/^\d{1,8}$/.test(code)) {
       setCodeError("Company code must be an 8-digit number");
       return false;
@@ -93,10 +92,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
     
     setCodeError("");
     
-    // Convert string code to number before querying
     const numericCode = parseInt(code);
-    
-    // Query the company_codes view
     const { data: validCode } = await supabase
       .from('company_codes')
       .select('code')
@@ -126,7 +122,6 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
 
       // If editing code, validate and update company_id
       if (isEditingCode) {
-        // Validate company code if provided
         if (companyCode && !(await validateCompanyCode(companyCode))) {
           setIsLoading(false);
           return;

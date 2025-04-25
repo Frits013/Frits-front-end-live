@@ -38,7 +38,7 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
     const numericCode = parseInt(code);
     console.log("Converted to numeric code:", numericCode);
     
-    // Query the company_codes view instead of the companies table
+    // Query the company_codes view to check if code exists
     const { data: validCode } = await supabase
       .from('company_codes')
       .select('code')
