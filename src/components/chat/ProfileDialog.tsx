@@ -29,6 +29,8 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
   const [userDescription, setUserDescription] = useState("");
   const [ttsEnabled, setTtsEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [codeError, setCodeError] = useState("");
+  const [isEditingCode, setIsEditingCode] = useState(false);
 
   const loadProfile = async () => {
     try {
@@ -61,6 +63,8 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
           } else if (!Array.isArray(companiesData) && 'code' in companiesData) {
             setCompanyCode(companiesData.code || "");
           }
+        } else {
+          setCompanyCode("");
         }
       }
     } catch (error) {
@@ -71,6 +75,30 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
         variant: "destructive",
       });
     }
+  };
+
+  const validateCompanyCode = async (code: string) => {
+    if (!code) return true; // Empty code is allowed (will remove company association)
+    
+    setCodeError("");
+    const { data: company, error } = await supabase
+      .from('companies')
+      .select('company_id')
+      .eq('code', code.trim())
+      .maybeSingle();
+      
+    if (error) {
+      console.error('Error validating company code:', error);
+      setCodeError("Error checking company code");
+      return false;
+    }
+
+    if (!company) {
+      setCodeError("Company code not found");
+      return false;
+    }
+    
+    return true;
   };
 
   const handleSave = async () => {
@@ -86,20 +114,57 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
         return;
       }
 
-      const { error } = await supabase
-        .from("users")
-        .update({
-          user_description: userDescription,
-          TTS_flag: ttsEnabled
-        })
-        .eq("user_id", session.user.id);
+      // If editing code, validate and update company_id
+      if (isEditingCode) {
+        // Validate company code if provided
+        if (companyCode && !(await validateCompanyCode(companyCode))) {
+          return;
+        }
 
-      if (error) throw error;
+        let company_id = null;
+        if (companyCode) {
+          // Look up company_id from the code
+          const { data: company } = await supabase
+            .from('companies')
+            .select('company_id')
+            .eq('code', companyCode.trim())
+            .maybeSingle();
+
+          if (company) {
+            company_id = company.company_id;
+          }
+        }
+
+        // Update user with the new company_id
+        const { error } = await supabase
+          .from("users")
+          .update({
+            user_description: userDescription,
+            TTS_flag: ttsEnabled,
+            company_id
+          })
+          .eq("user_id", session.user.id);
+
+        if (error) throw error;
+      } else {
+        // Not editing code, just update other fields
+        const { error } = await supabase
+          .from("users")
+          .update({
+            user_description: userDescription,
+            TTS_flag: ttsEnabled
+          })
+          .eq("user_id", session.user.id);
+
+        if (error) throw error;
+      }
 
       toast({
         title: "Success",
         description: "Profile updated successfully",
       });
+      
+      setIsEditingCode(false);
       onOpenChange(false);
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -116,6 +181,8 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
   useEffect(() => {
     if (open) {
       loadProfile();
+      setIsEditingCode(false);
+      setCodeError("");
     }
   }, [open]);
 
@@ -128,12 +195,58 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
         <div className="grid gap-6 py-4">
           <div className="grid gap-2">
             <Label htmlFor="companyCode">Company Code</Label>
-            <Input
-              id="companyCode"
-              value={companyCode}
-              disabled
-              className="w-full font-mono bg-muted"
-            />
+            {isEditingCode ? (
+              <div className="space-y-2">
+                <Input
+                  id="companyCode"
+                  value={companyCode}
+                  onChange={(e) => {
+                    setCompanyCode(e.target.value.slice(0, 8).toUpperCase());
+                    setCodeError("");
+                  }}
+                  className="w-full font-mono"
+                  placeholder="Enter company code"
+                  maxLength={8}
+                />
+                {codeError && (
+                  <p className="text-sm text-destructive">{codeError}</p>
+                )}
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setIsEditingCode(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    onClick={async () => {
+                      if (await validateCompanyCode(companyCode)) {
+                        setIsEditingCode(false);
+                      }
+                    }}
+                  >
+                    Confirm
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Input
+                  id="companyCode"
+                  value={companyCode}
+                  disabled
+                  className="w-full font-mono bg-muted"
+                />
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsEditingCode(true)}
+                >
+                  Edit
+                </Button>
+              </div>
+            )}
           </div>
           
           <div className="grid gap-2">

@@ -18,35 +18,60 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
   const [userDescription, setUserDescription] = useState("");
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [codeError, setCodeError] = useState("");
 
   const handleNext = () => setStep(2);
   const handlePrevious = () => setStep(1);
 
+  const validateCompanyCode = async (code: string) => {
+    if (!code) return true; // Empty code is allowed (will not link to company)
+    
+    setCodeError("");
+    const { data: company, error } = await supabase
+      .from('companies')
+      .select('company_id')
+      .eq('code', code.trim())
+      .maybeSingle();
+      
+    if (error) {
+      console.error('Error validating company code:', error);
+      setCodeError("Error checking company code");
+      return false;
+    }
+
+    if (!company) {
+      setCodeError("Company code not found");
+      return false;
+    }
+    
+    return true;
+  };
+
   const handleSave = async () => {
     try {
       setIsSubmitting(true);
+      
+      // Validate company code if provided
+      if (companyCode && !(await validateCompanyCode(companyCode))) {
+        setIsSubmitting(false);
+        return;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
       let company_id = null;
 
-      // If company code was provided, try to find the matching company
+      // If company code was provided, retrieve the company ID
       if (companyCode) {
         const { data: company } = await supabase
           .from('companies')
           .select('company_id')
-          .eq('code', companyCode)
+          .eq('code', companyCode.trim())
           .maybeSingle();
 
         if (company) {
           company_id = company.company_id;
-        } else {
-          toast({
-            title: "Invalid Company Code",
-            description: "The company code you entered was not found.",
-            variant: "destructive",
-          });
-          return;
         }
       }
 
@@ -101,10 +126,16 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
                 <Input
                   placeholder="Enter company code"
                   value={companyCode}
-                  onChange={(e) => setCompanyCode(e.target.value.slice(0, 8).toUpperCase())}
+                  onChange={(e) => {
+                    setCompanyCode(e.target.value.slice(0, 8).toUpperCase());
+                    setCodeError("");
+                  }}
                   className="font-mono"
                   maxLength={8}
                 />
+                {codeError && (
+                  <p className="text-sm text-destructive mt-2">{codeError}</p>
+                )}
               </div>
               <div className="flex justify-end">
                 <Button onClick={handleNext}>Next</Button>
