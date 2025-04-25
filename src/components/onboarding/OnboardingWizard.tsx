@@ -81,15 +81,17 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
         console.log("Looking up company with code:", companyCode);
         const numericCode = parseInt(companyCode);
         
-        const { data: company } = await supabase
+        const { data: company, error } = await supabase
           .from('companies')
           .select('company_id, code')
           .eq('code', numericCode)
           .maybeSingle();
 
         console.log("Company lookup result:", company);
-
-        if (company) {
+        
+        if (error) {
+          console.error("Error looking up company:", error);
+        } else if (company) {
           company_id = company.company_id;
         }
       }

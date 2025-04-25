@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,7 +44,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
           user_description,
           TTS_flag,
           company_id,
-          companies(code)
+          companies(code, company_id)
         `)
         .eq("user_id", session.user.id)
         .maybeSingle();
@@ -57,11 +56,28 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
         setTtsEnabled(profile.TTS_flag || false);
         
         // Handle company data
+        console.log("Profile companies data:", profile.companies);
+        
         if (profile.companies) {
-          const companyData = profile.companies as CompanyData;
-          if (companyData && companyData.code) {
-            setCompanyCode(companyData.code.toString());
-            console.log("Loaded company code:", companyData.code);
+          // Handle the case where companies is an array
+          if (Array.isArray(profile.companies) && profile.companies.length > 0) {
+            const companyData = profile.companies[0];
+            if (companyData && typeof companyData.code === 'number') {
+              setCompanyCode(companyData.code.toString());
+              console.log("Loaded company code from array:", companyData.code);
+            } else {
+              setCompanyCode("");
+            }
+          } 
+          // Handle the case where companies is a direct object
+          else if (typeof profile.companies === 'object' && profile.companies !== null) {
+            const companyData = profile.companies as unknown as CompanyData;
+            if (companyData && typeof companyData.code === 'number') {
+              setCompanyCode(companyData.code.toString());
+              console.log("Loaded company code from object:", companyData.code);
+            } else {
+              setCompanyCode("");
+            }
           } else {
             setCompanyCode("");
           }
