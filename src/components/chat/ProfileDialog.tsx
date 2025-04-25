@@ -38,13 +38,13 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
+      // Query the users table with company code information
       const { data: profile, error } = await supabase
         .from("users")
         .select(`
           user_description,
           TTS_flag,
-          company_id,
-          companies(code, company_id)
+          company_id
         `)
         .eq("user_id", session.user.id)
         .maybeSingle();
@@ -55,29 +55,16 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
         setUserDescription(profile.user_description || "");
         setTtsEnabled(profile.TTS_flag || false);
         
-        // Handle company data
-        console.log("Profile companies data:", profile.companies);
-        
-        if (profile.companies) {
-          // Handle the case where companies is an array
-          if (Array.isArray(profile.companies) && profile.companies.length > 0) {
-            const companyData = profile.companies[0];
-            if (companyData && typeof companyData.code === 'number') {
-              setCompanyCode(companyData.code.toString());
-              console.log("Loaded company code from array:", companyData.code);
-            } else {
-              setCompanyCode("");
-            }
-          } 
-          // Handle the case where companies is a direct object
-          else if (typeof profile.companies === 'object' && profile.companies !== null) {
-            const companyData = profile.companies as unknown as CompanyData;
-            if (companyData && typeof companyData.code === 'number') {
-              setCompanyCode(companyData.code.toString());
-              console.log("Loaded company code from object:", companyData.code);
-            } else {
-              setCompanyCode("");
-            }
+        // If there's a company_id, get the code from company_codes view
+        if (profile.company_id) {
+          const { data: companyCode } = await supabase
+            .from('company_codes')
+            .select('code')
+            .eq('code', profile.company_id)
+            .maybeSingle();
+            
+          if (companyCode) {
+            setCompanyCode(companyCode.code.toString());
           } else {
             setCompanyCode("");
           }
@@ -112,8 +99,8 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
     console.log("Converted to numeric code:", numericCode);
     
     const { data: company, error } = await supabase
-      .from('companies')
-      .select('company_id, code')
+      .from('company_codes')
+      .select('code')
       .eq('code', numericCode)
       .maybeSingle();
       
@@ -160,15 +147,15 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
           const numericCode = parseInt(companyCode);
           
           const { data: company } = await supabase
-            .from('companies')
-            .select('company_id')
+            .from('company_codes')
+            .select('code')
             .eq('code', numericCode)
             .maybeSingle();
 
           console.log("Company lookup result:", company);
 
           if (company) {
-            company_id = company.company_id;
+            company_id = company.code;
           }
         }
 

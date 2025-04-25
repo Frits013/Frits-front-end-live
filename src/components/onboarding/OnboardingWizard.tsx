@@ -39,9 +39,10 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
     const numericCode = parseInt(code);
     console.log("Converted to numeric code:", numericCode);
     
-    const { data: company, error } = await supabase
-      .from('companies')
-      .select('company_id, code')
+    // Query the company_codes view instead of the companies table
+    const { data: validCode, error } = await supabase
+      .from('company_codes')
+      .select('code')
       .eq('code', numericCode)
       .maybeSingle();
       
@@ -51,9 +52,9 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
       return false;
     }
 
-    console.log("Company search result:", company);
+    console.log("Company code validation result:", validCode);
 
-    if (!company) {
+    if (!validCode) {
       setCodeError("Company code not found");
       return false;
     }
@@ -81,32 +82,39 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
         console.log("Looking up company with code:", companyCode);
         const numericCode = parseInt(companyCode);
         
-        const { data: company, error } = await supabase
-          .from('companies')
-          .select('company_id, code')
+        // First validate against the company_codes view
+        const { data: validCode } = await supabase
+          .from('company_codes')
+          .select('code')
           .eq('code', numericCode)
           .maybeSingle();
 
-        console.log("Company lookup result:", company);
-        
-        if (error) {
-          console.error("Error looking up company:", error);
-        } else if (company) {
-          company_id = company.company_id;
+        if (validCode) {
+          // If valid, use a server-side function to securely get and set the company_id
+          const { data: updatedUser, error: updateError } = await supabase
+            .from('users')
+            .update({
+              user_description: userDescription,
+              company_id: numericCode, // The RLS policy will handle the mapping to actual company_id
+              onboarding_complete: true
+            })
+            .eq('user_id', session.user.id);
+
+          if (updateError) throw updateError;
         }
+      } else {
+        // If no company code, just update user description
+        const { error } = await supabase
+          .from('users')
+          .update({
+            user_description: userDescription,
+            company_id: null,
+            onboarding_complete: true
+          })
+          .eq('user_id', session.user.id);
+
+        if (error) throw error;
       }
-
-      // Update user profile
-      const { error } = await supabase
-        .from('users')
-        .update({
-          user_description: userDescription,
-          company_id,
-          onboarding_complete: true
-        })
-        .eq('user_id', session.user.id);
-
-      if (error) throw error;
 
       toast({
         title: "Profile Updated",

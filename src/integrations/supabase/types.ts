@@ -187,7 +187,18 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      company_codes: {
+        Row: {
+          code: number | null
+        }
+        Insert: {
+          code?: number | null
+        }
+        Update: {
+          code?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
