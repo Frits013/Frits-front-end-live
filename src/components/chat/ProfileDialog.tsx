@@ -20,6 +20,7 @@ interface ProfileDialogProps {
 }
 
 interface CompanyData {
+  company_id: string;
   code: number;
   company_name?: string;
 }
@@ -43,9 +44,8 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
         .select(`
           user_description,
           TTS_flag,
-          companies(
-            code
-          )
+          company_id,
+          companies(code)
         `)
         .eq("user_id", session.user.id)
         .maybeSingle();
@@ -56,21 +56,18 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
         setUserDescription(profile.user_description || "");
         setTtsEnabled(profile.TTS_flag || false);
         
-        // Handle the companies data structure correctly with proper type checking
+        // Handle company data
         if (profile.companies) {
-          // Convert any numerical code to string for display
-          if (Array.isArray(profile.companies) && profile.companies.length > 0) {
-            const code = profile.companies[0]?.code;
-            setCompanyCode(code ? code.toString() : "");
-          } else if (!Array.isArray(profile.companies) && profile.companies) {
-            const companyData = profile.companies as unknown as CompanyData;
-            const code = companyData.code;
-            setCompanyCode(code ? code.toString() : "");
+          const companyData = profile.companies as CompanyData;
+          if (companyData && companyData.code) {
+            setCompanyCode(companyData.code.toString());
+            console.log("Loaded company code:", companyData.code);
+          } else {
+            setCompanyCode("");
           }
         } else {
           setCompanyCode("");
         }
-        console.log("Loaded company code:", profile.companies);
       }
     } catch (error) {
       console.error("Error loading profile:", error);
@@ -94,10 +91,14 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
     setCodeError("");
     console.log("Validating company code:", code);
     
+    // Convert string code to number before querying
+    const numericCode = parseInt(code);
+    console.log("Converted to numeric code:", numericCode);
+    
     const { data: company, error } = await supabase
       .from('companies')
-      .select('company_id')
-      .eq('code', parseInt(code))
+      .select('company_id, code')
+      .eq('code', numericCode)
       .maybeSingle();
       
     if (error) {
@@ -140,10 +141,12 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
         let company_id = null;
         if (companyCode) {
           // Look up company_id from the code
+          const numericCode = parseInt(companyCode);
+          
           const { data: company } = await supabase
             .from('companies')
             .select('company_id')
-            .eq('code', parseInt(companyCode))
+            .eq('code', numericCode)
             .maybeSingle();
 
           console.log("Company lookup result:", company);

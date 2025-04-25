@@ -35,10 +35,14 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
     setCodeError("");
     console.log("Validating company code:", code);
     
+    // Convert string code to number before querying
+    const numericCode = parseInt(code);
+    console.log("Converted to numeric code:", numericCode);
+    
     const { data: company, error } = await supabase
       .from('companies')
-      .select('company_id')
-      .eq('code', parseInt(code))
+      .select('company_id, code')
+      .eq('code', numericCode)
       .maybeSingle();
       
     if (error) {
@@ -75,10 +79,12 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
       // If company code was provided, retrieve the company ID
       if (companyCode) {
         console.log("Looking up company with code:", companyCode);
+        const numericCode = parseInt(companyCode);
+        
         const { data: company } = await supabase
           .from('companies')
-          .select('company_id')
-          .eq('code', parseInt(companyCode))
+          .select('company_id, code')
+          .eq('code', numericCode)
           .maybeSingle();
 
         console.log("Company lookup result:", company);

@@ -73,12 +73,20 @@ const Index = () => {
         .maybeSingle();
 
       if (!existingCompany) {
-        await supabase.from('companies').insert({
+        console.log("Creating test company with code 12345678");
+        const { data, error } = await supabase.from('companies').insert({
           code: 12345678,
           company_name: 'Test Company',
           company_description: 'This is a test company for development purposes'
-        });
-        console.log('Added test company with code: 12345678');
+        }).select();
+        
+        if (error) {
+          console.error("Error creating test company:", error);
+        } else {
+          console.log("Added test company:", data);
+        }
+      } else {
+        console.log("Test company already exists:", existingCompany);
       }
     };
     
