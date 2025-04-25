@@ -27,6 +27,8 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
     if (!code) return true; // Empty code is allowed (will not link to company)
     
     setCodeError("");
+    console.log("Validating company code:", code);
+    
     const { data: company, error } = await supabase
       .from('companies')
       .select('company_id')
@@ -38,6 +40,8 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
       setCodeError("Error checking company code");
       return false;
     }
+
+    console.log("Company search result:", company);
 
     if (!company) {
       setCodeError("Company code not found");
@@ -64,11 +68,14 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
 
       // If company code was provided, retrieve the company ID
       if (companyCode) {
+        console.log("Looking up company with code:", companyCode);
         const { data: company } = await supabase
           .from('companies')
           .select('company_id')
           .eq('code', companyCode.trim())
           .maybeSingle();
+
+        console.log("Company lookup result:", company);
 
         if (company) {
           company_id = company.company_id;

@@ -57,15 +57,15 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
         
         // Handle the companies data structure correctly
         if (profile.companies) {
-          const companiesData = profile.companies as CompanyData | CompanyData[];
-          if (Array.isArray(companiesData) && companiesData.length > 0) {
-            setCompanyCode(companiesData[0].code || "");
-          } else if (!Array.isArray(companiesData) && 'code' in companiesData) {
-            setCompanyCode(companiesData.code || "");
+          if (Array.isArray(profile.companies) && profile.companies.length > 0) {
+            setCompanyCode(profile.companies[0].code || "");
+          } else if (!Array.isArray(profile.companies) && profile.companies) {
+            setCompanyCode(profile.companies.code || "");
           }
         } else {
           setCompanyCode("");
         }
+        console.log("Loaded company code:", profile.companies);
       }
     } catch (error) {
       console.error("Error loading profile:", error);
@@ -81,6 +81,8 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
     if (!code) return true; // Empty code is allowed (will remove company association)
     
     setCodeError("");
+    console.log("Validating company code:", code);
+    
     const { data: company, error } = await supabase
       .from('companies')
       .select('company_id')
@@ -92,6 +94,8 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
       setCodeError("Error checking company code");
       return false;
     }
+
+    console.log("Company search result:", company);
 
     if (!company) {
       setCodeError("Company code not found");
@@ -118,6 +122,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
       if (isEditingCode) {
         // Validate company code if provided
         if (companyCode && !(await validateCompanyCode(companyCode))) {
+          setIsLoading(false);
           return;
         }
 
@@ -129,6 +134,8 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
             .select('company_id')
             .eq('code', companyCode.trim())
             .maybeSingle();
+
+          console.log("Company lookup result:", company);
 
           if (company) {
             company_id = company.company_id;

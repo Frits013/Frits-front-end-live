@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
@@ -63,6 +62,27 @@ const Index = () => {
       }
     });
 
+    // This is for development purposes only - adds a test company if needed
+    const addTestCompany = async () => {
+      // Check if test company already exists
+      const { data: existingCompany } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('code', 'TEST1234')
+        .maybeSingle();
+
+      if (!existingCompany) {
+        await supabase.from('companies').insert({
+          code: 'TEST1234',
+          company_name: 'Test Company',
+          company_description: 'This is a test company for development purposes'
+        });
+        console.log('Added test company with code: TEST1234');
+      }
+    };
+    
+    addTestCompany();
+    
     return () => {
       subscription.unsubscribe();
     };
