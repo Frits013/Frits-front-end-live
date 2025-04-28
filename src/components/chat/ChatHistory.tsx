@@ -49,32 +49,91 @@ const ChatHistoryComponent = ({
   const handleDeleteChat = async (chatId: string) => {
     console.log('Attempting to delete chat:', chatId);
     
-    // Delete the session (cascade will delete messages)
-    const { error } = await supabase
-      .from('chat_sessions')
-      .delete()
-      .eq('id', chatId);
+    try {
+      // First, check if there are any info_messages referencing the chat messages
+      const { data: infoMessages, error: infoError } = await supabase
+        .from('info_messages')
+        .select('message_id')
+        .filter('message_id', 'in', (query) => {
+          query
+            .select('message_id')
+            .from('chat_messages')
+            .eq('session_id', chatId);
+        });
 
-    if (error) {
-      console.error('Error deleting chat session:', error);
+      if (infoError) {
+        console.error('Error checking info messages:', infoError);
+      } else if (infoMessages && infoMessages.length > 0) {
+        // Delete associated info_messages first
+        console.log('Deleting associated info messages');
+        const { error: deleteInfoError } = await supabase
+          .from('info_messages')
+          .delete()
+          .filter('message_id', 'in', infoMessages.map(m => m.message_id));
+          
+        if (deleteInfoError) {
+          console.error('Error deleting info messages:', deleteInfoError);
+          toast({
+            title: "Error",
+            description: "Failed to delete associated info messages",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+      
+      // Now delete the chat messages
+      console.log('Deleting chat messages');
+      const { error: messagesError } = await supabase
+        .from('chat_messages')
+        .delete()
+        .eq('session_id', chatId);
+        
+      if (messagesError) {
+        console.error('Error deleting chat messages:', messagesError);
+        toast({
+          title: "Error",
+          description: "Failed to delete chat messages",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Finally delete the session
+      console.log('Deleting chat session');
+      const { error: sessionError } = await supabase
+        .from('chat_sessions')
+        .delete()
+        .eq('id', chatId);
+
+      if (sessionError) {
+        console.error('Error deleting chat session:', sessionError);
+        toast({
+          title: "Error",
+          description: "Failed to delete chat session",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Successfully deleted chat session');
+      setChatHistories(chatHistories.filter(chat => chat.id !== chatId));
+      if (currentChatId === chatId) {
+        setCurrentChatId(null);
+      }
+
+      toast({
+        title: "Success",
+        description: "Chat deleted successfully",
+      });
+    } catch (error) {
+      console.error('Unexpected error during deletion:', error);
       toast({
         title: "Error",
-        description: "Failed to delete chat session",
+        description: "An unexpected error occurred",
         variant: "destructive",
       });
-      return;
     }
-
-    console.log('Successfully deleted chat session');
-    setChatHistories(chatHistories.filter(chat => chat.id !== chatId));
-    if (currentChatId === chatId) {
-      setCurrentChatId(null);
-    }
-
-    toast({
-      title: "Success",
-      description: "Chat deleted successfully",
-    });
   };
 
   const handleEditTitle = (chat: ChatSession) => {
