@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { setupScene, setupLighting } from "./three/SceneSetup";
 import { createBrainStructure } from "./three/BrainStructure";
@@ -17,30 +17,65 @@ const ThreeScene = ({ isThinking, audioData }: ThreeSceneProps) => {
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const nodesRef = useRef<THREE.Mesh[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
+  // Initial setup
   useEffect(() => {
-    if (!canvasRef.current || !containerRef.current) return;
+    if (!containerRef.current || !canvasRef.current) return;
 
-    const container = containerRef.current;
-    const containerWidth = container.clientWidth;
-    const containerHeight = container.clientHeight;
+    const initializeScene = () => {
+      const container = containerRef.current;
+      if (!container) return;
 
-    // Initialize scene, camera, and renderer with container dimensions
-    const { scene, camera, renderer } = setupScene(canvasRef.current, containerWidth, containerHeight);
-    sceneRef.current = scene;
-    cameraRef.current = camera;
-    rendererRef.current = renderer;
+      // Get actual container dimensions
+      const containerRect = container.getBoundingClientRect();
+      const containerWidth = containerRect.width;
+      const containerHeight = containerRect.height;
 
-    // Setup lighting
-    setupLighting(scene);
+      if (containerWidth === 0 || containerHeight === 0) {
+        // If container has no size yet, try again in the next frame
+        requestAnimationFrame(initializeScene);
+        return;
+      }
+      
+      console.log("Initializing scene with dimensions:", containerWidth, containerHeight);
 
-    // Create brain structure
-    const { brainGroup, nodes } = createBrainStructure();
-    brainRef.current = brainGroup;
-    nodesRef.current = nodes;
-    scene.add(brainGroup);
+      // Initialize scene, camera, and renderer with container dimensions
+      const { scene, camera, renderer } = setupScene(canvasRef.current!, containerWidth, containerHeight);
+      sceneRef.current = scene;
+      cameraRef.current = camera;
+      rendererRef.current = renderer;
 
+      // Setup lighting
+      setupLighting(scene);
+
+      // Create brain structure
+      const { brainGroup, nodes } = createBrainStructure();
+      brainRef.current = brainGroup;
+      nodesRef.current = nodes;
+      scene.add(brainGroup);
+      
+      setIsInitialized(true);
+    };
+
+    // Run initialization
+    initializeScene();
+
+    // Cleanup function
+    return () => {
+      if (rendererRef.current) {
+        rendererRef.current.dispose();
+      }
+    };
+  }, []);
+
+  // Animation loop
+  useEffect(() => {
+    if (!isInitialized) return;
+    
     const animate = () => {
+      if (!sceneRef.current || !cameraRef.current || !rendererRef.current) return;
+      
       requestAnimationFrame(animate);
 
       if (brainRef.current) {
@@ -69,27 +104,40 @@ const ThreeScene = ({ isThinking, audioData }: ThreeSceneProps) => {
         }
       }
 
-      if (rendererRef.current && sceneRef.current && cameraRef.current) {
-        rendererRef.current.render(sceneRef.current, cameraRef.current);
-      }
+      rendererRef.current.render(sceneRef.current, cameraRef.current);
     };
 
     animate();
+  }, [isInitialized, isThinking, audioData]);
 
+  // Handle resize events
+  useEffect(() => {
+    if (!isInitialized) return;
+    
     const handleResize = () => {
-      if (!cameraRef.current || !rendererRef.current || !containerRef.current) return;
+      if (!containerRef.current || !cameraRef.current || !rendererRef.current) return;
       
-      const newWidth = containerRef.current.clientWidth;
-      const newHeight = containerRef.current.clientHeight;
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const newWidth = containerRect.width;
+      const newHeight = containerRect.height;
+      
+      if (newWidth === 0 || newHeight === 0) return;
+      
+      console.log("Resizing scene to:", newWidth, newHeight);
       
       cameraRef.current.aspect = newWidth / newHeight;
       cameraRef.current.updateProjectionMatrix();
       rendererRef.current.setSize(newWidth, newHeight);
     };
 
+    // Initial resize to ensure proper dimensions
+    handleResize();
+    
     window.addEventListener('resize', handleResize);
+    
+    // Cleanup
     return () => window.removeEventListener('resize', handleResize);
-  }, [isThinking, audioData]);
+  }, [isInitialized]);
 
   return (
     <div className="flex justify-center w-full">
@@ -97,7 +145,7 @@ const ThreeScene = ({ isThinking, audioData }: ThreeSceneProps) => {
         ref={containerRef}
         className="relative w-full aspect-square max-w-[800px] bg-gradient-to-b from-transparent to-purple-50/20 dark:to-purple-900/20 rounded-full"
       >
-        <canvas ref={canvasRef} className="absolute inset-0" />
+        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
         {isThinking && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="bg-white/80 dark:bg-black/80 backdrop-blur-sm px-4 py-2 rounded-full">
