@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ChatMessage } from "@/types/chat";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,6 +63,10 @@ export const useChatMessages = (sessionId: string | null) => {
       }
     };
 
+    // Reset messages and completion state when session changes
+    setMessages([]);
+    setIsConsultComplete(false);
+    
     fetchMessages();
   }, [sessionId]);
 

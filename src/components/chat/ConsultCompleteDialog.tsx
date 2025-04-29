@@ -17,7 +17,12 @@ interface ConsultCompleteDialogProps {
 
 const ConsultCompleteDialog = ({ open, onClose, onFinish }: ConsultCompleteDialogProps) => {
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      // Only trigger onClose when dialog is being closed, not when opened
+      if (!isOpen) {
+        onClose();
+      }
+    }}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Consult Session Complete</DialogTitle>

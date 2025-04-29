@@ -37,13 +37,14 @@ const ChatContainer = ({
   const [audioData, setAudioData] = useState<number[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
+  const [dialogDismissed, setDialogDismissed] = useState(false);
 
   // Watch for changes in isConsultComplete to show dialog
   useEffect(() => {
-    if (isConsultComplete && !showCompleteDialog) {
+    if (isConsultComplete && !showCompleteDialog && !dialogDismissed) {
       setShowCompleteDialog(true);
     }
-  }, [isConsultComplete, showCompleteDialog]);
+  }, [isConsultComplete, showCompleteDialog, dialogDismissed]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -212,10 +213,12 @@ const ChatContainer = ({
       });
     }
     setShowCompleteDialog(false);
+    setDialogDismissed(true);
   };
 
   const handleContinueChat = () => {
     setShowCompleteDialog(false);
+    setDialogDismissed(true);
   };
 
   return (
