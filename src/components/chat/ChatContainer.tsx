@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import ThreeScene from "@/components/chat/ThreeScene";
@@ -19,6 +18,8 @@ interface ChatContainerProps {
   isConsultComplete: boolean;
   setIsConsultComplete: (isComplete: boolean) => void;
   onConsultFinish: (sessionId: string) => void;
+  dialogDismissed: boolean;
+  setDialogDismissed: (dismissed: boolean) => void;
 }
 
 const ChatContainer = ({
@@ -29,6 +30,8 @@ const ChatContainer = ({
   isConsultComplete,
   setIsConsultComplete,
   onConsultFinish,
+  dialogDismissed,
+  setDialogDismissed,
 }: ChatContainerProps) => {
   const { toast } = useToast();
   const [inputMessage, setInputMessage] = useState("");
@@ -37,7 +40,6 @@ const ChatContainer = ({
   const [audioData, setAudioData] = useState<number[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
-  const [dialogDismissed, setDialogDismissed] = useState(false);
 
   // Watch for changes in isConsultComplete to show dialog
   useEffect(() => {

@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const useChatMessages = (sessionId: string | null) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isConsultComplete, setIsConsultComplete] = useState(false);
+  const [dialogDismissed, setDialogDismissed] = useState(false);
 
   // Fetch messages for the current session
   useEffect(() => {
@@ -41,14 +42,25 @@ export const useChatMessages = (sessionId: string | null) => {
         }
 
         if (data) {
-          // Process the messages - only filter out system messages, keep all user and assistant messages
+          // Process the messages - keep only user messages and writer (assistant) responses
+          // Filter out system messages and any internal messages
           const validMessages = data
-            .filter(msg => msg.role !== 'system')
+            .filter(msg => {
+              // Only show user messages and assistant messages that are meant for the user
+              return msg.role === 'user' || 
+                (msg.role === 'assistant' && 
+                 // Don't show internal conversation messages
+                 !msg.content.includes('internalconversation') &&
+                 !msg.content.includes('Frits_run_user_prompt') &&
+                 !msg.content.includes('reviewer_') &&
+                 !msg.content.includes('RAG_') &&
+                 !msg.content.includes('summarizer_response'));
+            })
             .map(msg => ({
               id: msg.message_id,
               content: msg.content,
               role: msg.role,
-              created_at: new Date(msg.created_at),
+              created_at: new Date(msg.content ? msg.created_at : null),
             }));
 
           console.log('Processed messages:', validMessages);
@@ -59,9 +71,10 @@ export const useChatMessages = (sessionId: string | null) => {
       }
     };
 
-    // Reset messages and completion state when session changes
+    // Reset messages, completion state, and dialog dismissed state when session changes
     setMessages([]);
     setIsConsultComplete(false);
+    setDialogDismissed(false);
     
     fetchMessages();
   }, [sessionId]);
@@ -101,6 +114,8 @@ export const useChatMessages = (sessionId: string | null) => {
     messages,
     setMessages,
     isConsultComplete,
-    setIsConsultComplete
+    setIsConsultComplete,
+    dialogDismissed,
+    setDialogDismissed
   };
 };
