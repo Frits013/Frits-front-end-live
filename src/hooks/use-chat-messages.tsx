@@ -26,42 +26,46 @@ export const useChatMessages = (sessionId: string | null) => {
       return;
     }
 
-    // Process messages to remove duplicates and internal conversation
+    // Improved processing for messages to ensure we capture all user messages
     const processedMessages: ChatMessage[] = [];
-    const messageMap = new Map(); // Track messages by content to avoid duplicates
+    const messageMap = new Map(); // Track messages by id to avoid duplicates
 
     chatMessages.forEach(msg => {
-      // Skip messages with content that looks like internal conversation
-      const content = msg.content;
-      if (!content || content.includes('multi_agent_state')) {
+      // Skip system messages and empty contents
+      if (!msg.content || msg.role === 'system') {
         return;
       }
 
-      // Include user messages and any writer/assistant responses
-      if (msg.role === 'user' || msg.role === 'assistant' || msg.role === 'writer') {
-        const formattedMessage: ChatMessage = {
-          id: msg.message_id || msg.id,
-          content: content,
-          role: msg.role,
-          created_at: new Date(msg.created_at),
-        };
+      // Skip messages that look like internal conversation format
+      if (typeof msg.content === 'string' && msg.content.includes('multi_agent_state')) {
+        return;
+      }
 
-        // Check if we already have a similar message (to avoid duplicates)
-        const messageKey = `${msg.role}-${content}`;
-        if (!messageMap.has(messageKey)) {
-          messageMap.set(messageKey, true);
-          processedMessages.push(formattedMessage);
-        }
+      // Format the message
+      const formattedMessage: ChatMessage = {
+        id: msg.message_id || msg.id,
+        content: msg.content,
+        role: msg.role,
+        created_at: new Date(msg.created_at),
+      };
+
+      // Use message ID as the unique key instead of content for better uniqueness
+      const messageKey = msg.message_id || msg.id;
+      if (!messageMap.has(messageKey)) {
+        messageMap.set(messageKey, true);
+        processedMessages.push(formattedMessage);
       }
     });
 
-    console.log('Processed messages:', processedMessages);
+    console.log('Processed messages count:', processedMessages.length);
     setMessages(processedMessages);
   };
 
   useEffect(() => {
     if (sessionId) {
       loadChatMessages(sessionId);
+    } else {
+      setMessages([]);
     }
   }, [sessionId]);
 
