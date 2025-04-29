@@ -39,9 +39,9 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
   };
 
   const formatMessage = (message: ChatMessage) => {
-    let text = message.content;
+    if (!message || !message.content) return ''; // Add null check for message and content
     
-    if (!text) return ''; // Add null check for text
+    let text = message.content;
     
     // For assistant messages, try to extract the final response if it exists
     if (message.role === 'assistant' && text.includes('Final_response')) {
@@ -87,7 +87,7 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      {messages.filter(msg => msg.role === 'user' || msg.role === 'assistant').map((message) => (
+      {messages.map((message) => (
         <div
           key={message.id}
           className={`flex ${

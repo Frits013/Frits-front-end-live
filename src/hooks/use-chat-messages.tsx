@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ChatMessage } from "@/types/chat";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,12 +41,9 @@ export const useChatMessages = (sessionId: string | null) => {
         }
 
         if (data) {
-          // Process the messages - filter out system messages and messages with no content
+          // Process the messages - only filter out system messages, keep all user and assistant messages
           const validMessages = data
-            .filter(msg => {
-              // Keep user or assistant messages that have content
-              return (msg.role === 'user' || msg.role === 'assistant') && msg.content;
-            })
+            .filter(msg => msg.role !== 'system')
             .map(msg => ({
               id: msg.message_id,
               content: msg.content,
