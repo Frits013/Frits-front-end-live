@@ -28,7 +28,7 @@ const ChatSidebar = ({
   onNewChat,
 }: ChatSidebarProps) => {
   return (
-    <Sidebar>
+    <Sidebar className="h-full w-full">
       <SidebarHeader className="p-4">
         <Button
           onClick={onNewChat}
@@ -39,7 +39,7 @@ const ChatSidebar = ({
           Start New Consult
         </Button>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="h-full overflow-y-auto">
         <SidebarGroup>
           <SidebarGroupLabel>Consult Session History</SidebarGroupLabel>
           <SidebarGroupContent>
