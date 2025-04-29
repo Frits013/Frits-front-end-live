@@ -167,9 +167,9 @@ const ChatHistoryComponent = ({
   }
 
   return (
-    <SidebarMenu className="w-full">
+    <div className="flex flex-col gap-1">
       {chatHistories.map((chat) => (
-        <SidebarMenuItem key={chat.id}>
+        <div key={chat.id} className="w-full">
           {editingChatId === chat.id ? (
             <ChatHistoryEditItem
               editingTitle={editingTitle}
@@ -187,9 +187,9 @@ const ChatHistoryComponent = ({
               onDelete={handleDeleteChat}
             />
           )}
-        </SidebarMenuItem>
+        </div>
       ))}
-    </SidebarMenu>
+    </div>
   );
 };
 

@@ -28,8 +28,8 @@ const ChatSidebar = ({
   onNewChat,
 }: ChatSidebarProps) => {
   return (
-    <Sidebar className="h-full w-full flex flex-col">
-      <SidebarHeader className="p-4 flex-shrink-0">
+    <div className="h-full flex flex-col">
+      <div className="p-4 border-b">
         <Button
           onClick={onNewChat}
           variant="default"
@@ -38,27 +38,27 @@ const ChatSidebar = ({
           <Plus className="w-4 h-4" />
           Start New Consult
         </Button>
-      </SidebarHeader>
-      <SidebarContent className="flex-1 overflow-y-auto">
-        <SidebarGroup>
-          <SidebarGroupLabel>Consult Session History</SidebarGroupLabel>
-          <SidebarGroupContent className="w-full">
-            {chatSessions.length > 0 ? (
-              <ChatHistoryComponent
-                chatHistories={chatSessions}
-                currentChatId={currentSessionId}
-                setChatHistories={setChatSessions}
-                setCurrentChatId={setCurrentSessionId}
-              />
-            ) : (
-              <div className="px-2 py-4 text-sm text-muted-foreground">
-                No consult history available.
-              </div>
-            )}
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
+      </div>
+      <div className="flex-1 overflow-auto py-2">
+        <div className="px-3 mb-2 text-sm font-medium text-muted-foreground">
+          Consult Session History
+        </div>
+        <div className="px-2">
+          {chatSessions.length > 0 ? (
+            <ChatHistoryComponent
+              chatHistories={chatSessions}
+              currentChatId={currentSessionId}
+              setChatHistories={setChatSessions}
+              setCurrentChatId={setCurrentSessionId}
+            />
+          ) : (
+            <div className="px-2 py-4 text-sm text-muted-foreground">
+              No consult history available.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
 
