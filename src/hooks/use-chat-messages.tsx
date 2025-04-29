@@ -26,18 +26,24 @@ export const useChatMessages = (sessionId: string | null) => {
       return;
     }
 
-    // Improved processing for messages to ensure we capture all user messages
+    // Process messages to only include user messages and final writer responses
     const processedMessages: ChatMessage[] = [];
     const messageMap = new Map(); // Track messages by id to avoid duplicates
 
     chatMessages.forEach(msg => {
-      // Skip system messages and empty contents
+      // Skip empty messages and system messages
       if (!msg.content || msg.role === 'system') {
         return;
       }
 
-      // Skip messages that look like internal conversation format
-      if (typeof msg.content === 'string' && msg.content.includes('multi_agent_state')) {
+      // Skip internal conversation messages (including multi_agent_state)
+      if (
+        typeof msg.content === 'string' && (
+          msg.content.includes('multi_agent_state') || 
+          msg.content.includes('internalconversation') ||
+          (msg.role === 'assistant' && !msg.content.includes('Final_response'))
+        )
+      ) {
         return;
       }
 
@@ -45,11 +51,11 @@ export const useChatMessages = (sessionId: string | null) => {
       const formattedMessage: ChatMessage = {
         id: msg.message_id || msg.id,
         content: msg.content,
-        role: msg.role,
+        role: msg.role === 'writer' ? 'assistant' : msg.role, // normalize writer role to assistant
         created_at: new Date(msg.created_at),
       };
 
-      // Use message ID as the unique key instead of content for better uniqueness
+      // Use message ID as the unique key
       const messageKey = msg.message_id || msg.id;
       if (!messageMap.has(messageKey)) {
         messageMap.set(messageKey, true);

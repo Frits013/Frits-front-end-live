@@ -11,8 +11,42 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
     return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   };
 
-  const formatMessage = (text: string) => {
+  const extractFinalResponse = (text: string): string => {
+    // If it contains Final_response, extract only that part
+    if (text.includes('Final_response')) {
+      try {
+        // Try to parse as JSON to extract Final_response
+        const jsonMatch = text.match(/{[\s\S]*}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          if (parsed.Final_response) {
+            return parsed.Final_response;
+          }
+        }
+        
+        // Fallback: try to extract anything after "Final_response":
+        const finalResponseMatch = text.match(/Final_response["\s:]+([^"]+)/);
+        if (finalResponseMatch && finalResponseMatch[1]) {
+          return finalResponseMatch[1];
+        }
+      } catch (e) {
+        console.error("Error parsing response:", e);
+      }
+    }
+    
+    // If we can't extract it, just return the original text
+    return text;
+  };
+
+  const formatMessage = (message: ChatMessage) => {
+    let text = message.content;
+    
     if (!text) return ''; // Add null check for text
+    
+    // For assistant messages, try to extract the final response if it exists
+    if (message.role === 'assistant' && text.includes('Final_response')) {
+      text = extractFinalResponse(text);
+    }
 
     // First, handle any markdown list numbers that might appear
     text = text.replace(/^\d+\.\s+/gm, '');
@@ -53,7 +87,7 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      {messages.map((message) => (
+      {messages.filter(msg => msg.role === 'user' || msg.role === 'assistant').map((message) => (
         <div
           key={message.id}
           className={`flex ${
@@ -67,7 +101,7 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
                 : 'bg-gradient-to-r from-gray-100/80 to-purple-50/80 dark:from-gray-800/80 dark:to-purple-900/80 text-gray-800 dark:text-gray-200'
             } transition-all duration-200 hover:shadow-md backdrop-blur-sm`}
           >
-            {formatMessage(message.content)}
+            {formatMessage(message)}
           </div>
         </div>
       ))}
