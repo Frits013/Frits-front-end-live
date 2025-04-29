@@ -1,80 +1,100 @@
-
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { ChatMessage } from "@/types/chat";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useChatMessages = (sessionId: string | null) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [isConsultComplete, setIsConsultComplete] = useState<boolean>(false);
-  const { toast } = useToast();
+  const [isConsultComplete, setIsConsultComplete] = useState(false);
 
-  const loadChatMessages = async (sessionId: string) => {
-    console.log('Loading messages for session:', sessionId);
-    const { data: chatMessages, error } = await supabase
-      .from('chat_messages')
-      .select('*')
-      .eq('session_id', sessionId)
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      console.error('Error loading chat messages:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load chat messages",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Process messages to only include user messages and final writer responses
-    const processedMessages: ChatMessage[] = [];
-    const messageMap = new Map(); // Track messages by id to avoid duplicates
-
-    chatMessages.forEach(msg => {
-      // Skip empty messages and system messages
-      if (!msg.content || msg.role === 'system') {
-        return;
-      }
-
-      // Skip internal conversation messages (including multi_agent_state)
-      if (
-        typeof msg.content === 'string' && (
-          msg.content.includes('multi_agent_state') || 
-          msg.content.includes('internalconversation') ||
-          (msg.role === 'assistant' && !msg.content.includes('Final_response'))
-        )
-      ) {
-        return;
-      }
-
-      // Format the message
-      const formattedMessage: ChatMessage = {
-        id: msg.message_id || msg.id,
-        content: msg.content,
-        role: msg.role === 'writer' ? 'assistant' : msg.role, // normalize writer role to assistant
-        created_at: new Date(msg.created_at),
-      };
-
-      // Use message ID as the unique key
-      const messageKey = msg.message_id || msg.id;
-      if (!messageMap.has(messageKey)) {
-        messageMap.set(messageKey, true);
-        processedMessages.push(formattedMessage);
-      }
-    });
-
-    console.log('Processed messages count:', processedMessages.length);
-    setMessages(processedMessages);
-  };
-
+  // Fetch messages for the current session
   useEffect(() => {
-    if (sessionId) {
-      loadChatMessages(sessionId);
-    } else {
-      setMessages([]);
-    }
+    const fetchMessages = async () => {
+      if (!sessionId) return;
+
+      console.log('Loading messages for session:', sessionId);
+
+      try {
+        // First, check if the session is marked as finished
+        const { data: sessionData, error: sessionError } = await supabase
+          .from('chat_sessions')
+          .select('finished')
+          .eq('id', sessionId)
+          .single();
+
+        if (sessionError) {
+          console.error('Error fetching session status:', sessionError);
+        } else if (sessionData) {
+          // Update the consult complete state based on the finished column
+          setIsConsultComplete(sessionData.finished);
+        }
+
+        // Then fetch the messages for the session
+        const { data, error } = await supabase
+          .from('chat_messages')
+          .select('*')
+          .eq('session_id', sessionId)
+          .order('created_at', { ascending: true });
+
+        if (error) {
+          console.error('Error loading messages:', error);
+          return;
+        }
+
+        if (data) {
+          // Process the messages - filter out system messages and messages with no content
+          const validMessages = data
+            .filter(msg => {
+              // Keep user or assistant messages that have content
+              return (msg.role === 'user' || msg.role === 'assistant') && msg.content;
+            })
+            .map(msg => ({
+              id: msg.message_id,
+              content: msg.content,
+              role: msg.role,
+              created_at: new Date(msg.created_at),
+            }));
+
+          console.log('Processed messages:', validMessages);
+          setMessages(validMessages);
+        }
+      } catch (error) {
+        console.error('Error in fetchMessages:', error);
+      }
+    };
+
+    fetchMessages();
   }, [sessionId]);
+
+  // Set up a subscription to listen for changes to the chat_sessions table
+  useEffect(() => {
+    if (!sessionId) return;
+
+    // Subscribe to changes on the specific session
+    const channel = supabase
+      .channel(`session-${sessionId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'chat_sessions',
+          filter: `id=eq.${sessionId}`
+        },
+        (payload) => {
+          // Check if the finished status has changed
+          const newFinishedStatus = payload.new.finished;
+          if (newFinishedStatus !== isConsultComplete) {
+            console.log('Session finished status changed:', newFinishedStatus);
+            setIsConsultComplete(newFinishedStatus);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [sessionId, isConsultComplete]);
 
   return {
     messages,

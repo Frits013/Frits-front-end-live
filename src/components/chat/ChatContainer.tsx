@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import ThreeScene from "@/components/chat/ThreeScene";
 import ChatMessageList from "@/components/chat/ChatMessageList";
@@ -37,6 +37,13 @@ const ChatContainer = ({
   const [audioData, setAudioData] = useState<number[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
+
+  // Watch for changes in isConsultComplete to show dialog
+  useEffect(() => {
+    if (isConsultComplete && !showCompleteDialog) {
+      setShowCompleteDialog(true);
+    }
+  }, [isConsultComplete, showCompleteDialog]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,11 +153,16 @@ const ChatContainer = ({
         // Don't throw here - we'll still display this in the UI
       }
       
-      // Check if the consult is marked as finished by the backend
-      if (data.consult_finish === true) {
-        console.log('Consult marked as complete by backend');
+      // After receiving response, check the session status again
+      const { data: sessionData, error: sessionCheckError } = await supabase
+        .from('chat_sessions')
+        .select('finished')
+        .eq('id', currentChatId)
+        .single();
+        
+      if (!sessionCheckError && sessionData && sessionData.finished) {
+        console.log('Session is marked as completed in the database');
         setIsConsultComplete(true);
-        setShowCompleteDialog(true);
       }
       
       // Get response content, prioritizing the 'response' field

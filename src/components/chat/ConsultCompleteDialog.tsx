@@ -22,7 +22,7 @@ const ConsultCompleteDialog = ({ open, onClose, onFinish }: ConsultCompleteDialo
         <DialogHeader>
           <DialogTitle>Consult Session Complete</DialogTitle>
           <DialogDescription>
-            The AI assistant has indicated that this consult session is complete.
+            This consult session is marked as complete in the database.
             Would you like to end the session or continue chatting?
           </DialogDescription>
         </DialogHeader>
@@ -31,7 +31,7 @@ const ConsultCompleteDialog = ({ open, onClose, onFinish }: ConsultCompleteDialo
           <Button onClick={onClose} variant="outline">
             Continue Chatting
           </Button>
-          <Button onClick={onFinish} className="bg-purple-600 hover:bg-purple-700">
+          <Button onClick={onFinish} className="bg-green-600 hover:bg-green-700">
             End Session
           </Button>
         </DialogFooter>
