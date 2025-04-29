@@ -98,6 +98,35 @@ export const useChatSessions = () => {
     return true;
   };
 
+  const markConsultFinished = async (sessionId: string) => {
+    // Update the finished flag in the chat_sessions table
+    const { error } = await supabase
+      .from('chat_sessions')
+      .update({ finished: true })
+      .eq('id', sessionId);
+
+    if (error) {
+      console.error('Error marking consult as finished:', error);
+      toast({
+        title: "Error",
+        description: "Failed to mark consult as finished",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // Update the finished flag in local state
+    setChatSessions(prevSessions => 
+      prevSessions.map(session => 
+        session.id === sessionId 
+          ? { ...session, finished: true } 
+          : session
+      )
+    );
+    
+    return true;
+  };
+
   const loadSessions = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
@@ -151,5 +180,6 @@ export const useChatSessions = () => {
     setCurrentSessionId,
     createNewChat,
     updateSessionTitle,
+    markConsultFinished,
   };
 };

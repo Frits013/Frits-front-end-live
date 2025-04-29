@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -182,6 +183,7 @@ const ChatHistoryComponent = ({
               id={chat.id}
               title={chat.session_name}
               isActive={currentChatId === chat.id}
+              isCompleted={chat.finished}
               onSelect={() => setCurrentChatId(chat.id)}
               onEdit={() => handleEditTitle(chat)}
               onDelete={handleDeleteChat}

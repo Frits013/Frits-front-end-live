@@ -1,5 +1,6 @@
+
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Check } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,6 +18,7 @@ interface ChatHistoryItemProps {
   id: string;
   title: string;
   isActive: boolean;
+  isCompleted?: boolean;
   onSelect: () => void;
   onEdit: () => void;
   onDelete: (id: string) => void;
@@ -26,6 +28,7 @@ const ChatHistoryItem = ({
   id,
   title,
   isActive,
+  isCompleted = false,
   onSelect,
   onEdit,
   onDelete,
@@ -35,9 +38,14 @@ const ChatHistoryItem = ({
       <SidebarMenuButton
         onClick={onSelect}
         isActive={isActive}
-        className="flex-1"
+        className="flex-1 flex items-center gap-2"
       >
         {title}
+        {isCompleted && (
+          <span className="ml-auto">
+            <Check className="h-4 w-4 text-green-500" />
+          </span>
+        )}
       </SidebarMenuButton>
       <Button
         variant="ghost"

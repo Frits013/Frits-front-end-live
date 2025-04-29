@@ -6,6 +6,7 @@ import { ChatMessage } from "@/types/chat";
 
 export const useChatMessages = (sessionId: string | null) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isConsultComplete, setIsConsultComplete] = useState<boolean>(false);
   const { toast } = useToast();
 
   const loadChatMessages = async (sessionId: string) => {
@@ -78,5 +79,7 @@ export const useChatMessages = (sessionId: string | null) => {
   return {
     messages,
     setMessages,
+    isConsultComplete,
+    setIsConsultComplete
   };
 };

@@ -18,11 +18,16 @@ const Chat = () => {
     setCurrentSessionId,
     createNewChat,
     updateSessionTitle,
+    markConsultFinished,
   } = useChatSessions();
 
-  const { messages, setMessages } = useChatMessages(currentSessionId);
+  const { messages, setMessages, isConsultComplete, setIsConsultComplete } = useChatMessages(currentSessionId);
   const { handleSignOut } = useAuthOperations();
   const { showOnboarding, setShowOnboarding } = useOnboarding();
+
+  const handleConsultFinish = (sessionId: string) => {
+    markConsultFinished(sessionId);
+  };
 
   return (
     <SidebarProvider>
@@ -44,6 +49,9 @@ const Chat = () => {
               setMessages={setMessages}
               currentChatId={currentSessionId}
               updateChatTitle={updateSessionTitle}
+              isConsultComplete={isConsultComplete}
+              setIsConsultComplete={setIsConsultComplete}
+              onConsultFinish={handleConsultFinish}
             />
             <OnboardingWizard
               open={showOnboarding}

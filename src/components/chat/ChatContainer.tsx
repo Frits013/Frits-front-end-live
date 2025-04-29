@@ -9,12 +9,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { ChatMessage } from "@/types/chat";
 import { config } from "@/config/environment";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import ConsultCompleteDialog from "@/components/chat/ConsultCompleteDialog";
 
 interface ChatContainerProps {
   messages: ChatMessage[];
   setMessages: (messages: ChatMessage[]) => void;
   currentChatId: string | null;
   updateChatTitle: (chatId: string, newTitle: string) => Promise<boolean>;
+  isConsultComplete: boolean;
+  setIsConsultComplete: (isComplete: boolean) => void;
+  onConsultFinish: (sessionId: string) => void;
 }
 
 const ChatContainer = ({
@@ -22,6 +26,9 @@ const ChatContainer = ({
   setMessages,
   currentChatId,
   updateChatTitle,
+  isConsultComplete,
+  setIsConsultComplete,
+  onConsultFinish,
 }: ChatContainerProps) => {
   const { toast } = useToast();
   const [inputMessage, setInputMessage] = useState("");
@@ -29,6 +36,7 @@ const ChatContainer = ({
   const isThinkingRef = useRef(false);
   const [audioData, setAudioData] = useState<number[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showCompleteDialog, setShowCompleteDialog] = useState(false);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,6 +146,13 @@ const ChatContainer = ({
         // Don't throw here - we'll still display this in the UI
       }
       
+      // Check if the consult is marked as finished by the backend
+      if (data.consult_finish === true) {
+        console.log('Consult marked as complete by backend');
+        setIsConsultComplete(true);
+        setShowCompleteDialog(true);
+      }
+      
       // Get response content, prioritizing the 'response' field
       const responseContent = data.response || "No response generated";
       
@@ -176,6 +191,21 @@ const ChatContainer = ({
     }
   };
 
+  const handleFinishConsult = () => {
+    if (currentChatId) {
+      onConsultFinish(currentChatId);
+      toast({
+        title: "Success",
+        description: "Consult session marked as complete",
+      });
+    }
+    setShowCompleteDialog(false);
+  };
+
+  const handleContinueChat = () => {
+    setShowCompleteDialog(false);
+  };
+
   return (
     <div className="flex-1 flex flex-col h-[100dvh] w-full">
       <div className="flex-1 overflow-hidden p-4 flex flex-col">
@@ -210,6 +240,12 @@ const ChatContainer = ({
           </div>
         </Card>
       </div>
+
+      <ConsultCompleteDialog
+        open={showCompleteDialog}
+        onClose={handleContinueChat}
+        onFinish={handleFinishConsult}
+      />
     </div>
   );
 };
