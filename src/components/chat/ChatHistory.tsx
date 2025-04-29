@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -159,8 +158,16 @@ const ChatHistoryComponent = ({
     setEditingTitle("");
   };
 
+  if (chatHistories.length === 0) {
+    return (
+      <div className="p-2 text-sm text-muted-foreground">
+        No consult history found.
+      </div>
+    );
+  }
+
   return (
-    <SidebarMenu>
+    <SidebarMenu className="w-full">
       {chatHistories.map((chat) => (
         <SidebarMenuItem key={chat.id}>
           {editingChatId === chat.id ? (

@@ -28,8 +28,13 @@ const ChatLayout = ({ sidebar, content }: ChatLayoutProps) => {
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-[280px] p-0 overflow-y-auto">
-              {sidebar}
+            <SheetContent 
+              side="left" 
+              className="w-[280px] p-0 flex flex-col overflow-hidden"
+            >
+              <div className="flex-1 overflow-y-auto h-full">
+                {sidebar}
+              </div>
             </SheetContent>
           </Sheet>
         </>

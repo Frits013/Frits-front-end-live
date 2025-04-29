@@ -28,8 +28,8 @@ const ChatSidebar = ({
   onNewChat,
 }: ChatSidebarProps) => {
   return (
-    <Sidebar className="h-full w-full">
-      <SidebarHeader className="p-4">
+    <Sidebar className="h-full w-full flex flex-col">
+      <SidebarHeader className="p-4 flex-shrink-0">
         <Button
           onClick={onNewChat}
           variant="default"
@@ -39,16 +39,22 @@ const ChatSidebar = ({
           Start New Consult
         </Button>
       </SidebarHeader>
-      <SidebarContent className="h-full overflow-y-auto">
+      <SidebarContent className="flex-1 overflow-y-auto">
         <SidebarGroup>
           <SidebarGroupLabel>Consult Session History</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <ChatHistoryComponent
-              chatHistories={chatSessions}
-              currentChatId={currentSessionId}
-              setChatHistories={setChatSessions}
-              setCurrentChatId={setCurrentSessionId}
-            />
+          <SidebarGroupContent className="w-full">
+            {chatSessions.length > 0 ? (
+              <ChatHistoryComponent
+                chatHistories={chatSessions}
+                currentChatId={currentSessionId}
+                setChatHistories={setChatSessions}
+                setCurrentChatId={setCurrentSessionId}
+              />
+            ) : (
+              <div className="px-2 py-4 text-sm text-muted-foreground">
+                No consult history available.
+              </div>
+            )}
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
