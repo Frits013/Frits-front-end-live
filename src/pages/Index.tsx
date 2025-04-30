@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
@@ -145,6 +146,18 @@ const Index = () => {
                 }}
                 providers={[]}
               />
+              
+              <Button 
+                variant="outline" 
+                className="w-full bg-white text-blue-600 border-blue-200 hover:bg-blue-50 mt-2"
+                onClick={() => {
+                  // Here would be the signup navigation if needed
+                  // For Supabase Auth UI, this is already handled by the Auth component
+                }}
+              >
+                Sign up
+              </Button>
+              
               <div className="mt-6 relative">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t border-gray-300" />
@@ -161,17 +174,6 @@ const Index = () => {
                 >
                   <Github className="h-4 w-4" />
                   GitHub
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  className="w-full bg-white text-blue-600 border-blue-200 hover:bg-blue-50"
-                  onClick={() => {
-                    // Here would be the signup navigation if needed
-                    // For Supabase Auth UI, this is already handled by the Auth component
-                  }}
-                >
-                  Don't have an account? Sign up
                 </Button>
               </div>
             </>
