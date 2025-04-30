@@ -143,6 +143,12 @@ const Index = () => {
                       },
                     },
                   },
+                  // Remove any "Sign Up" link from Auth UI since we have our own button
+                  style: {
+                    anchor: {
+                      textDecoration: 'none',
+                    },
+                  },
                 }}
                 providers={[]}
               />
