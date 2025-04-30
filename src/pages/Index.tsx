@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
@@ -14,8 +13,10 @@ import { useAuthOperations } from "@/hooks/use-auth-operations";
 const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { handleSignInWithGithub } = useAuthOperations();
+  const { handleSignInWithGithub, handleEmailSignUp } = useAuthOperations();
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   useEffect(() => {
     // Check if user is already logged in
@@ -101,6 +102,13 @@ const Index = () => {
     };
   }, [navigate, toast]);
 
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email && password) {
+      await handleEmailSignUp(email, password);
+    }
+  };
+
   return (
     <div 
       className="min-h-screen flex flex-col items-center justify-center p-4 relative"
@@ -143,22 +151,34 @@ const Index = () => {
                       },
                     },
                   },
-                  // Remove any "Sign Up" link from Auth UI since we have our own button
                   style: {
                     anchor: {
-                      textDecoration: 'none',
+                      display: 'none', // Hide all anchor tags including the sign up/sign in links
+                    },
+                    message: {
+                      margin: '0',
                     },
                   },
                 }}
                 providers={[]}
+                view="sign_in"
               />
               
               <Button 
                 variant="outline" 
                 className="w-full bg-white text-blue-600 border-blue-200 hover:bg-blue-50 mt-2"
                 onClick={() => {
-                  // Here would be the signup navigation if needed
-                  // For Supabase Auth UI, this is already handled by the Auth component
+                  const authElement = document.querySelector('[data-supabase-auth]');
+                  if (authElement) {
+                    const viewAttr = authElement.getAttribute('data-supabase-auth-view');
+                    if (viewAttr === 'sign_in') {
+                      // If currently on sign in view, switch to sign up
+                      window.location.hash = 'auth-sign-up';
+                    } else {
+                      // Otherwise switch to sign in
+                      window.location.hash = 'auth-sign-in';
+                    }
+                  }
                 }}
               >
                 Sign up
