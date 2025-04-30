@@ -17,6 +17,7 @@ const Index = () => {
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [authView, setAuthView] = useState<'sign_in' | 'sign_up'>('sign_in');
 
   useEffect(() => {
     // Check if user is already logged in
@@ -109,6 +110,10 @@ const Index = () => {
     }
   };
 
+  const toggleAuthView = () => {
+    setAuthView(authView === 'sign_in' ? 'sign_up' : 'sign_in');
+  };
+
   return (
     <div 
       className="min-h-screen flex flex-col items-center justify-center p-4 relative"
@@ -153,7 +158,8 @@ const Index = () => {
                   },
                   style: {
                     anchor: {
-                      display: 'none', // Hide all anchor tags including the sign up/sign in links
+                      // Only hide the sign up/sign in links, but keep forgot password
+                      display: 'inline-flex', 
                     },
                     message: {
                       margin: '0',
@@ -161,27 +167,15 @@ const Index = () => {
                   },
                 }}
                 providers={[]}
-                view="sign_in"
+                view={authView}
               />
               
               <Button 
                 variant="outline" 
                 className="w-full bg-white text-blue-600 border-blue-200 hover:bg-blue-50 mt-2"
-                onClick={() => {
-                  const authElement = document.querySelector('[data-supabase-auth]');
-                  if (authElement) {
-                    const viewAttr = authElement.getAttribute('data-supabase-auth-view');
-                    if (viewAttr === 'sign_in') {
-                      // If currently on sign in view, switch to sign up
-                      window.location.hash = 'auth-sign-up';
-                    } else {
-                      // Otherwise switch to sign in
-                      window.location.hash = 'auth-sign-in';
-                    }
-                  }
-                }}
+                onClick={toggleAuthView}
               >
-                Sign up
+                {authView === 'sign_in' ? 'Sign up' : 'Sign in'}
               </Button>
               
               <div className="mt-6 relative">

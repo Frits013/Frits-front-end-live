@@ -1,0 +1,10 @@
+
+/* Hide only the sign in/sign up links but keep other links like "Forgot password" */
+[data-supabase-auth] a:has(.sbui-btn-text) {
+  display: none !important;
+}
+
+/* Keep "Forgot password" links visible */
+[data-supabase-auth] a:not(:has(.sbui-btn-text)) {
+  display: inline-flex !important;
+}
