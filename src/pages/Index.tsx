@@ -1,34 +1,18 @@
 import { useEffect, useState } from "react";
-import { Auth } from "@supabase/auth-ui-react";
-import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Github } from "lucide-react";
 import { useAuthOperations } from "@/hooks/use-auth-operations";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { AuthContent } from "@/components/auth/AuthContent";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { 
-    handleSignInWithGithub, 
-    handleEmailSignUp,
-    handleEmailSignIn, 
-    resendConfirmationEmail,
-    checkEmailConfirmation 
-  } = useAuthOperations();
-
+  const { checkEmailConfirmation } = useAuthOperations();
   const [isCheckingSession, setIsCheckingSession] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [authView, setAuthView] = useState<'sign_in' | 'sign_up'>('sign_in');
-  const [resendEmail, setResendEmail] = useState('');
-  const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
     // Check if user is already logged in and has confirmed email
@@ -151,40 +135,6 @@ const Index = () => {
     };
   }, [navigate, toast, checkEmailConfirmation]);
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email && password) {
-      await handleEmailSignUp(email, password);
-    }
-  };
-  
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email && password) {
-      await handleEmailSignIn(email, password);
-    }
-  };
-
-  const handleResendConfirmation = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!resendEmail) {
-      toast({
-        title: "Email Required",
-        description: "Please enter your email address",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsResending(true);
-    await resendConfirmationEmail(resendEmail);
-    setIsResending(false);
-  };
-
-  const toggleAuthView = () => {
-    setAuthView(authView === 'sign_in' ? 'sign_up' : 'sign_in');
-  };
-
   return (
     <div 
       className="min-h-screen flex flex-col items-center justify-center p-4 relative"
@@ -210,88 +160,9 @@ const Index = () => {
 
         <Card className="p-6 backdrop-blur-md bg-white/80 border border-blue-100 shadow-lg">
           {isCheckingSession ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
+            <LoadingSpinner />
           ) : (
-            <>
-              <Auth
-                supabaseClient={supabase}
-                appearance={{
-                  theme: ThemeSupa,
-                  variables: {
-                    default: {
-                      colors: {
-                        brand: '#3b82f6',
-                        brandAccent: '#2563eb',
-                      },
-                    },
-                  },
-                  style: {
-                    anchor: {
-                      display: 'inline-flex', 
-                    },
-                    message: {
-                      margin: '0',
-                    },
-                  },
-                }}
-                providers={[]}
-                view={authView}
-              />
-              
-              <Button 
-                variant="outline" 
-                className="w-full bg-white text-blue-600 border-blue-200 hover:bg-blue-50 mt-2"
-                onClick={toggleAuthView}
-              >
-                {authView === 'sign_in' ? 'Sign up' : 'Sign in'}
-              </Button>
-              
-              <div className="mt-4 border-t border-gray-200 pt-4">
-                <h3 className="text-sm font-medium mb-2">Didn't receive confirmation email?</h3>
-                <form onSubmit={handleResendConfirmation} className="space-y-2">
-                  <div className="space-y-1">
-                    <Label htmlFor="resend-email">Email</Label>
-                    <Input
-                      id="resend-email"
-                      type="email"
-                      value={resendEmail}
-                      onChange={(e) => setResendEmail(e.target.value)}
-                      placeholder="Enter your email"
-                      required
-                    />
-                  </div>
-                  <Button 
-                    type="submit" 
-                    variant="secondary"
-                    className="w-full"
-                    disabled={isResending}
-                  >
-                    {isResending ? "Sending..." : "Resend Confirmation Email"}
-                  </Button>
-                </form>
-              </div>
-              
-              <div className="mt-6 relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-gray-300" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white/80 text-gray-500">Or continue with</span>
-                </div>
-              </div>
-              <div className="mt-6 space-y-4">
-                <Button 
-                  variant="outline" 
-                  className="w-full flex items-center justify-center gap-2" 
-                  onClick={handleSignInWithGithub}
-                >
-                  <Github className="h-4 w-4" />
-                  GitHub
-                </Button>
-              </div>
-            </>
+            <AuthContent />
           )}
         </Card>
       </div>
