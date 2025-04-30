@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import ChatContainer from "@/components/chat/ChatContainer";
 import ChatLayout from "@/components/chat/ChatLayout";
 import { useChatMessages } from "@/hooks/use-chat-messages";
@@ -8,39 +8,54 @@ import { useProfile } from "@/hooks/use-profile";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import ChatSidebar from "@/components/chat/ChatSidebar";
 
 const Chat = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const isThinkingRef = useRef(false);
+  const [audioData, setAudioData] = useState<number[]>([]);
   
+  // Get the current session ID from the chat sessions hook
+  const {
+    chatSessions,
+    currentSessionId,
+    setCurrentSessionId,
+    createNewChat,
+    updateSessionTitle,
+    markConsultFinished,
+  } = useChatSessions();
+
+  // Use the current session ID to fetch messages
   const {
     messages,
     setMessages,
-    errorMessage,
-    setErrorMessage,
-    isThinkingRef,
-    isProcessing,
-    setIsProcessing,
-    audioData,
-    sendMessage,
-    retryMessage,
-  } = useChatMessages();
-
-  const {
-    chatSessions,
-    currentChatId,
-    setCurrentChatId,
-    createNewChat,
-    renameChatSession,
     isConsultComplete,
     setIsConsultComplete,
     dialogDismissed,
-    setDialogDismissed,
-    finishConsultSession,
-  } = useChatSessions(setMessages);
+    setDialogDismissed
+  } = useChatMessages(currentSessionId);
 
-  const { profile, loadProfileData, updateProfile, isProfileModalOpen, setIsProfileModalOpen } = useProfile();
+  // Load user profile data
+  const { 
+    companyCode, 
+    setCompanyCode,
+    userDescription,
+    setUserDescription,
+    ttsEnabled,
+    setTtsEnabled,
+    isLoading: profileLoading,
+    codeError,
+    setCodeError,
+    loadProfile,
+    saveProfile
+  } = useProfile();
+  
+  // Used for profile modal
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Check authentication and email confirmation
   useEffect(() => {
@@ -73,7 +88,7 @@ const Chat = () => {
         }
         
         // User is authenticated and email confirmed
-        await loadProfileData();
+        await loadProfile();
         setIsLoading(false);
       } catch (error) {
         console.error("Auth check error:", error);
@@ -93,7 +108,7 @@ const Chat = () => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate, toast, loadProfileData]);
+  }, [navigate, toast, loadProfile]);
 
   if (isLoading) {
     return (
@@ -105,27 +120,31 @@ const Chat = () => {
 
   return (
     <ChatLayout
-      chatSessions={chatSessions}
-      currentChatId={currentChatId}
-      setCurrentChatId={setCurrentChatId}
-      createNewChat={createNewChat}
-      profile={profile}
-      updateProfile={updateProfile}
-      isProfileModalOpen={isProfileModalOpen}
-      setIsProfileModalOpen={setIsProfileModalOpen}
-    >
-      <ChatContainer
-        messages={messages}
-        setMessages={setMessages}
-        currentChatId={currentChatId}
-        updateChatTitle={renameChatSession}
-        isConsultComplete={isConsultComplete}
-        setIsConsultComplete={setIsConsultComplete}
-        onConsultFinish={finishConsultSession}
-        dialogDismissed={dialogDismissed}
-        setDialogDismissed={setDialogDismissed}
-      />
-    </ChatLayout>
+      sidebar={
+        <ChatSidebar
+          chatSessions={chatSessions}
+          currentSessionId={currentSessionId}
+          setChatSessions={(sessions) => {
+            /* We don't have direct access to this setter, but we're keeping the prop */
+          }}
+          setCurrentSessionId={setCurrentSessionId}
+          onNewChat={createNewChat}
+        />
+      }
+      content={
+        <ChatContainer
+          messages={messages}
+          setMessages={setMessages}
+          currentChatId={currentSessionId}
+          updateChatTitle={updateSessionTitle}
+          isConsultComplete={isConsultComplete}
+          setIsConsultComplete={setIsConsultComplete}
+          onConsultFinish={(sessionId) => markConsultFinished(sessionId)}
+          dialogDismissed={dialogDismissed}
+          setDialogDismissed={setDialogDismissed}
+        />
+      }
+    />
   );
 };
 
