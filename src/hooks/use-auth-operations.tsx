@@ -59,10 +59,20 @@ export const useAuthOperations = () => {
         return { error };
       }
 
-      toast({
-        title: "Sign Up Successful",
-        description: "Please check your email to confirm your account before signing in.",
-      });
+      // Check if user needs to confirm email
+      const needsEmailConfirmation = !data.user?.email_confirmed_at;
+      
+      if (needsEmailConfirmation) {
+        toast({
+          title: "Sign Up Successful",
+          description: "Please check your email to confirm your account before signing in.",
+        });
+      } else {
+        toast({
+          title: "Sign Up Successful",
+          description: "You've been signed up successfully!",
+        });
+      }
       
       return { data };
     } catch (error) {
@@ -91,6 +101,18 @@ export const useAuthOperations = () => {
           variant: "destructive",
         });
         return { error };
+      }
+
+      // Check if email is confirmed
+      if (data.user && !data.user.email_confirmed_at) {
+        toast({
+          title: "Email Not Confirmed",
+          description: "Please check your email and confirm your account before signing in.",
+          variant: "destructive",
+        });
+        // Sign out the user immediately since they shouldn't be logged in yet
+        await supabase.auth.signOut();
+        return { error: new Error("Email not confirmed") };
       }
 
       toast({

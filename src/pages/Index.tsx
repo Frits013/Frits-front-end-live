@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
@@ -34,7 +35,19 @@ const Index = () => {
         }
 
         if (session) {
-          navigate('/chat');
+          // Check if the user's email is confirmed before redirecting to chat
+          const user = session.user;
+          if (user && user.email_confirmed_at) {
+            navigate('/chat');
+          } else {
+            // If email not confirmed, sign them out and show message
+            await supabase.auth.signOut();
+            toast({
+              title: "Email Not Confirmed",
+              description: "Please check your email and confirm your account before signing in.",
+              variant: "destructive",
+            });
+          }
         }
       } catch (error) {
         console.error("Auth error:", error);
@@ -50,11 +63,23 @@ const Index = () => {
       console.log("Auth state changed:", event);
       
       if (event === 'SIGNED_IN' && session) {
-        toast({
-          title: "Welcome!",
-          description: "Successfully signed in. Redirecting to chat...",
-        });
-        navigate('/chat');
+        // Check if email is confirmed before redirecting
+        const user = session.user;
+        if (user && user.email_confirmed_at) {
+          toast({
+            title: "Welcome!",
+            description: "Successfully signed in. Redirecting to chat...",
+          });
+          navigate('/chat');
+        } else {
+          // If email not confirmed, sign them out and show message
+          await supabase.auth.signOut();
+          toast({
+            title: "Email Not Confirmed",
+            description: "Please check your email and confirm your account before signing in.",
+            variant: "destructive",
+          });
+        }
       }
 
       if (event === 'SIGNED_OUT') {
