@@ -24,8 +24,12 @@ export const ResendConfirmationForm = () => {
     }
     
     setIsResending(true);
-    await resendConfirmationEmail(resendEmail);
-    setIsResending(false);
+    try {
+      const result = await resendConfirmationEmail(resendEmail);
+      console.log("Resend result:", result);
+    } finally {
+      setIsResending(false);
+    }
   };
 
   return (

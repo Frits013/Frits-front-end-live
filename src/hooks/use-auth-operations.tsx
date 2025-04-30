@@ -183,6 +183,9 @@ export const useAuthOperations = () => {
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email,
+        options: {
+          emailRedirectTo: window.location.origin,
+        }
       });
 
       if (error) {
