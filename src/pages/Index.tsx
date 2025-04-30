@@ -156,15 +156,6 @@ const Index = () => {
                       },
                     },
                   },
-                  style: {
-                    anchor: {
-                      // Only hide the sign up/sign in links, but keep forgot password
-                      display: 'inline-flex', 
-                    },
-                    message: {
-                      margin: '0',
-                    },
-                  },
                 }}
                 providers={[]}
                 view={authView}
