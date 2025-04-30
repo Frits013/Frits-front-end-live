@@ -154,7 +154,7 @@ const Index = () => {
                   <span className="px-2 bg-white/80 text-gray-500">Or continue with</span>
                 </div>
               </div>
-              <div className="mt-6">
+              <div className="mt-6 space-y-4">
                 <Button 
                   variant="outline" 
                   className="w-full flex items-center justify-center gap-2" 
@@ -163,6 +163,19 @@ const Index = () => {
                   <Github className="h-4 w-4" />
                   GitHub
                 </Button>
+                
+                <div className="flex items-center justify-center">
+                  <Button 
+                    variant="outline" 
+                    className="bg-white text-blue-600 border-blue-200 hover:bg-blue-50"
+                    onClick={() => {
+                      // Here would be the signup navigation if needed
+                      // For Supabase Auth UI, this is already handled by the Auth component
+                    }}
+                  >
+                    Don't have an account? Sign up
+                  </Button>
+                </div>
               </div>
             </>
           )}
