@@ -77,6 +77,8 @@ export const useAuthOperations = () => {
 
   const handleEmailSignUp = async (email: string, password: string) => {
     try {
+      console.log("Attempting to sign up with email:", email);
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -94,12 +96,23 @@ export const useAuthOperations = () => {
         });
         return { error };
       }
-
-      toast({
-        title: "Sign Up Successful",
-        description: "Please check your email for a confirmation link.",
-        duration: 6000,
-      });
+      
+      console.log("Sign up successful:", data);
+      
+      // Check if we received a confirmation flow
+      if (data?.user && !data.user.email_confirmed_at) {
+        toast({
+          title: "Almost There!",
+          description: "Please check your email for a confirmation link. You'll need to verify your email before signing in.",
+          duration: 8000,
+        });
+      } else {
+        toast({
+          title: "Sign Up Successful",
+          description: "Your account has been created successfully!",
+          duration: 6000,
+        });
+      }
       
       return { data };
     } catch (error) {
@@ -165,12 +178,15 @@ export const useAuthOperations = () => {
 
   const resendConfirmationEmail = async (email: string) => {
     try {
+      console.log("Attempting to resend confirmation email to:", email);
+      
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email,
       });
 
       if (error) {
+        console.error("Failed to resend confirmation email:", error);
         toast({
           title: "Failed to Resend",
           description: error.message,
@@ -179,6 +195,7 @@ export const useAuthOperations = () => {
         return { error };
       }
 
+      console.log("Confirmation email resent successfully");
       toast({
         title: "Email Sent",
         description: "Confirmation email has been resent. Please check your inbox.",

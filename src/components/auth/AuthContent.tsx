@@ -39,6 +39,7 @@ export const AuthContent = () => {
         }}
         providers={[]}
         view={authView}
+        redirectTo={window.location.origin}
       />
       
       <Button 
