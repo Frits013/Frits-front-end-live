@@ -11,42 +11,10 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
     return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   };
 
-  const extractFinalResponse = (text: string): string => {
-    // If it contains Final_response, extract only that part
-    if (text.includes('Final_response')) {
-      try {
-        // Try to parse as JSON to extract Final_response
-        const jsonMatch = text.match(/{[\s\S]*}/);
-        if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[0]);
-          if (parsed.Final_response) {
-            return parsed.Final_response;
-          }
-        }
-        
-        // Fallback: try to extract anything after "Final_response":
-        const finalResponseMatch = text.match(/Final_response["\s:]+([^"]+)/);
-        if (finalResponseMatch && finalResponseMatch[1]) {
-          return finalResponseMatch[1];
-        }
-      } catch (e) {
-        console.error("Error parsing response:", e);
-      }
-    }
-    
-    // If we can't extract it, just return the original text
-    return text;
-  };
-
   const formatMessage = (message: ChatMessage) => {
     if (!message || !message.content) return ''; // Add null check for message and content
     
     let text = message.content;
-    
-    // For assistant messages, try to extract the final response if it exists
-    if (message.role === 'assistant' && text.includes('Final_response')) {
-      text = extractFinalResponse(text);
-    }
 
     // First, handle any markdown list numbers that might appear
     text = text.replace(/^\d+\.\s+/gm, '');

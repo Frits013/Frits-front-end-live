@@ -43,23 +43,24 @@ export const useChatMessages = (sessionId: string | null) => {
 
         if (data) {
           // Process the messages - keep only user messages and writer (assistant) responses
-          // Filter out system messages and any internal messages
           const validMessages = data
             .filter(msg => {
-              // Only show user messages and assistant messages that are meant for the user
-              return msg.role === 'user' || 
-                (msg.role === 'assistant' && 
-                 // Don't show internal conversation messages
-                 !msg.content.includes('internalconversation') &&
-                 !msg.content.includes('Frits_run_user_prompt') &&
-                 !msg.content.includes('reviewer_') &&
-                 !msg.content.includes('RAG_') &&
-                 !msg.content.includes('summarizer_response'));
+              // Keep user messages
+              if (msg.role === 'user') {
+                return true;
+              }
+              
+              // Keep writer messages (assistant messages for the user)
+              if (msg.role === 'writer' || msg.role === 'assistant') {
+                return true;
+              }
+              
+              return false;
             })
             .map(msg => ({
               id: msg.message_id,
               content: msg.content,
-              role: msg.role,
+              role: msg.role === 'writer' ? 'assistant' : msg.role, // Map 'writer' role to 'assistant' for UI consistency
               created_at: new Date(msg.content ? msg.created_at : null),
             }));
 
