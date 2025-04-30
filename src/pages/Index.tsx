@@ -89,11 +89,51 @@ const Index = () => {
         });
       }
     });
+
+    // This is for development purposes only - adds a test company if needed
+    const addTestCompany = async () => {
+      try {
+        // Check if test company already exists
+        const { data: existingCompany } = await supabase
+          .from('companies')
+          .select('*')
+          .eq('code', 12345678)
+          .maybeSingle();
+
+        if (!existingCompany) {
+          console.log("Creating test company with code 12345678");
+          const { data, error } = await supabase.from('companies').insert({
+            code: 12345678,
+            company_name: 'Test Company',
+            company_description: 'This is a test company for development purposes'
+          }).select();
+          
+          if (error) {
+            console.error("Error creating test company:", error);
+          } else {
+            console.log("Added test company:", data);
+          }
+        } else {
+          console.log("Test company already exists:", existingCompany);
+        }
+      } catch (error) {
+        console.error("Error in addTestCompany:", error);
+      }
+    };
+    
+    addTestCompany();
     
     return () => {
       subscription.unsubscribe();
     };
   }, [navigate, toast]);
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email && password) {
+      await handleEmailSignUp(email, password);
+    }
+  };
 
   const toggleAuthView = () => {
     setAuthView(authView === 'sign_in' ? 'sign_up' : 'sign_in');
