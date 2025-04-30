@@ -25,15 +25,22 @@ export const useAuthOperations = () => {
   }, []);
 
   const checkEmailConfirmation = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (user) {
-      setIsEmailConfirmed(user.email_confirmed_at !== null);
-      return user.email_confirmed_at !== null;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        const isConfirmed = user.email_confirmed_at !== null;
+        setIsEmailConfirmed(isConfirmed);
+        return isConfirmed;
+      }
+      
+      setIsEmailConfirmed(false);
+      return false;
+    } catch (error) {
+      console.error("Error checking email confirmation:", error);
+      setIsEmailConfirmed(false);
+      return false;
     }
-    
-    setIsEmailConfirmed(false);
-    return false;
   };
 
   const handleSignOut = async () => {

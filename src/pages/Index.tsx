@@ -41,6 +41,7 @@ const Index = () => {
           console.error("Session error:", error);
           // Clear any invalid session data
           await supabase.auth.signOut();
+          setIsCheckingSession(false);
           return;
         }
 
@@ -56,11 +57,14 @@ const Index = () => {
               duration: 6000,
             });
             // Keep on login page if email isn't confirmed
+            await supabase.auth.signOut();
           }
         }
+        
+        // Always set checking to false at the end, even if there's no session
+        setIsCheckingSession(false);
       } catch (error) {
         console.error("Auth error:", error);
-      } finally {
         setIsCheckingSession(false);
       }
     };
