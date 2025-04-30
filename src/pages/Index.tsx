@@ -9,18 +9,29 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Github } from "lucide-react";
 import { useAuthOperations } from "@/hooks/use-auth-operations";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { handleSignInWithGithub, handleEmailSignUp } = useAuthOperations();
+  const { 
+    handleSignInWithGithub, 
+    handleEmailSignUp,
+    handleEmailSignIn, 
+    resendConfirmationEmail,
+    checkEmailConfirmation 
+  } = useAuthOperations();
+
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [authView, setAuthView] = useState<'sign_in' | 'sign_up'>('sign_in');
+  const [resendEmail, setResendEmail] = useState('');
+  const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
-    // Check if user is already logged in
+    // Check if user is already logged in and has confirmed email
     const checkUser = async () => {
       try {
         setIsCheckingSession(true);
@@ -34,7 +45,18 @@ const Index = () => {
         }
 
         if (session) {
-          navigate('/chat');
+          const isConfirmed = await checkEmailConfirmation();
+          if (isConfirmed) {
+            navigate('/chat');
+          } else {
+            toast({
+              title: "Email Not Confirmed",
+              description: "Please check your email and confirm your account before accessing the chat.",
+              variant: "destructive",
+              duration: 6000,
+            });
+            // Keep on login page if email isn't confirmed
+          }
         }
       } catch (error) {
         console.error("Auth error:", error);
@@ -50,11 +72,22 @@ const Index = () => {
       console.log("Auth state changed:", event);
       
       if (event === 'SIGNED_IN' && session) {
-        toast({
-          title: "Welcome!",
-          description: "Successfully signed in. Redirecting to chat...",
-        });
-        navigate('/chat');
+        const isConfirmed = await checkEmailConfirmation();
+        if (isConfirmed) {
+          toast({
+            title: "Welcome!",
+            description: "Successfully signed in. Redirecting to chat...",
+          });
+          navigate('/chat');
+        } else {
+          toast({
+            title: "Email Not Confirmed",
+            description: "Please check your email and confirm your account before accessing the chat.",
+            variant: "destructive",
+            duration: 6000,
+          });
+          await supabase.auth.signOut();
+        }
       }
 
       if (event === 'SIGNED_OUT') {
@@ -62,6 +95,17 @@ const Index = () => {
           title: "Signed out",
           description: "You have been signed out.",
         });
+      }
+      
+      if (event === 'USER_UPDATED') {
+        const isConfirmed = await checkEmailConfirmation();
+        if (isConfirmed) {
+          toast({
+            title: "Email Confirmed",
+            description: "Your email has been confirmed. Redirecting to chat...",
+          });
+          navigate('/chat');
+        }
       }
     });
 
@@ -101,13 +145,36 @@ const Index = () => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate, toast]);
+  }, [navigate, toast, checkEmailConfirmation]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (email && password) {
       await handleEmailSignUp(email, password);
     }
+  };
+  
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email && password) {
+      await handleEmailSignIn(email, password);
+    }
+  };
+
+  const handleResendConfirmation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resendEmail) {
+      toast({
+        title: "Email Required",
+        description: "Please enter your email address",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsResending(true);
+    await resendConfirmationEmail(resendEmail);
+    setIsResending(false);
   };
 
   const toggleAuthView = () => {
@@ -158,7 +225,6 @@ const Index = () => {
                   },
                   style: {
                     anchor: {
-                      // Only hide the sign up/sign in links, but keep forgot password
                       display: 'inline-flex', 
                     },
                     message: {
@@ -177,6 +243,31 @@ const Index = () => {
               >
                 {authView === 'sign_in' ? 'Sign up' : 'Sign in'}
               </Button>
+              
+              <div className="mt-4 border-t border-gray-200 pt-4">
+                <h3 className="text-sm font-medium mb-2">Didn't receive confirmation email?</h3>
+                <form onSubmit={handleResendConfirmation} className="space-y-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="resend-email">Email</Label>
+                    <Input
+                      id="resend-email"
+                      type="email"
+                      value={resendEmail}
+                      onChange={(e) => setResendEmail(e.target.value)}
+                      placeholder="Enter your email"
+                      required
+                    />
+                  </div>
+                  <Button 
+                    type="submit" 
+                    variant="secondary"
+                    className="w-full"
+                    disabled={isResending}
+                  >
+                    {isResending ? "Sending..." : "Resend Confirmation Email"}
+                  </Button>
+                </form>
+              </div>
               
               <div className="mt-6 relative">
                 <div className="absolute inset-0 flex items-center">

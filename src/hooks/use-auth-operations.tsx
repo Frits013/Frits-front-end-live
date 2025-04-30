@@ -2,10 +2,39 @@
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
 
 export const useAuthOperations = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isEmailConfirmed, setIsEmailConfirmed] = useState<boolean>(false);
+
+  // Check email confirmation status on mount and when auth state changes
+  useEffect(() => {
+    checkEmailConfirmation();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        checkEmailConfirmation();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const checkEmailConfirmation = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (user) {
+      setIsEmailConfirmed(user.email_confirmed_at !== null);
+      return user.email_confirmed_at !== null;
+    }
+    
+    setIsEmailConfirmed(false);
+    return false;
+  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -61,7 +90,8 @@ export const useAuthOperations = () => {
 
       toast({
         title: "Sign Up Successful",
-        description: "You've been signed up successfully!",
+        description: "Please check your email for a confirmation link.",
+        duration: 6000,
       });
       
       return { data };
@@ -93,6 +123,22 @@ export const useAuthOperations = () => {
         return { error };
       }
 
+      // Check if email is confirmed
+      const isConfirmed = await checkEmailConfirmation();
+      
+      if (!isConfirmed) {
+        toast({
+          title: "Email Not Confirmed",
+          description: "Please check your email and confirm your account before signing in.",
+          variant: "destructive", 
+          duration: 6000,
+        });
+        
+        // Sign out the user if their email isn't confirmed
+        await supabase.auth.signOut();
+        return { error: { message: "Email not confirmed" } };
+      }
+
       toast({
         title: "Sign In Successful",
         description: "You've been signed in successfully!",
@@ -110,10 +156,47 @@ export const useAuthOperations = () => {
     }
   };
 
+  const resendConfirmationEmail = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+      });
+
+      if (error) {
+        toast({
+          title: "Failed to Resend",
+          description: error.message,
+          variant: "destructive",
+        });
+        return { error };
+      }
+
+      toast({
+        title: "Email Sent",
+        description: "Confirmation email has been resent. Please check your inbox.",
+        duration: 6000,
+      });
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Resend confirmation exception:', error);
+      toast({
+        title: "Failed to Resend",
+        description: "An unexpected error occurred when resending the confirmation email.",
+        variant: "destructive",
+      });
+      return { error };
+    }
+  };
+
   return {
     handleSignOut,
     handleSignInWithGithub,
     handleEmailSignUp,
     handleEmailSignIn,
+    resendConfirmationEmail,
+    isEmailConfirmed,
+    checkEmailConfirmation,
   };
 };
