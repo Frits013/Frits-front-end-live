@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
@@ -6,26 +6,22 @@ import { MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthOperations } from "@/hooks/use-auth-operations";
 import { AuthContent } from "@/components/auth/AuthContent";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { checkEmailConfirmation } = useAuthOperations();
-  const [isCheckingSession, setIsCheckingSession] = useState(true);
 
   useEffect(() => {
     // Check if user is already logged in and has confirmed email
     const checkUser = async () => {
       try {
-        setIsCheckingSession(true);
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error("Session error:", error);
           // Clear any invalid session data
           await supabase.auth.signOut();
-          setIsCheckingSession(false);
           return;
         }
 
@@ -44,12 +40,8 @@ const Index = () => {
             await supabase.auth.signOut();
           }
         }
-        
-        // Always set checking to false at the end, even if there's no session
-        setIsCheckingSession(false);
       } catch (error) {
         console.error("Auth error:", error);
-        setIsCheckingSession(false);
       }
     };
 
@@ -159,11 +151,7 @@ const Index = () => {
         </div>
 
         <Card className="p-6 backdrop-blur-md bg-white/80 border border-blue-100 shadow-lg">
-          {isCheckingSession ? (
-            <LoadingSpinner />
-          ) : (
-            <AuthContent />
-          )}
+          <AuthContent />
         </Card>
       </div>
     </div>
