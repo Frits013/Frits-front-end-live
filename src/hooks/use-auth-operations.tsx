@@ -61,7 +61,7 @@ export const useAuthOperations = () => {
 
       toast({
         title: "Sign Up Successful",
-        description: "You've been signed up successfully!",
+        description: "Please check your email to confirm your account before signing in.",
       });
       
       return { data };
