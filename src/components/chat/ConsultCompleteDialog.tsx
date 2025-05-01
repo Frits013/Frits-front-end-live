@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +12,7 @@ import { Angry, Meh, Smile, Flame } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import Confetti from "@/components/ui/confetti";
 
 interface ConsultCompleteDialogProps {
   open: boolean;
@@ -28,6 +28,21 @@ const ConsultCompleteDialog = ({ open, onClose, onFinish, sessionId }: ConsultCo
   const [selectedEmoji, setSelectedEmoji] = useState<EmojiRating>(null);
   const [reviewText, setReviewText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  // Trigger confetti when dialog opens
+  useEffect(() => {
+    if (open) {
+      setShowConfetti(true);
+      // Stop confetti after 4 seconds
+      const timer = setTimeout(() => {
+        setShowConfetti(false);
+      }, 4000);
+      return () => clearTimeout(timer);
+    } else {
+      setShowConfetti(false);
+    }
+  }, [open]);
 
   const handleEmojiSelect = (emoji: EmojiRating) => {
     setSelectedEmoji(emoji);
@@ -117,81 +132,84 @@ const ConsultCompleteDialog = ({ open, onClose, onFinish, sessionId }: ConsultCo
   };
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => {
-      // Only trigger onClose when dialog is being closed, not when opened
-      if (!isOpen) {
-        onClose();
-      }
-    }}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Consult Session Complete</DialogTitle>
-          <DialogDescription>
-            This consult session is marked as complete in the database.
-            How would you rate your experience?
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="flex justify-between items-center py-4">
-          <button 
-            onClick={() => handleEmojiSelect("angry")}
-            className={`p-2 rounded-full ${selectedEmoji === "angry" ? "bg-red-100 ring-2 ring-red-500" : "hover:bg-gray-100"} transition-all`}
-            aria-label="Angry"
-            title="Angry"
-          >
-            <Angry className={`h-8 w-8 ${selectedEmoji === "angry" ? "text-red-500" : "text-gray-500"}`} />
-          </button>
+    <>
+      <Confetti active={showConfetti} />
+      <Dialog open={open} onOpenChange={(isOpen) => {
+        // Only trigger onClose when dialog is being closed, not when opened
+        if (!isOpen) {
+          onClose();
+        }
+      }}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Consult Session Complete</DialogTitle>
+            <DialogDescription>
+              This consult session is marked as complete in the database.
+              How would you rate your experience?
+            </DialogDescription>
+          </DialogHeader>
           
-          <button 
-            onClick={() => handleEmojiSelect("meh")}
-            className={`p-2 rounded-full ${selectedEmoji === "meh" ? "bg-blue-100 ring-2 ring-blue-500" : "hover:bg-gray-100"} transition-all`}
-            aria-label="Meh/Indifferent"
-            title="Meh/Indifferent"
-          >
-            <Meh className={`h-8 w-8 ${selectedEmoji === "meh" ? "text-blue-500" : "text-gray-500"}`} />
-          </button>
-          
-          <button 
-            onClick={() => handleEmojiSelect("happy")}
-            className={`p-2 rounded-full ${selectedEmoji === "happy" ? "bg-green-100 ring-2 ring-green-500" : "hover:bg-gray-100"} transition-all`}
-            aria-label="Happy"
-            title="Happy"
-          >
-            <Smile className={`h-8 w-8 ${selectedEmoji === "happy" ? "text-green-500" : "text-gray-500"}`} />
-          </button>
-          
-          <button 
-            onClick={() => handleEmojiSelect("fire")}
-            className={`p-2 rounded-full ${selectedEmoji === "fire" ? "bg-orange-100 ring-2 ring-orange-500" : "hover:bg-gray-100"} transition-all`}
-            aria-label="Fire/Amazing"
-            title="Fire/Amazing"
-          >
-            <Flame className={`h-8 w-8 ${selectedEmoji === "fire" ? "text-orange-500" : "text-gray-500"}`} />
-          </button>
-        </div>
-        
-        {selectedEmoji && (
-          <div className="mt-2 animate-in fade-in slide-in-from-top duration-300">
-            <Textarea
-              placeholder="Share your feedback about this consultation session..."
-              value={reviewText}
-              onChange={(e) => setReviewText(e.target.value)}
-              className="w-full min-h-[100px]"
-            />
+          <div className="flex justify-between items-center py-4">
+            <button 
+              onClick={() => handleEmojiSelect("angry")}
+              className={`p-2 rounded-full ${selectedEmoji === "angry" ? "bg-red-100 ring-2 ring-red-500" : "hover:bg-gray-100"} transition-all`}
+              aria-label="Angry"
+              title="Angry"
+            >
+              <Angry className={`h-8 w-8 ${selectedEmoji === "angry" ? "text-red-500" : "text-gray-500"}`} />
+            </button>
+            
+            <button 
+              onClick={() => handleEmojiSelect("meh")}
+              className={`p-2 rounded-full ${selectedEmoji === "meh" ? "bg-blue-100 ring-2 ring-blue-500" : "hover:bg-gray-100"} transition-all`}
+              aria-label="Meh/Indifferent"
+              title="Meh/Indifferent"
+            >
+              <Meh className={`h-8 w-8 ${selectedEmoji === "meh" ? "text-blue-500" : "text-gray-500"}`} />
+            </button>
+            
+            <button 
+              onClick={() => handleEmojiSelect("happy")}
+              className={`p-2 rounded-full ${selectedEmoji === "happy" ? "bg-green-100 ring-2 ring-green-500" : "hover:bg-gray-100"} transition-all`}
+              aria-label="Happy"
+              title="Happy"
+            >
+              <Smile className={`h-8 w-8 ${selectedEmoji === "happy" ? "text-green-500" : "text-gray-500"}`} />
+            </button>
+            
+            <button 
+              onClick={() => handleEmojiSelect("fire")}
+              className={`p-2 rounded-full ${selectedEmoji === "fire" ? "bg-orange-100 ring-2 ring-orange-500" : "hover:bg-gray-100"} transition-all`}
+              aria-label="Fire/Amazing"
+              title="Fire/Amazing"
+            >
+              <Flame className={`h-8 w-8 ${selectedEmoji === "fire" ? "text-orange-500" : "text-gray-500"}`} />
+            </button>
           </div>
-        )}
+          
+          {selectedEmoji && (
+            <div className="mt-2 animate-in fade-in slide-in-from-top duration-300">
+              <Textarea
+                placeholder="Share your feedback about this consultation session..."
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+                className="w-full min-h-[100px]"
+              />
+            </div>
+          )}
 
-        <DialogFooter className="mt-6">
-          <Button 
-            onClick={handleFinish} 
-            className="w-full bg-green-600 hover:bg-green-700"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Submitting..." : "End Session"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <DialogFooter className="mt-6">
+            <Button 
+              onClick={handleFinish} 
+              className="w-full bg-green-600 hover:bg-green-700"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Submitting..." : "End Session"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
