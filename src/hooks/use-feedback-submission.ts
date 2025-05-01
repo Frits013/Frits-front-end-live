@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { EmojiRating } from "@/components/feedback/EmojiRatingSelector";
@@ -14,6 +14,13 @@ export const useFeedbackSubmission = ({ sessionId, onFinish }: UseFeedbackSubmis
   const [selectedEmoji, setSelectedEmoji] = useState<EmojiRating>(null);
   const [reviewText, setReviewText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Reset feedback state when session ID changes
+  useEffect(() => {
+    setSelectedEmoji(null);
+    setReviewText("");
+    setIsSubmitting(false);
+  }, [sessionId]);
 
   const handleEmojiSelect = (emoji: EmojiRating) => {
     setSelectedEmoji(emoji);

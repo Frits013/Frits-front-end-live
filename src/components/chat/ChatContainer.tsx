@@ -44,8 +44,11 @@ const ChatContainer = ({
     if (isConsultComplete && !dialogDismissed) {
       // Make sure to show dialog immediately to trigger confetti
       setShowCompleteDialog(true);
+    } else {
+      // Hide dialog when session is not complete or dialog has been dismissed
+      setShowCompleteDialog(false);
     }
-  }, [isConsultComplete, dialogDismissed]);
+  }, [isConsultComplete, dialogDismissed, currentChatId]);
 
   const handleFinishConsult = () => {
     if (currentChatId) {
