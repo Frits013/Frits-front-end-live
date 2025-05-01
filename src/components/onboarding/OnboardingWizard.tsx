@@ -84,10 +84,11 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
       }
 
       // Update user description and onboarding status
+      // Note: We don't validate userDescription - it can be empty
       const { error: updateError } = await supabase
         .from('users')
         .update({
-          user_description: userDescription,
+          user_description: userDescription || null, // Use null if empty string
           onboarding_complete: true
         })
         .eq('user_id', session.user.id);
@@ -159,6 +160,7 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
                 <h3 className="text-lg font-medium mb-2">Tell Us About Yourself</h3>
                 <p className="text-sm text-muted-foreground mb-4">
                   Please provide a brief description about yourself, including your role, expertise, and interests.
+                  This step is optional.
                 </p>
                 <Textarea
                   placeholder="Enter your description..."
