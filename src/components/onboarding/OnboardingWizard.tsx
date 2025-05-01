@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -147,7 +148,9 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
                 )}
               </div>
               <div className="flex justify-end">
-                <Button onClick={handleNext}>Next</Button>
+                <Button onClick={handleNext}>
+                  {companyCode.length > 0 ? "Next" : "Skip"}
+                </Button>
               </div>
             </div>
           ) : (
