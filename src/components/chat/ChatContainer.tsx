@@ -41,14 +41,15 @@ const ChatContainer = ({
 
   // Watch for changes in isConsultComplete to show dialog
   useEffect(() => {
-    if (isConsultComplete && !showCompleteDialog && !dialogDismissed) {
+    if (isConsultComplete && !dialogDismissed) {
       // Make sure to show dialog immediately to trigger confetti
       setShowCompleteDialog(true);
     }
-  }, [isConsultComplete, showCompleteDialog, dialogDismissed]);
+  }, [isConsultComplete, dialogDismissed]);
 
   const handleFinishConsult = () => {
     if (currentChatId) {
+      // Call onConsultFinish only when the user confirms by clicking "End Session"
       onConsultFinish(currentChatId);
       toast({
         title: "Success",

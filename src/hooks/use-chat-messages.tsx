@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ChatMessage } from "@/types/chat";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +28,9 @@ export const useChatMessages = (sessionId: string | null) => {
         } else if (sessionData) {
           // Update the consult complete state based on the finished column
           setIsConsultComplete(sessionData.finished);
+          
+          // Reset dialog dismissed flag when loading a completed session
+          setDialogDismissed(false);
         }
 
         // Then fetch the messages for the session
@@ -101,6 +105,11 @@ export const useChatMessages = (sessionId: string | null) => {
           if (newFinishedStatus !== isConsultComplete) {
             console.log('Session finished status changed:', newFinishedStatus);
             setIsConsultComplete(newFinishedStatus);
+            
+            // Important: Reset dialog dismissed state when session is marked as complete
+            if (newFinishedStatus) {
+              setDialogDismissed(false);
+            }
           }
         }
       )

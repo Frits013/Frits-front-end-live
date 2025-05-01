@@ -100,6 +100,7 @@ export const useChatSessions = () => {
 
   const markConsultFinished = async (sessionId: string) => {
     // Update the finished flag in the chat_sessions table
+    // This will now be called only after feedback is submitted and "End Session" button is clicked
     const { error } = await supabase
       .from('chat_sessions')
       .update({ finished: true })

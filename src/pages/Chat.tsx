@@ -49,6 +49,7 @@ const Chat = () => {
   }, [navigate, checkEmailConfirmation]);
 
   const handleConsultFinish = (sessionId: string) => {
+    // This now gets called only when the user clicks "End Session" in the dialog
     markConsultFinished(sessionId);
   };
 
