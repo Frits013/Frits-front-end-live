@@ -13,6 +13,7 @@ import { Smile, Angry, Meh, Flame } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useParams } from "react-router-dom";
 
 interface ConsultCompleteDialogProps {
   open: boolean;
@@ -27,6 +28,10 @@ const ConsultCompleteDialog = ({ open, onClose, onFinish }: ConsultCompleteDialo
   const [selectedEmoji, setSelectedEmoji] = useState<EmojiRating>(null);
   const [reviewText, setReviewText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Use the current sessionId from the URL params if available
+  const params = useParams();
+  const currentSessionId = params["*"] || null;
 
   const handleEmojiSelect = (emoji: EmojiRating) => {
     setSelectedEmoji(emoji);
@@ -58,10 +63,30 @@ const ConsultCompleteDialog = ({ open, onClose, onFinish }: ConsultCompleteDialo
         return;
       }
       
-      // Extract the current session ID from URL or context
-      const url = new URL(window.location.href);
-      const pathSegments = url.pathname.split('/');
-      const sessionId = pathSegments[pathSegments.length - 1];
+      // Get the current session ID from the currentSessionId or from context
+      let sessionId = currentSessionId;
+      
+      // If we couldn't get the session ID from params, try to get it from the URL
+      if (!sessionId) {
+        const url = new URL(window.location.href);
+        const pathSegments = url.pathname.split('/');
+        // Make sure we're getting a UUID and not just 'chat'
+        sessionId = pathSegments.find(segment => 
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment)
+        );
+      }
+      
+      // If we still don't have a valid sessionId, get it from the context
+      if (!sessionId) {
+        console.error("Could not extract a valid session ID from URL or params.");
+        toast({
+          title: "Submission error",
+          description: "Could not identify the current chat session.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
       
       console.log("Submitting feedback:", {
         userId: session.user.id,
@@ -129,6 +154,8 @@ const ConsultCompleteDialog = ({ open, onClose, onFinish }: ConsultCompleteDialo
           <button 
             onClick={() => handleEmojiSelect("happy")}
             className={`p-2 rounded-full ${selectedEmoji === "happy" ? "bg-green-100 ring-2 ring-green-500" : "hover:bg-gray-100"} transition-all`}
+            aria-label="Happy"
+            title="Happy"
           >
             <Smile className={`h-8 w-8 ${selectedEmoji === "happy" ? "text-green-500" : "text-gray-500"}`} />
           </button>
@@ -136,6 +163,8 @@ const ConsultCompleteDialog = ({ open, onClose, onFinish }: ConsultCompleteDialo
           <button 
             onClick={() => handleEmojiSelect("angry")}
             className={`p-2 rounded-full ${selectedEmoji === "angry" ? "bg-red-100 ring-2 ring-red-500" : "hover:bg-gray-100"} transition-all`}
+            aria-label="Angry"
+            title="Angry"
           >
             <Angry className={`h-8 w-8 ${selectedEmoji === "angry" ? "text-red-500" : "text-gray-500"}`} />
           </button>
@@ -152,6 +181,8 @@ const ConsultCompleteDialog = ({ open, onClose, onFinish }: ConsultCompleteDialo
           <button 
             onClick={() => handleEmojiSelect("fire")}
             className={`p-2 rounded-full ${selectedEmoji === "fire" ? "bg-orange-100 ring-2 ring-orange-500" : "hover:bg-gray-100"} transition-all`}
+            aria-label="Fire/Amazing"
+            title="Fire/Amazing"
           >
             <Flame className={`h-8 w-8 ${selectedEmoji === "fire" ? "text-orange-500" : "text-gray-500"}`} />
           </button>
