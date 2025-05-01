@@ -42,7 +42,10 @@ const ChatContainer = ({
   // Watch for changes in isConsultComplete to show dialog
   useEffect(() => {
     if (isConsultComplete && !showCompleteDialog && !dialogDismissed) {
-      setShowCompleteDialog(true);
+      // Slight delay to ensure everything is ready
+      setTimeout(() => {
+        setShowCompleteDialog(true);
+      }, 200);
     }
   }, [isConsultComplete, showCompleteDialog, dialogDismissed]);
 

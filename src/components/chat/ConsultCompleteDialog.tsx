@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -30,15 +31,23 @@ const ConsultCompleteDialog = ({ open, onClose, onFinish, sessionId }: ConsultCo
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
 
-  // Trigger confetti when dialog opens
+  // Trigger confetti when dialog opens with a slight delay to ensure visibility
   useEffect(() => {
     if (open) {
-      setShowConfetti(true);
-      // Stop confetti after 4 seconds
+      // Short delay to ensure dialog is visible before confetti
       const timer = setTimeout(() => {
+        setShowConfetti(true);
+      }, 100);
+      
+      // Stop confetti after 5 seconds
+      const confettiTimer = setTimeout(() => {
         setShowConfetti(false);
-      }, 4000);
-      return () => clearTimeout(timer);
+      }, 5000);
+      
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(confettiTimer);
+      };
     } else {
       setShowConfetti(false);
     }
@@ -140,7 +149,7 @@ const ConsultCompleteDialog = ({ open, onClose, onFinish, sessionId }: ConsultCo
           onClose();
         }
       }}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] z-50">
           <DialogHeader>
             <DialogTitle>Consult Session Complete</DialogTitle>
             <DialogDescription>
