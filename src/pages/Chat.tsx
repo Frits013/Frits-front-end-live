@@ -63,40 +63,38 @@ const Chat = () => {
   };
 
   return (
-    <SidebarProvider>
-      <ChatLayout
-        sidebar={
-          <ChatSidebar
-            chatSessions={chatSessions}
-            currentSessionId={currentSessionId}
-            setChatSessions={setChatSessions}
-            setCurrentSessionId={setCurrentSessionId}
-            onNewChat={createNewChat}
+    <ChatLayout
+      sidebar={
+        <ChatSidebar
+          chatSessions={chatSessions}
+          currentSessionId={currentSessionId}
+          setChatSessions={setChatSessions}
+          setCurrentSessionId={setCurrentSessionId}
+          onNewChat={createNewChat}
+        />
+      }
+      content={
+        <div className="flex flex-col h-full">
+          <ChatHeader onSignOut={handleSignOut} />
+          <ChatContainer
+            messages={messages}
+            setMessages={setMessages}
+            currentChatId={currentSessionId}
+            updateChatTitle={updateSessionTitle}
+            isConsultComplete={isConsultComplete}
+            setIsConsultComplete={setIsConsultComplete}
+            onConsultFinish={handleConsultFinish}
+            dialogDismissed={dialogDismissed}
+            setDialogDismissed={setDialogDismissed}
+            hasFeedback={hasFeedback}
           />
-        }
-        content={
-          <>
-            <ChatHeader onSignOut={handleSignOut} />
-            <ChatContainer
-              messages={messages}
-              setMessages={setMessages}
-              currentChatId={currentSessionId}
-              updateChatTitle={updateSessionTitle}
-              isConsultComplete={isConsultComplete}
-              setIsConsultComplete={setIsConsultComplete}
-              onConsultFinish={handleConsultFinish}
-              dialogDismissed={dialogDismissed}
-              setDialogDismissed={setDialogDismissed}
-              hasFeedback={hasFeedback}
-            />
-            <OnboardingWizard
-              open={showOnboarding}
-              onComplete={() => setShowOnboarding(false)}
-            />
-          </>
-        }
-      />
-    </SidebarProvider>
+          <OnboardingWizard
+            open={showOnboarding}
+            onComplete={() => setShowOnboarding(false)}
+          />
+        </div>
+      }
+    />
   );
 };
 

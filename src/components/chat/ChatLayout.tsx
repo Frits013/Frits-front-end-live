@@ -32,20 +32,23 @@ const ChatLayout = ({ sidebar, content }: ChatLayoutProps) => {
               side="left" 
               className="w-[280px] p-0"
             >
-              <div className="h-full flex flex-col">
-                {sidebar}
-              </div>
+              {sidebar}
             </SheetContent>
           </Sheet>
+          <div className="flex-1">
+            {content}
+          </div>
         </>
       ) : (
-        <div className="block">
-          {sidebar}
-        </div>
+        <>
+          <div className="w-[280px] min-h-[100dvh] border-r border-gray-200">
+            {sidebar}
+          </div>
+          <div className="flex-1">
+            {content}
+          </div>
+        </>
       )}
-      <div className="relative flex-1">
-        {content}
-      </div>
     </div>
   );
 };
