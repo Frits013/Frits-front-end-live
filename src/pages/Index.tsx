@@ -129,28 +129,15 @@ const Index = () => {
 
   return (
     <div 
-      className="min-h-screen flex flex-col items-center justify-center p-4 relative"
-      style={{
-        background: `
-          linear-gradient(
-            to bottom,
-            rgba(37, 99, 235, 0.1),
-            rgba(59, 130, 246, 0.2)
-          ),
-          url('https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=1920&q=80')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}
+      className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50"
     >
-      <div className="absolute inset-0 bg-white/80 backdrop-blur-sm" />
-      
-      <div className="relative z-10 w-full max-w-md">
-        <div className="flex items-center justify-center gap-2 mb-8">
+      <div className="w-full max-w-md">
+        <div className="flex items-center justify-center gap-2 mb-6">
           <MessageSquare className="h-8 w-8 text-blue-600" />
-          <h1 className="text-4xl font-bold text-blue-900">Frits</h1>
+          <h1 className="text-2xl font-bold text-blue-900">Frits</h1>
         </div>
 
-        <Card className="p-6 backdrop-blur-md bg-white/80 border border-blue-100 shadow-lg">
+        <Card className="p-6 shadow-md bg-white border-0">
           <AuthContent />
         </Card>
       </div>
