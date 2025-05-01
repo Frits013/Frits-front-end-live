@@ -168,6 +168,9 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
                   onChange={(e) => setUserDescription(e.target.value)}
                   className="min-h-[200px]"
                 />
+                <p className="text-sm text-muted-foreground mt-2 italic">
+                  PRO TIP: Ask ChatGPT to make a summary about yourself. Specifically a summary which an AI readiness consultant can use to prepare itself for an interview. Paste the answer here.
+                </p>
               </div>
               <div className="flex justify-between">
                 <Button variant="outline" onClick={handlePrevious}>
