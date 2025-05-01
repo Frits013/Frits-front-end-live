@@ -19,6 +19,7 @@ interface ChatContainerProps {
   onConsultFinish: (sessionId: string) => void;
   dialogDismissed: boolean;
   setDialogDismissed: (dismissed: boolean) => void;
+  hasFeedback?: boolean;
 }
 
 const ChatContainer = ({
@@ -31,6 +32,7 @@ const ChatContainer = ({
   onConsultFinish,
   dialogDismissed,
   setDialogDismissed,
+  hasFeedback = false,
 }: ChatContainerProps) => {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -41,14 +43,15 @@ const ChatContainer = ({
 
   // Watch for changes in isConsultComplete to show dialog
   useEffect(() => {
-    if (isConsultComplete && !dialogDismissed) {
-      // Make sure to show dialog immediately to trigger confetti
+    if (isConsultComplete && !dialogDismissed && !hasFeedback) {
+      // Only show dialog for completed sessions without feedback
+      // and that haven't been dismissed
       setShowCompleteDialog(true);
     } else {
-      // Hide dialog when session is not complete or dialog has been dismissed
+      // Hide dialog in all other cases
       setShowCompleteDialog(false);
     }
-  }, [isConsultComplete, dialogDismissed, currentChatId]);
+  }, [isConsultComplete, dialogDismissed, currentChatId, hasFeedback]);
 
   const handleFinishConsult = () => {
     if (currentChatId) {

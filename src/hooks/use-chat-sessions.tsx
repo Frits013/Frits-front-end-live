@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -153,7 +152,12 @@ export const useChatSessions = () => {
         console.log('No existing sessions, creating new one...');
         await createNewChat();
       } else if (sessions && sessions.length > 0 && !currentSessionId) {
-        setCurrentSessionId(sessions[0].id);
+        // Find the most recent ongoing session first
+        const ongoingSession = sessions.find(s => !s.finished);
+        
+        // If there's an ongoing session, set it as current
+        // Otherwise, fall back to the most recent session (which would be completed)
+        setCurrentSessionId(ongoingSession ? ongoingSession.id : sessions[0].id);
       }
     } catch (error) {
       console.error('Error in loadSessions:', error);

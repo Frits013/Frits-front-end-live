@@ -25,7 +25,16 @@ const Chat = () => {
     markConsultFinished,
   } = useChatSessions();
 
-  const { messages, setMessages, isConsultComplete, setIsConsultComplete, dialogDismissed, setDialogDismissed } = useChatMessages(currentSessionId);
+  const { 
+    messages, 
+    setMessages, 
+    isConsultComplete, 
+    setIsConsultComplete, 
+    dialogDismissed, 
+    setDialogDismissed,
+    hasFeedback 
+  } = useChatMessages(currentSessionId);
+  
   const { handleSignOut, checkEmailConfirmation } = useAuthOperations();
   const { showOnboarding, setShowOnboarding } = useOnboarding();
 
@@ -78,6 +87,7 @@ const Chat = () => {
               onConsultFinish={handleConsultFinish}
               dialogDismissed={dialogDismissed}
               setDialogDismissed={setDialogDismissed}
+              hasFeedback={hasFeedback}
             />
             <OnboardingWizard
               open={showOnboarding}

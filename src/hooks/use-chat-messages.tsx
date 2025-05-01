@@ -7,6 +7,7 @@ export const useChatMessages = (sessionId: string | null) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isConsultComplete, setIsConsultComplete] = useState(false);
   const [dialogDismissed, setDialogDismissed] = useState(false);
+  const [hasFeedback, setHasFeedback] = useState(false);
 
   // Fetch messages for the current session
   useEffect(() => {
@@ -29,8 +30,30 @@ export const useChatMessages = (sessionId: string | null) => {
           // Update the consult complete state based on the finished column
           setIsConsultComplete(sessionData.finished);
           
-          // Reset dialog dismissed flag when loading a completed session
-          setDialogDismissed(false);
+          // If the session is finished, check if feedback exists
+          if (sessionData.finished) {
+            const { data: feedbackData, error: feedbackError } = await supabase
+              .from('feedback')
+              .select('id')
+              .eq('session_id', sessionId)
+              .maybeSingle();
+            
+            if (feedbackError) {
+              console.error('Error checking feedback existence:', feedbackError);
+            } else {
+              // Set whether this session has feedback or not
+              setHasFeedback(!!feedbackData);
+              
+              // Only show dialog for completed sessions without feedback
+              // For completed sessions with feedback, consider it "dismissed"
+              setDialogDismissed(!!feedbackData);
+            }
+          } else {
+            // For ongoing sessions, reset feedback state
+            setHasFeedback(false);
+            // Reset dialog dismissed state for ongoing sessions
+            setDialogDismissed(false);
+          }
         }
 
         // Then fetch the messages for the session
@@ -76,10 +99,10 @@ export const useChatMessages = (sessionId: string | null) => {
       }
     };
 
-    // Reset messages, completion state, and dialog dismissed state when session changes
+    // Reset messages when session changes
     setMessages([]);
-    setIsConsultComplete(false);
-    setDialogDismissed(false);
+    // We don't reset isConsultComplete, dialogDismissed, or hasFeedback here
+    // as we'll set them correctly in fetchMessages
     
     fetchMessages();
   }, [sessionId]);
@@ -106,9 +129,11 @@ export const useChatMessages = (sessionId: string | null) => {
             console.log('Session finished status changed:', newFinishedStatus);
             setIsConsultComplete(newFinishedStatus);
             
-            // Important: Reset dialog dismissed state when session is marked as complete
+            // Important: Reset dialog dismissed state when session is newly marked as complete
             if (newFinishedStatus) {
               setDialogDismissed(false);
+              // We'll check if feedback exists separately
+              checkFeedbackExists(sessionId);
             }
           }
         }
@@ -120,12 +145,36 @@ export const useChatMessages = (sessionId: string | null) => {
     };
   }, [sessionId, isConsultComplete]);
 
+  // Helper function to check if feedback exists for a session
+  const checkFeedbackExists = async (sessionId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('feedback')
+        .select('id')
+        .eq('session_id', sessionId)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error checking feedback existence:', error);
+      } else {
+        setHasFeedback(!!data);
+        // If feedback exists, consider the dialog dismissed
+        if (data) {
+          setDialogDismissed(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error in checkFeedbackExists:', error);
+    }
+  };
+
   return {
     messages,
     setMessages,
     isConsultComplete,
     setIsConsultComplete,
     dialogDismissed,
-    setDialogDismissed
+    setDialogDismissed,
+    hasFeedback
   };
 };
