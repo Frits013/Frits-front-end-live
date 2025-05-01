@@ -20,8 +20,8 @@ const ChatMessageList = ({ messages }: ChatMessageListProps) => {
   }, [messages]); // Scroll when messages change
 
   return (
-    <ScrollArea className="flex-1 h-full w-full pt-2">
-      <div className="px-4 pb-4">
+    <ScrollArea className="flex-1 h-full w-full pt-4">
+      <div className="px-4 pb-6 pt-2">
         <ChatMessages messages={messages} />
         <div ref={messagesEndRef} />
       </div>
