@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import { PartyPopper, Sparkles, Star, Confetti as ConfettiIcon } from "lucide-react";
+import { PartyPopper, Sparkles, Star } from "lucide-react";
 
 interface ConfettiProps {
   active: boolean;
@@ -14,7 +14,7 @@ const Confetti: React.FC<ConfettiProps> = ({ active }) => {
     size: number;
     rotation: number;
     color: string;
-    type: "star" | "sparkle" | "popper" | "confetti";
+    type: "star" | "sparkle" | "popper";
     opacity: number;
     delay: number;
     duration: number;
@@ -42,9 +42,9 @@ const Confetti: React.FC<ConfettiProps> = ({ active }) => {
           "#FFEC5C", // Bright yellow
           "#4CAF50", // Bright green
         ][Math.floor(Math.random() * 11)],
-        type: ["star", "sparkle", "popper", "confetti"][
-          Math.floor(Math.random() * 4)
-        ] as "star" | "sparkle" | "popper" | "confetti",
+        type: ["star", "sparkle", "popper"][
+          Math.floor(Math.random() * 3)
+        ] as "star" | "sparkle" | "popper",
         opacity: Math.random() * 0.5 + 0.5,
         delay: Math.random() * 2,
         duration: Math.random() * 1 + 1.5, // Random duration between 1.5-2.5s
@@ -72,7 +72,6 @@ const Confetti: React.FC<ConfettiProps> = ({ active }) => {
         const ParticleIcon = 
           particle.type === "star" ? Star : 
           particle.type === "sparkle" ? Sparkles : 
-          particle.type === "confetti" ? ConfettiIcon :
           PartyPopper;
 
         return (
