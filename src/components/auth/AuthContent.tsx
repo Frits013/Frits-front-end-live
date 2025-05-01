@@ -69,7 +69,7 @@ export const AuthContent = () => {
         </div>
       </div>
       
-      {authView === 'sign_in' && <ResendConfirmationForm />}
+      {authView === 'sign_up' && <ResendConfirmationForm />}
     </div>
   );
 };
