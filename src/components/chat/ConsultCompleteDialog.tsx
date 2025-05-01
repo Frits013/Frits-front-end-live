@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Smile, Angry, AlertCircle, CircleDashed, Flame } from "lucide-react";
+import { Smile, Angry, Meh, Confused, Flame } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -20,7 +20,7 @@ interface ConsultCompleteDialogProps {
   onFinish: () => void;
 }
 
-type EmojiRating = "happy" | "angry" | "surprised" | "sleepy" | "fire" | null;
+type EmojiRating = "happy" | "angry" | "confused" | "meh" | "fire" | null;
 
 const ConsultCompleteDialog = ({ open, onClose, onFinish }: ConsultCompleteDialogProps) => {
   const { toast } = useToast();
@@ -54,6 +54,7 @@ const ConsultCompleteDialog = ({ open, onClose, onFinish }: ConsultCompleteDialo
           description: "You must be logged in to submit feedback.",
           variant: "destructive",
         });
+        setIsSubmitting(false);
         return;
       }
       
@@ -61,6 +62,13 @@ const ConsultCompleteDialog = ({ open, onClose, onFinish }: ConsultCompleteDialo
       const url = new URL(window.location.href);
       const pathSegments = url.pathname.split('/');
       const sessionId = pathSegments[pathSegments.length - 1];
+      
+      console.log("Submitting feedback:", {
+        userId: session.user.id,
+        sessionId: sessionId,
+        emoji: selectedEmoji,
+        text: reviewText
+      });
       
       // Save the feedback to Supabase
       const { error } = await supabase
@@ -79,6 +87,7 @@ const ConsultCompleteDialog = ({ open, onClose, onFinish }: ConsultCompleteDialo
           description: "There was a problem saving your feedback.",
           variant: "destructive",
         });
+        setIsSubmitting(false);
         return;
       }
       
@@ -96,7 +105,6 @@ const ConsultCompleteDialog = ({ open, onClose, onFinish }: ConsultCompleteDialo
         description: "An unexpected error occurred.",
         variant: "destructive",
       });
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -133,21 +141,21 @@ const ConsultCompleteDialog = ({ open, onClose, onFinish }: ConsultCompleteDialo
           </button>
           
           <button 
-            onClick={() => handleEmojiSelect("surprised")}
-            className={`p-2 rounded-full ${selectedEmoji === "surprised" ? "bg-yellow-100 ring-2 ring-yellow-500" : "hover:bg-gray-100"} transition-all`}
-            aria-label="Surprised"
-            title="Surprised"
+            onClick={() => handleEmojiSelect("confused")}
+            className={`p-2 rounded-full ${selectedEmoji === "confused" ? "bg-yellow-100 ring-2 ring-yellow-500" : "hover:bg-gray-100"} transition-all`}
+            aria-label="Confused"
+            title="Confused"
           >
-            <AlertCircle className={`h-8 w-8 ${selectedEmoji === "surprised" ? "text-yellow-500" : "text-gray-500"}`} />
+            <Confused className={`h-8 w-8 ${selectedEmoji === "confused" ? "text-yellow-500" : "text-gray-500"}`} />
           </button>
           
           <button 
-            onClick={() => handleEmojiSelect("sleepy")}
-            className={`p-2 rounded-full ${selectedEmoji === "sleepy" ? "bg-blue-100 ring-2 ring-blue-500" : "hover:bg-gray-100"} transition-all`}
-            aria-label="Bored/Sleepy"
-            title="Bored/Sleepy"
+            onClick={() => handleEmojiSelect("meh")}
+            className={`p-2 rounded-full ${selectedEmoji === "meh" ? "bg-blue-100 ring-2 ring-blue-500" : "hover:bg-gray-100"} transition-all`}
+            aria-label="Meh/Indifferent"
+            title="Meh/Indifferent"
           >
-            <CircleDashed className={`h-8 w-8 ${selectedEmoji === "sleepy" ? "text-blue-500" : "text-gray-500"}`} />
+            <Meh className={`h-8 w-8 ${selectedEmoji === "meh" ? "text-blue-500" : "text-gray-500"}`} />
           </button>
           
           <button 
