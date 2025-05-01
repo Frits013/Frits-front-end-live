@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -89,7 +88,7 @@ const Index = () => {
         }
       }
     });
-
+    
     // This is for development purposes only - adds a test company if needed
     const addTestCompany = async () => {
       try {
@@ -138,6 +137,15 @@ const Index = () => {
         backgroundRepeat: 'no-repeat'
       }}
     >
+      {/* Company Logo - Positioned at the top left */}
+      <div className="absolute top-4 left-4 z-20">
+        <img 
+          src="/lovable-uploads/aacf68b0-e0c4-472e-9f50-8289a498979b.png" 
+          alt="FIDDS Company Emblem" 
+          className="h-16 w-auto"
+        />
+      </div>
+
       <div className="w-full max-w-md relative z-10">
         <div className="flex items-center justify-center gap-2 mb-6">
           <MessageSquare className="h-8 w-8 text-blue-600" />
