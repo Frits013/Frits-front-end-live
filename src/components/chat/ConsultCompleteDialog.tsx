@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Smile, Angry, Meh, Confused, Flame } from "lucide-react";
+import { Smile, Angry, Meh, Flame } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -20,7 +20,7 @@ interface ConsultCompleteDialogProps {
   onFinish: () => void;
 }
 
-type EmojiRating = "happy" | "angry" | "confused" | "meh" | "fire" | null;
+type EmojiRating = "happy" | "angry" | "meh" | "fire" | null;
 
 const ConsultCompleteDialog = ({ open, onClose, onFinish }: ConsultCompleteDialogProps) => {
   const { toast } = useToast();
@@ -138,15 +138,6 @@ const ConsultCompleteDialog = ({ open, onClose, onFinish }: ConsultCompleteDialo
             className={`p-2 rounded-full ${selectedEmoji === "angry" ? "bg-red-100 ring-2 ring-red-500" : "hover:bg-gray-100"} transition-all`}
           >
             <Angry className={`h-8 w-8 ${selectedEmoji === "angry" ? "text-red-500" : "text-gray-500"}`} />
-          </button>
-          
-          <button 
-            onClick={() => handleEmojiSelect("confused")}
-            className={`p-2 rounded-full ${selectedEmoji === "confused" ? "bg-yellow-100 ring-2 ring-yellow-500" : "hover:bg-gray-100"} transition-all`}
-            aria-label="Confused"
-            title="Confused"
-          >
-            <Confused className={`h-8 w-8 ${selectedEmoji === "confused" ? "text-yellow-500" : "text-gray-500"}`} />
           </button>
           
           <button 
