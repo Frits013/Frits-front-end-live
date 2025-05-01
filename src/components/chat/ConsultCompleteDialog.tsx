@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Smile, Angry, Meh, Flame } from "lucide-react";
+import { Angry, Meh, Smile, Flame } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -134,15 +134,6 @@ const ConsultCompleteDialog = ({ open, onClose, onFinish, sessionId }: ConsultCo
         
         <div className="flex justify-between items-center py-4">
           <button 
-            onClick={() => handleEmojiSelect("happy")}
-            className={`p-2 rounded-full ${selectedEmoji === "happy" ? "bg-green-100 ring-2 ring-green-500" : "hover:bg-gray-100"} transition-all`}
-            aria-label="Happy"
-            title="Happy"
-          >
-            <Smile className={`h-8 w-8 ${selectedEmoji === "happy" ? "text-green-500" : "text-gray-500"}`} />
-          </button>
-          
-          <button 
             onClick={() => handleEmojiSelect("angry")}
             className={`p-2 rounded-full ${selectedEmoji === "angry" ? "bg-red-100 ring-2 ring-red-500" : "hover:bg-gray-100"} transition-all`}
             aria-label="Angry"
@@ -158,6 +149,15 @@ const ConsultCompleteDialog = ({ open, onClose, onFinish, sessionId }: ConsultCo
             title="Meh/Indifferent"
           >
             <Meh className={`h-8 w-8 ${selectedEmoji === "meh" ? "text-blue-500" : "text-gray-500"}`} />
+          </button>
+          
+          <button 
+            onClick={() => handleEmojiSelect("happy")}
+            className={`p-2 rounded-full ${selectedEmoji === "happy" ? "bg-green-100 ring-2 ring-green-500" : "hover:bg-gray-100"} transition-all`}
+            aria-label="Happy"
+            title="Happy"
+          >
+            <Smile className={`h-8 w-8 ${selectedEmoji === "happy" ? "text-green-500" : "text-gray-500"}`} />
           </button>
           
           <button 
