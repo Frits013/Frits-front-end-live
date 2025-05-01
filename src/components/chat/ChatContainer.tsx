@@ -95,6 +95,7 @@ const ChatContainer = ({
         open={showCompleteDialog}
         onClose={handleContinueChat}
         onFinish={handleFinishConsult}
+        sessionId={currentChatId}
       />
     </div>
   );

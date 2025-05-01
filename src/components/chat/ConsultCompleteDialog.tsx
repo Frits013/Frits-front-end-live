@@ -13,25 +13,21 @@ import { Smile, Angry, Meh, Flame } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useParams } from "react-router-dom";
 
 interface ConsultCompleteDialogProps {
   open: boolean;
   onClose: () => void;
   onFinish: () => void;
+  sessionId?: string | null;
 }
 
 type EmojiRating = "happy" | "angry" | "meh" | "fire" | null;
 
-const ConsultCompleteDialog = ({ open, onClose, onFinish }: ConsultCompleteDialogProps) => {
+const ConsultCompleteDialog = ({ open, onClose, onFinish, sessionId }: ConsultCompleteDialogProps) => {
   const { toast } = useToast();
   const [selectedEmoji, setSelectedEmoji] = useState<EmojiRating>(null);
   const [reviewText, setReviewText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Use the current sessionId from the URL params if available
-  const params = useParams();
-  const currentSessionId = params["*"] || null;
 
   const handleEmojiSelect = (emoji: EmojiRating) => {
     setSelectedEmoji(emoji);
@@ -63,22 +59,8 @@ const ConsultCompleteDialog = ({ open, onClose, onFinish }: ConsultCompleteDialo
         return;
       }
       
-      // Get the current session ID from the currentSessionId or from context
-      let sessionId = currentSessionId;
-      
-      // If we couldn't get the session ID from params, try to get it from the URL
+      // Use the sessionId prop that's passed from the parent component
       if (!sessionId) {
-        const url = new URL(window.location.href);
-        const pathSegments = url.pathname.split('/');
-        // Make sure we're getting a UUID and not just 'chat'
-        sessionId = pathSegments.find(segment => 
-          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment)
-        );
-      }
-      
-      // If we still don't have a valid sessionId, get it from the context
-      if (!sessionId) {
-        console.error("Could not extract a valid session ID from URL or params.");
         toast({
           title: "Submission error",
           description: "Could not identify the current chat session.",
