@@ -23,11 +23,11 @@ const Confetti: React.FC<ConfettiProps> = ({ active }) => {
   useEffect(() => {
     if (active) {
       // Create confetti particles with more variety and quantity
-      const newParticles = Array.from({ length: 60 }, (_, i) => ({
+      const newParticles = Array.from({ length: 100 }, (_, i) => ({
         id: i,
-        x: Math.random() * 100,
-        y: Math.random() * -40 - 10, // Start higher above the screen
-        size: Math.random() * 20 + 10,
+        x: Math.random() * 100, // Spread across full width
+        y: -10 - Math.random() * 60, // Start higher above the screen
+        size: Math.random() * 30 + 10, // Larger size range
         rotation: Math.random() * 360,
         color: [
           "#9b87f5", // Primary purple
@@ -41,21 +41,23 @@ const Confetti: React.FC<ConfettiProps> = ({ active }) => {
           "#FF5733", // Bright red
           "#FFEC5C", // Bright yellow
           "#4CAF50", // Bright green
-        ][Math.floor(Math.random() * 11)],
+          "#FF1493", // Deep pink
+          "#FFD700", // Gold
+        ][Math.floor(Math.random() * 13)],
         type: ["star", "sparkle", "popper"][
           Math.floor(Math.random() * 3)
         ] as "star" | "sparkle" | "popper",
         opacity: Math.random() * 0.5 + 0.5,
-        delay: Math.random() * 2,
-        duration: Math.random() * 1 + 1.5, // Random duration between 1.5-2.5s
+        delay: Math.random() * 3, // More varied delays
+        duration: Math.random() * 2 + 2, // Longer durations (2-4s)
       }));
 
       setParticles(newParticles);
       
-      // Clean up particles after 6 seconds
+      // Clean up particles after animation completes
       const timer = setTimeout(() => {
         setParticles([]);
-      }, 6000);
+      }, 8000); // Longer cleanup time to ensure all particles complete their animation
       
       return () => clearTimeout(timer);
     } else {
@@ -66,7 +68,7 @@ const Confetti: React.FC<ConfettiProps> = ({ active }) => {
   if (!active) return null;
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-[999] overflow-hidden">
+    <div className="fixed inset-0 pointer-events-none z-[9999] overflow-hidden">
       {particles.map((particle) => {
         // Determine which icon to use
         const ParticleIcon = 
@@ -77,7 +79,7 @@ const Confetti: React.FC<ConfettiProps> = ({ active }) => {
         return (
           <div
             key={particle.id}
-            className="absolute animate-in fade-in slide-in-from-top"
+            className="absolute animate-confetti-fall"
             style={{
               left: `${particle.x}%`,
               top: `${particle.y}%`,
@@ -86,13 +88,14 @@ const Confetti: React.FC<ConfettiProps> = ({ active }) => {
               animationDelay: `${particle.delay}s`,
               animationDuration: `${particle.duration}s`,
               color: particle.color,
-              zIndex: 1000,
+              zIndex: 10000,
             }}
           >
             <ParticleIcon 
               size={particle.size} 
               fill={particle.color} 
               stroke="none"
+              className="drop-shadow-lg"
             />
           </div>
         );

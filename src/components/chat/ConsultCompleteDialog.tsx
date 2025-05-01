@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -34,19 +33,17 @@ const ConsultCompleteDialog = ({ open, onClose, onFinish, sessionId }: ConsultCo
   // Trigger confetti when dialog opens with a slight delay to ensure visibility
   useEffect(() => {
     if (open) {
-      // Short delay to ensure dialog is visible before confetti
-      const timer = setTimeout(() => {
-        setShowConfetti(true);
-      }, 100);
+      // Immediate confetti
+      setShowConfetti(true);
       
-      // Stop confetti after 5 seconds
+      // Keep confetti for 6 seconds
       const confettiTimer = setTimeout(() => {
         setShowConfetti(false);
-      }, 5000);
+      }, 6000);
       
       return () => {
-        clearTimeout(timer);
         clearTimeout(confettiTimer);
+        setShowConfetti(false);
       };
     } else {
       setShowConfetti(false);
