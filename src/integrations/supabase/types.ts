@@ -103,6 +103,41 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback: {
+        Row: {
+          created_at: string
+          emoji_rating: string
+          id: string
+          review_text: string | null
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji_rating: string
+          id?: string
+          review_text?: string | null
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji_rating?: string
+          id?: string
+          review_text?: string | null
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       info_messages: {
         Row: {
           category: string

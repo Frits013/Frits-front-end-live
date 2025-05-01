@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Smile, Angry, AlertCircle, CircleDashed, Flame } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface ConsultCompleteDialogProps {
   open: boolean;
@@ -22,6 +23,7 @@ interface ConsultCompleteDialogProps {
 type EmojiRating = "happy" | "angry" | "surprised" | "sleepy" | "fire" | null;
 
 const ConsultCompleteDialog = ({ open, onClose, onFinish }: ConsultCompleteDialogProps) => {
+  const { toast } = useToast();
   const [selectedEmoji, setSelectedEmoji] = useState<EmojiRating>(null);
   const [reviewText, setReviewText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,17 +33,69 @@ const ConsultCompleteDialog = ({ open, onClose, onFinish }: ConsultCompleteDialo
   };
 
   const handleFinish = async () => {
+    if (!selectedEmoji) {
+      toast({
+        title: "Please select an emoji",
+        description: "Select how you feel about this consultation before ending the session.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
-      // Here you would typically save the rating to your database
-      // For now, we'll just log it to the console
-      console.log("Rating submitted:", { emoji: selectedEmoji, review: reviewText });
+      // Get current user session
+      const { data: { session } } = await supabase.auth.getSession();
       
-      // After saving the rating, call the onFinish prop
+      if (!session) {
+        toast({
+          title: "Authentication error",
+          description: "You must be logged in to submit feedback.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Extract the current session ID from URL or context
+      const url = new URL(window.location.href);
+      const pathSegments = url.pathname.split('/');
+      const sessionId = pathSegments[pathSegments.length - 1];
+      
+      // Save the feedback to Supabase
+      const { error } = await supabase
+        .from('feedback')
+        .insert({
+          user_id: session.user.id,
+          session_id: sessionId,
+          emoji_rating: selectedEmoji,
+          review_text: reviewText || null
+        });
+
+      if (error) {
+        console.error("Error submitting feedback:", error);
+        toast({
+          title: "Submission error",
+          description: "There was a problem saving your feedback.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      toast({
+        title: "Feedback submitted",
+        description: "Thank you for your feedback!",
+      });
+      
+      // After saving the feedback, call the onFinish prop
       onFinish();
     } catch (error) {
-      console.error("Error submitting rating:", error);
+      console.error("Error submitting feedback:", error);
+      toast({
+        title: "Submission error",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -80,16 +134,20 @@ const ConsultCompleteDialog = ({ open, onClose, onFinish }: ConsultCompleteDialo
           
           <button 
             onClick={() => handleEmojiSelect("surprised")}
-            className={`p-2 rounded-full ${selectedEmoji === "surprised" ? "bg-blue-100 ring-2 ring-blue-500" : "hover:bg-gray-100"} transition-all`}
+            className={`p-2 rounded-full ${selectedEmoji === "surprised" ? "bg-yellow-100 ring-2 ring-yellow-500" : "hover:bg-gray-100"} transition-all`}
+            aria-label="Surprised"
+            title="Surprised"
           >
-            <AlertCircle className={`h-8 w-8 ${selectedEmoji === "surprised" ? "text-blue-500" : "text-gray-500"}`} />
+            <AlertCircle className={`h-8 w-8 ${selectedEmoji === "surprised" ? "text-yellow-500" : "text-gray-500"}`} />
           </button>
           
           <button 
             onClick={() => handleEmojiSelect("sleepy")}
-            className={`p-2 rounded-full ${selectedEmoji === "sleepy" ? "bg-purple-100 ring-2 ring-purple-500" : "hover:bg-gray-100"} transition-all`}
+            className={`p-2 rounded-full ${selectedEmoji === "sleepy" ? "bg-blue-100 ring-2 ring-blue-500" : "hover:bg-gray-100"} transition-all`}
+            aria-label="Bored/Sleepy"
+            title="Bored/Sleepy"
           >
-            <CircleDashed className={`h-8 w-8 ${selectedEmoji === "sleepy" ? "text-purple-500" : "text-gray-500"}`} />
+            <CircleDashed className={`h-8 w-8 ${selectedEmoji === "sleepy" ? "text-blue-500" : "text-gray-500"}`} />
           </button>
           
           <button 
@@ -111,13 +169,10 @@ const ConsultCompleteDialog = ({ open, onClose, onFinish }: ConsultCompleteDialo
           </div>
         )}
 
-        <DialogFooter className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:space-x-2">
-          <Button onClick={onClose} variant="outline" disabled={isSubmitting}>
-            Continue Chatting
-          </Button>
+        <DialogFooter className="mt-6">
           <Button 
             onClick={handleFinish} 
-            className="bg-green-600 hover:bg-green-700"
+            className="w-full bg-green-600 hover:bg-green-700"
             disabled={isSubmitting}
           >
             {isSubmitting ? "Submitting..." : "End Session"}
