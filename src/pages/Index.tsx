@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -13,7 +12,7 @@ const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { checkEmailConfirmation } = useAuthOperations();
-  const [isChecking, setIsChecking] = useState(true);
+  const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => {
     // Check if user is already logged in and has confirmed email
@@ -156,13 +155,7 @@ const Index = () => {
         </div>
 
         <Card className="p-6 shadow-md bg-white border-0">
-          {isChecking ? (
-            <div className="py-8 flex justify-center">
-              <LoadingSpinner />
-            </div>
-          ) : (
-            <AuthContent />
-          )}
+          <AuthContent />
         </Card>
       </div>
     </div>
