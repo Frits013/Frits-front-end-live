@@ -16,6 +16,7 @@ const Index = () => {
   const [authCheckCompleted, setAuthCheckCompleted] = useState(false);
   const checkingRef = useRef(false);
   const initialCheckDone = useRef(false);
+  const redirectInProgress = useRef(false);
 
   useEffect(() => {
     // Check if user is already logged in and has confirmed email
@@ -45,9 +46,13 @@ const Index = () => {
           console.log("User has an active session, checking email confirmation");
           clearEmailConfirmationCache(); // Clear cache to ensure fresh check
           const isConfirmed = await checkEmailConfirmation();
+          
           if (isConfirmed) {
             console.log("Email confirmed, redirecting to chat");
-            navigate('/chat');
+            if (!redirectInProgress.current) {
+              redirectInProgress.current = true;
+              navigate('/chat');
+            }
             return; // Important: return early to prevent further execution
           } else {
             console.log("Email not confirmed, signing out");
@@ -88,6 +93,9 @@ const Index = () => {
         setIsChecking(true);
         
         try {
+          // Wait a moment to ensure session is fully established
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
           // Ensure we don't use cached data
           clearEmailConfirmationCache();
           const isConfirmed = await checkEmailConfirmation();
@@ -99,9 +107,13 @@ const Index = () => {
             });
             
             // Add a slight delay before navigating to ensure toast is visible
-            setTimeout(() => {
-              navigate('/chat');
-            }, 300);
+            // and session is fully established
+            if (!redirectInProgress.current) {
+              redirectInProgress.current = true;
+              setTimeout(() => {
+                navigate('/chat');
+              }, 500);
+            }
           } else {
             toast({
               title: "Email Not Confirmed",
@@ -120,6 +132,7 @@ const Index = () => {
       }
       
       if (event === 'SIGNED_OUT') {
+        redirectInProgress.current = false;
         toast({
           title: "Signed out",
           description: "You have been signed out."
@@ -137,13 +150,17 @@ const Index = () => {
           // Clear cache to ensure fresh check
           clearEmailConfirmationCache();
           const isConfirmed = await checkEmailConfirmation();
-          if (isConfirmed) {
+          
+          if (isConfirmed && !redirectInProgress.current) {
+            redirectInProgress.current = true;
             toast({
               title: "Email Confirmed",
               description: "Your email has been confirmed. Redirecting to chat..."
             });
             navigate('/chat');
           }
+        } catch (error) {
+          console.error("Error during user update:", error);
         } finally {
           setIsChecking(false);
           checkingRef.current = false;

@@ -10,6 +10,7 @@ export const useAuthOperations = () => {
   const [isEmailConfirmed, setIsEmailConfirmed] = useState<boolean>(false);
   const isCheckingRef = useRef<boolean>(false);
   const emailConfirmationCache = useRef<Record<string, boolean>>({});
+  const signInInProgressRef = useRef<boolean>(false);
 
   // Check email confirmation status on mount and when auth state changes
   useEffect(() => {
@@ -19,6 +20,11 @@ export const useAuthOperations = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && !isCheckingRef.current) {
         checkEmailConfirmation();
+      }
+      
+      // Reset sign in progress when signed out
+      if (event === 'SIGNED_OUT') {
+        signInInProgressRef.current = false;
       }
     });
 
@@ -168,6 +174,13 @@ export const useAuthOperations = () => {
 
   const handleEmailSignIn = async (email: string, password: string) => {
     try {
+      // Prevent multiple sign-in attempts in progress
+      if (signInInProgressRef.current) {
+        console.log("Sign in already in progress, ignoring duplicate request");
+        return { error: { message: "Sign in already in progress" } };
+      }
+      
+      signInInProgressRef.current = true;
       console.log("Attempting to sign in with email:", email);
       
       // Clear any cached confirmation status for this user
@@ -180,6 +193,7 @@ export const useAuthOperations = () => {
 
       if (error) {
         console.error('Email sign in error:', error);
+        signInInProgressRef.current = false;
         
         // Enhanced error reporting
         if (error.message?.includes("Invalid login credentials")) {
@@ -217,6 +231,7 @@ export const useAuthOperations = () => {
         
         // Sign out the user if their email isn't confirmed
         await supabase.auth.signOut();
+        signInInProgressRef.current = false;
         return { error: { message: "Email not confirmed" } };
       }
 
@@ -225,14 +240,17 @@ export const useAuthOperations = () => {
         description: "You've been signed in successfully!",
       });
       
-      // Add a navigation action to /chat after successful login
+      // Navigate to chat page after successful login
+      // Use a longer delay to ensure state has time to stabilize
       setTimeout(() => {
         navigate('/chat');
-      }, 300);
+        signInInProgressRef.current = false;
+      }, 500);
       
       return { data };
     } catch (error: any) {
       console.error('Email sign in exception:', error);
+      signInInProgressRef.current = false;
       
       // Better error handling for specific cases
       let enhancedError = error;

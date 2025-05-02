@@ -57,6 +57,10 @@ export const CustomLoginForm = ({ authView }: CustomLoginFormProps) => {
           errorMessage = "This email is already registered. Please try signing in instead.";
         } else if (errorMessage.includes("fetch") || result.error.name === "FetchError") {
           errorMessage = "Server connection issue. Please try again in a moment.";
+        } else if (errorMessage.includes("Sign in already in progress")) {
+          // Silent handling for duplicate requests
+          setLoading(false);
+          return;
         }
         
         toast({
