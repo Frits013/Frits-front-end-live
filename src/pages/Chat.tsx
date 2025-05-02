@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import ChatLayout from "@/components/chat/ChatLayout";
@@ -37,17 +37,19 @@ const Chat = () => {
     hasFeedback 
   } = useChatMessages(currentSessionId);
   
-  const { handleSignOut, checkEmailConfirmation } = useAuthOperations();
+  const { handleSignOut, checkEmailConfirmation, clearEmailConfirmationCache } = useAuthOperations();
   const { showOnboarding, setShowOnboarding } = useOnboarding();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [authCheckCompleted, setAuthCheckCompleted] = useState(false);
+  const checkingRef = useRef(false);
 
   // Check if user is authenticated and has confirmed email
   useEffect(() => {
     // Only perform the check once
-    if (authCheckCompleted) return;
+    if (authCheckCompleted || checkingRef.current) return;
     
     const checkAuth = async () => {
+      checkingRef.current = true;
       setIsCheckingAuth(true);
       
       try {
@@ -59,6 +61,8 @@ const Chat = () => {
           return;
         }
         
+        // Clear cache to ensure fresh check
+        clearEmailConfirmationCache();
         const isConfirmed = await checkEmailConfirmation();
         if (!isConfirmed) {
           console.log("Email not confirmed, navigating to login");
@@ -72,12 +76,13 @@ const Chat = () => {
         navigate('/');
       } finally {
         setIsCheckingAuth(false);
+        checkingRef.current = false;
         setAuthCheckCompleted(true);
       }
     };
     
     checkAuth();
-  }, [navigate, checkEmailConfirmation, authCheckCompleted]);
+  }, [navigate, checkEmailConfirmation, clearEmailConfirmationCache, authCheckCompleted]);
 
   const handleConsultFinish = (sessionId: string) => {
     // This now gets called only when the user clicks "End Session" in the dialog

@@ -9,6 +9,7 @@ export const useAuthOperations = () => {
   const { toast } = useToast();
   const [isEmailConfirmed, setIsEmailConfirmed] = useState<boolean>(false);
   const isCheckingRef = useRef<boolean>(false);
+  const emailConfirmationCache = useRef<Record<string, boolean>>({});
 
   // Check email confirmation status on mount and when auth state changes
   useEffect(() => {
@@ -37,19 +38,32 @@ export const useAuthOperations = () => {
       
       const { data: { user } } = await supabase.auth.getUser();
       
-      if (user) {
-        console.log("Checking email confirmation for user:", user.email);
-        console.log("Email confirmed at:", user.email_confirmed_at);
-        
-        const isConfirmed = user.email_confirmed_at !== null;
-        setIsEmailConfirmed(isConfirmed);
+      if (!user) {
+        setIsEmailConfirmed(false);
         isCheckingRef.current = false;
-        return isConfirmed;
+        return false;
       }
       
-      setIsEmailConfirmed(false);
+      // Use cached result if we've checked this user recently
+      const userEmail = user.email?.toLowerCase();
+      if (userEmail && emailConfirmationCache.current[userEmail] !== undefined) {
+        isCheckingRef.current = false;
+        return emailConfirmationCache.current[userEmail];
+      }
+      
+      console.log("Checking email confirmation for user:", user.email);
+      console.log("Email confirmed at:", user.email_confirmed_at);
+      
+      const isConfirmed = user.email_confirmed_at !== null;
+      setIsEmailConfirmed(isConfirmed);
+      
+      // Cache the result
+      if (userEmail) {
+        emailConfirmationCache.current[userEmail] = isConfirmed;
+      }
+      
       isCheckingRef.current = false;
-      return false;
+      return isConfirmed;
     } catch (error) {
       console.error("Error checking email confirmation:", error);
       setIsEmailConfirmed(false);
@@ -58,8 +72,19 @@ export const useAuthOperations = () => {
     }
   };
 
+  // Clear email confirmation cache for a specific user or all users
+  const clearEmailConfirmationCache = (email?: string) => {
+    if (email) {
+      delete emailConfirmationCache.current[email.toLowerCase()];
+    } else {
+      emailConfirmationCache.current = {};
+    }
+  };
+
   const handleSignOut = async () => {
     try {
+      // Clear email confirmation cache on sign out
+      clearEmailConfirmationCache();
       await supabase.auth.signOut();
       navigate('/');
     } catch (error) {
@@ -145,6 +170,9 @@ export const useAuthOperations = () => {
     try {
       console.log("Attempting to sign in with email:", email);
       
+      // Clear any cached confirmation status for this user
+      clearEmailConfirmationCache(email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -168,8 +196,15 @@ export const useAuthOperations = () => {
 
       console.log("Sign in successful:", data);
 
-      // Check if email is confirmed
-      const isConfirmed = await checkEmailConfirmation();
+      // Check if email is confirmed using a direct user fetch
+      // instead of the cached session that might be outdated
+      const { data: userData } = await supabase.auth.getUser();
+      const isConfirmed = userData?.user?.email_confirmed_at !== null;
+      
+      // Update the cache
+      if (email && userData?.user) {
+        emailConfirmationCache.current[email.toLowerCase()] = isConfirmed;
+      }
       
       if (!isConfirmed) {
         console.log("Email not confirmed, signing out user");
@@ -263,5 +298,6 @@ export const useAuthOperations = () => {
     resendConfirmationEmail,
     isEmailConfirmed,
     checkEmailConfirmation,
+    clearEmailConfirmationCache,
   };
 };

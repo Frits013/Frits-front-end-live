@@ -11,16 +11,17 @@ import { AuthContent } from "@/components/auth/AuthContent";
 const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { checkEmailConfirmation } = useAuthOperations();
+  const { checkEmailConfirmation, clearEmailConfirmationCache } = useAuthOperations();
   const [isChecking, setIsChecking] = useState(false);
   const [authCheckCompleted, setAuthCheckCompleted] = useState(false);
   const checkingRef = useRef(false);
+  const initialCheckDone = useRef(false);
 
   useEffect(() => {
     // Check if user is already logged in and has confirmed email
     const checkUser = async () => {
-      // Skip if already checking or check completed
-      if (checkingRef.current || authCheckCompleted) return;
+      // Skip if already checking or check already completed
+      if (checkingRef.current || initialCheckDone.current) return;
       
       checkingRef.current = true;
       setIsChecking(true);
@@ -35,12 +36,14 @@ const Index = () => {
           await supabase.auth.signOut();
           setIsChecking(false);
           checkingRef.current = false;
+          initialCheckDone.current = true;
           setAuthCheckCompleted(true);
           return;
         }
         
         if (session) {
           console.log("User has an active session, checking email confirmation");
+          clearEmailConfirmationCache(); // Clear cache to ensure fresh check
           const isConfirmed = await checkEmailConfirmation();
           if (isConfirmed) {
             console.log("Email confirmed, redirecting to chat");
@@ -60,13 +63,12 @@ const Index = () => {
           console.log("No active session found");
         }
         
-        setIsChecking(false);
-        checkingRef.current = false;
-        setAuthCheckCompleted(true);
       } catch (error) {
         console.error("Auth error:", error);
+      } finally {
         setIsChecking(false);
         checkingRef.current = false;
+        initialCheckDone.current = true;
         setAuthCheckCompleted(true);
       }
     };
@@ -84,25 +86,29 @@ const Index = () => {
         checkingRef.current = true;
         setIsChecking(true);
         
-        const isConfirmed = await checkEmailConfirmation();
-        if (isConfirmed) {
-          toast({
-            title: "Welcome!",
-            description: "Successfully signed in. Redirecting to chat..."
-          });
-          navigate('/chat');
-        } else {
-          toast({
-            title: "Email Not Confirmed",
-            description: "Please check your email and confirm your account before accessing the chat.",
-            variant: "destructive",
-            duration: 6000
-          });
-          await supabase.auth.signOut();
+        try {
+          // Ensure we don't use cached data
+          clearEmailConfirmationCache();
+          const isConfirmed = await checkEmailConfirmation();
+          if (isConfirmed) {
+            toast({
+              title: "Welcome!",
+              description: "Successfully signed in. Redirecting to chat..."
+            });
+            navigate('/chat');
+          } else {
+            toast({
+              title: "Email Not Confirmed",
+              description: "Please check your email and confirm your account before accessing the chat.",
+              variant: "destructive",
+              duration: 6000
+            });
+            await supabase.auth.signOut();
+          }
+        } finally {
+          setIsChecking(false);
+          checkingRef.current = false;
         }
-        
-        setIsChecking(false);
-        checkingRef.current = false;
       }
       
       if (event === 'SIGNED_OUT') {
@@ -116,27 +122,31 @@ const Index = () => {
         // Skip if already checking
         if (checkingRef.current) return;
         
-        checkingRef.current = true;
-        setIsChecking(true);
-        
-        const isConfirmed = await checkEmailConfirmation();
-        if (isConfirmed) {
-          toast({
-            title: "Email Confirmed",
-            description: "Your email has been confirmed. Redirecting to chat..."
-          });
-          navigate('/chat');
+        try {
+          checkingRef.current = true;
+          setIsChecking(true);
+          
+          // Clear cache to ensure fresh check
+          clearEmailConfirmationCache();
+          const isConfirmed = await checkEmailConfirmation();
+          if (isConfirmed) {
+            toast({
+              title: "Email Confirmed",
+              description: "Your email has been confirmed. Redirecting to chat..."
+            });
+            navigate('/chat');
+          }
+        } finally {
+          setIsChecking(false);
+          checkingRef.current = false;
         }
-        
-        setIsChecking(false);
-        checkingRef.current = false;
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate, toast, checkEmailConfirmation, authCheckCompleted]);
+  }, [navigate, toast, checkEmailConfirmation, clearEmailConfirmationCache, authCheckCompleted]);
 
   return (
     <div 
