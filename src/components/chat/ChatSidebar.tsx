@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import ChatHistoryComponent from "./ChatHistory";
 import { ChatSession } from "@/types/chat";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface ChatSidebarProps {
   chatSessions: ChatSession[];
@@ -18,6 +19,7 @@ interface ChatSidebarProps {
   setChatSessions: (sessions: ChatSession[]) => void;
   setCurrentSessionId: (id: string | null) => void;
   onNewChat: () => void;
+  isLoading?: boolean;
 }
 
 const ChatSidebar = ({
@@ -26,6 +28,7 @@ const ChatSidebar = ({
   setChatSessions,
   setCurrentSessionId,
   onNewChat,
+  isLoading = false,
 }: ChatSidebarProps) => {
   // Separate ongoing and completed consults
   const ongoingConsults = chatSessions.filter(chat => !chat.finished);
@@ -44,42 +47,50 @@ const ChatSidebar = ({
         </Button>
       </div>
       <div className="flex-1 overflow-auto py-2">
-        {/* Ongoing consults section */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="px-3 mb-2 text-sm font-medium text-muted-foreground">
-            Ongoing Consults
-          </SidebarGroupLabel>
-          <SidebarGroupContent className="px-2">
-            {ongoingConsults.length > 0 ? (
-              <ChatHistoryComponent
-                chatHistories={ongoingConsults}
-                currentChatId={currentSessionId}
-                setChatHistories={setChatSessions}
-                setCurrentChatId={setCurrentSessionId}
-              />
-            ) : (
-              <div className="px-2 py-4 text-sm text-muted-foreground">
-                No ongoing consults available.
-              </div>
-            )}
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-32">
+            <LoadingSpinner size="sm" text="Loading sessions..." />
+          </div>
+        ) : (
+          <>
+            {/* Ongoing consults section */}
+            <SidebarGroup>
+              <SidebarGroupLabel className="px-3 mb-2 text-sm font-medium text-muted-foreground">
+                Ongoing Consults
+              </SidebarGroupLabel>
+              <SidebarGroupContent className="px-2">
+                {ongoingConsults.length > 0 ? (
+                  <ChatHistoryComponent
+                    chatHistories={ongoingConsults}
+                    currentChatId={currentSessionId}
+                    setChatHistories={setChatSessions}
+                    setCurrentChatId={setCurrentSessionId}
+                  />
+                ) : (
+                  <div className="px-2 py-4 text-sm text-muted-foreground">
+                    No ongoing consults available.
+                  </div>
+                )}
+              </SidebarGroupContent>
+            </SidebarGroup>
 
-        {/* Completed consults section */}
-        {completedConsults.length > 0 && (
-          <SidebarGroup className="mt-4">
-            <SidebarGroupLabel className="px-3 mb-2 text-sm font-medium text-muted-foreground">
-              Completed Consults
-            </SidebarGroupLabel>
-            <SidebarGroupContent className="px-2">
-              <ChatHistoryComponent
-                chatHistories={completedConsults}
-                currentChatId={currentSessionId}
-                setChatHistories={setChatSessions}
-                setCurrentChatId={setCurrentSessionId}
-              />
-            </SidebarGroupContent>
-          </SidebarGroup>
+            {/* Completed consults section */}
+            {completedConsults.length > 0 && (
+              <SidebarGroup className="mt-4">
+                <SidebarGroupLabel className="px-3 mb-2 text-sm font-medium text-muted-foreground">
+                  Completed Consults
+                </SidebarGroupLabel>
+                <SidebarGroupContent className="px-2">
+                  <ChatHistoryComponent
+                    chatHistories={completedConsults}
+                    currentChatId={currentSessionId}
+                    setChatHistories={setChatSessions}
+                    setCurrentChatId={setCurrentSessionId}
+                  />
+                </SidebarGroupContent>
+              </SidebarGroup>
+            )}
+          </>
         )}
       </div>
     </div>

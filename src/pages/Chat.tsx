@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import ChatLayout from "@/components/chat/ChatLayout";
@@ -12,6 +12,7 @@ import { useAuthOperations } from "@/hooks/use-auth-operations";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import OnboardingWizard from "@/components/onboarding/OnboardingWizard";
 import { supabase } from "@/integrations/supabase/client";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 const Chat = () => {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ const Chat = () => {
     createNewChat,
     updateSessionTitle,
     markConsultFinished,
+    isLoading,
   } = useChatSessions();
 
   const { 
@@ -37,20 +39,35 @@ const Chat = () => {
   
   const { handleSignOut, checkEmailConfirmation } = useAuthOperations();
   const { showOnboarding, setShowOnboarding } = useOnboarding();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   // Check if user is authenticated and has confirmed email
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      setIsCheckingAuth(true);
       
-      if (!session) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          console.log("No active session, navigating to login");
+          navigate('/');
+          return;
+        }
+        
+        const isConfirmed = await checkEmailConfirmation();
+        if (!isConfirmed) {
+          console.log("Email not confirmed, navigating to login");
+          navigate('/');
+          return;
+        }
+        
+        console.log("User authenticated and email confirmed");
+      } catch (error) {
+        console.error("Error checking authentication:", error);
         navigate('/');
-        return;
-      }
-      
-      const isConfirmed = await checkEmailConfirmation();
-      if (!isConfirmed) {
-        navigate('/');
+      } finally {
+        setIsCheckingAuth(false);
       }
     };
     
@@ -62,6 +79,15 @@ const Chat = () => {
     markConsultFinished(sessionId);
   };
 
+  // Show loading state while checking auth or loading sessions
+  if (isCheckingAuth || isLoading) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center">
+        <LoadingSpinner size="lg" text="Loading your consult sessions..." />
+      </div>
+    );
+  }
+
   return (
     <SidebarProvider>
       <ChatLayout
@@ -72,6 +98,7 @@ const Chat = () => {
             setChatSessions={setChatSessions}
             setCurrentSessionId={setCurrentSessionId}
             onNewChat={createNewChat}
+            isLoading={isLoading}
           />
         }
         content={

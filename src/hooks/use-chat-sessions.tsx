@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +11,7 @@ export const useChatSessions = () => {
   const navigate = useNavigate();
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const createNewChat = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -128,24 +130,32 @@ export const useChatSessions = () => {
   };
 
   const loadSessions = async () => {
+    setIsLoading(true);
+    
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
+      setIsLoading(false);
       navigate('/');
       return;
     }
+    
+    console.log("Loading chat sessions for user:", session.user.id);
     
     try {
       // Query sessions from the chat_sessions table
       const { data: sessions, error } = await supabase
         .from('chat_sessions')
         .select('*')
+        .eq('user_id', session.user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching sessions:', error);
+        setIsLoading(false);
         return;
       }
 
+      console.log("Retrieved sessions:", sessions?.length || 0);
       setChatSessions(sessions || []);
 
       if (sessions && sessions.length === 0) {
@@ -158,25 +168,38 @@ export const useChatSessions = () => {
         // If there's an ongoing session, set it as current
         // Otherwise, fall back to the most recent session (which would be completed)
         setCurrentSessionId(ongoingSession ? ongoingSession.id : sessions[0].id);
+        console.log("Setting current session ID:", ongoingSession ? ongoingSession.id : sessions[0].id);
       }
     } catch (error) {
       console.error('Error in loadSessions:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  // Initial load of sessions
   useEffect(() => {
     loadSessions();
-
+    
+    // Now listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed:", event);
+      
       if (event === 'SIGNED_IN') {
+        console.log("User signed in, loading sessions");
+        // Explicitly load sessions when the user signs in
         loadSessions();
+      } else if (event === 'SIGNED_OUT') {
+        console.log("User signed out, clearing sessions");
+        setChatSessions([]);
+        setCurrentSessionId(null);
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, []);
 
   return {
     chatSessions,
@@ -186,5 +209,6 @@ export const useChatSessions = () => {
     createNewChat,
     updateSessionTitle,
     markConsultFinished,
+    isLoading,
   };
 };
