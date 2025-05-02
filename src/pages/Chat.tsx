@@ -40,9 +40,13 @@ const Chat = () => {
   const { handleSignOut, checkEmailConfirmation } = useAuthOperations();
   const { showOnboarding, setShowOnboarding } = useOnboarding();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [authCheckCompleted, setAuthCheckCompleted] = useState(false);
 
   // Check if user is authenticated and has confirmed email
   useEffect(() => {
+    // Only perform the check once
+    if (authCheckCompleted) return;
+    
     const checkAuth = async () => {
       setIsCheckingAuth(true);
       
@@ -68,11 +72,12 @@ const Chat = () => {
         navigate('/');
       } finally {
         setIsCheckingAuth(false);
+        setAuthCheckCompleted(true);
       }
     };
     
     checkAuth();
-  }, [navigate, checkEmailConfirmation]);
+  }, [navigate, checkEmailConfirmation, authCheckCompleted]);
 
   const handleConsultFinish = (sessionId: string) => {
     // This now gets called only when the user clicks "End Session" in the dialog

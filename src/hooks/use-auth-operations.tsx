@@ -2,19 +2,21 @@
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export const useAuthOperations = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isEmailConfirmed, setIsEmailConfirmed] = useState<boolean>(false);
+  const isCheckingRef = useRef<boolean>(false);
 
   // Check email confirmation status on mount and when auth state changes
   useEffect(() => {
+    // Initial check on mount
     checkEmailConfirmation();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && !isCheckingRef.current) {
         checkEmailConfirmation();
       }
     });
@@ -26,6 +28,13 @@ export const useAuthOperations = () => {
 
   const checkEmailConfirmation = async () => {
     try {
+      // Prevent multiple simultaneous checks
+      if (isCheckingRef.current) {
+        return isEmailConfirmed;
+      }
+
+      isCheckingRef.current = true;
+      
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
@@ -34,14 +43,17 @@ export const useAuthOperations = () => {
         
         const isConfirmed = user.email_confirmed_at !== null;
         setIsEmailConfirmed(isConfirmed);
+        isCheckingRef.current = false;
         return isConfirmed;
       }
       
       setIsEmailConfirmed(false);
+      isCheckingRef.current = false;
       return false;
     } catch (error) {
       console.error("Error checking email confirmation:", error);
       setIsEmailConfirmed(false);
+      isCheckingRef.current = false;
       return false;
     }
   };
