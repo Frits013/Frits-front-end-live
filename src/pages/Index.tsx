@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -105,31 +104,8 @@ const Index = () => {
       }
     });
 
-    // This is for development purposes only - adds a test company if needed
-    const addTestCompany = async () => {
-      try {
-        // Check if test company already exists
-        const { data: existingCompany } = await supabase.from('companies').select('*').eq('code', 12345678).maybeSingle();
-        if (!existingCompany) {
-          console.log("Creating test company with code 12345678");
-          const { data, error } = await supabase.from('companies').insert({
-            code: 12345678,
-            company_name: 'Test Company',
-            company_description: 'This is a test company for development purposes'
-          }).select();
-          if (error) {
-            console.error("Error creating test company:", error);
-          } else {
-            console.log("Added test company:", data);
-          }
-        } else {
-          console.log("Test company already exists:", existingCompany);
-        }
-      } catch (error) {
-        console.error("Error in addTestCompany:", error);
-      }
-    };
-    addTestCompany();
+    // Remove the test company creation function as it's causing issues
+    // We don't need to create a test company on every page load
     
     return () => {
       subscription.unsubscribe();
