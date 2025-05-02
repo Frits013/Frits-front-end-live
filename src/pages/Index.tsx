@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
@@ -12,11 +13,18 @@ const Index = () => {
   const { toast } = useToast();
   const { checkEmailConfirmation } = useAuthOperations();
   const [isChecking, setIsChecking] = useState(false);
+  const [authCheckCompleted, setAuthCheckCompleted] = useState(false);
+  const checkingRef = useRef(false);
 
   useEffect(() => {
     // Check if user is already logged in and has confirmed email
     const checkUser = async () => {
+      // Skip if already checking or check completed
+      if (checkingRef.current || authCheckCompleted) return;
+      
+      checkingRef.current = true;
       setIsChecking(true);
+      
       try {
         console.log("Checking user session");
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -26,6 +34,8 @@ const Index = () => {
           // Clear any invalid session data
           await supabase.auth.signOut();
           setIsChecking(false);
+          checkingRef.current = false;
+          setAuthCheckCompleted(true);
           return;
         }
         
@@ -49,10 +59,15 @@ const Index = () => {
         } else {
           console.log("No active session found");
         }
+        
         setIsChecking(false);
+        checkingRef.current = false;
+        setAuthCheckCompleted(true);
       } catch (error) {
         console.error("Auth error:", error);
         setIsChecking(false);
+        checkingRef.current = false;
+        setAuthCheckCompleted(true);
       }
     };
     
@@ -62,8 +77,13 @@ const Index = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event);
       
+      // Skip duplicate checks if currently checking
+      if (checkingRef.current) return;
+      
       if (event === 'SIGNED_IN' && session) {
+        checkingRef.current = true;
         setIsChecking(true);
+        
         const isConfirmed = await checkEmailConfirmation();
         if (isConfirmed) {
           toast({
@@ -80,7 +100,9 @@ const Index = () => {
           });
           await supabase.auth.signOut();
         }
+        
         setIsChecking(false);
+        checkingRef.current = false;
       }
       
       if (event === 'SIGNED_OUT') {
@@ -91,7 +113,12 @@ const Index = () => {
       }
       
       if (event === 'USER_UPDATED') {
+        // Skip if already checking
+        if (checkingRef.current) return;
+        
+        checkingRef.current = true;
         setIsChecking(true);
+        
         const isConfirmed = await checkEmailConfirmation();
         if (isConfirmed) {
           toast({
@@ -100,17 +127,16 @@ const Index = () => {
           });
           navigate('/chat');
         }
+        
         setIsChecking(false);
+        checkingRef.current = false;
       }
     });
 
-    // Remove the test company creation function as it's causing issues
-    // We don't need to create a test company on every page load
-    
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate, toast, checkEmailConfirmation]);
+  }, [navigate, toast, checkEmailConfirmation, authCheckCompleted]);
 
   return (
     <div 
