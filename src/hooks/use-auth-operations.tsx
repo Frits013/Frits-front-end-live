@@ -133,22 +133,24 @@ export const useAuthOperations = () => {
     try {
       console.log("Attempting to sign in with email:", email);
       
-      // Add a small delay to ensure the request has time to succeed or fail completely
-      const { data, error } = await Promise.race([
-        supabase.auth.signInWithPassword({
-          email,
-          password,
-        }),
-        new Promise<{data: null, error: {message: string}}>((resolve) => 
-          setTimeout(() => resolve({
-            data: null, 
-            error: {message: "Request timed out. Please try again."}
-          }), 10000)
-        )
-      ]);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
       if (error) {
         console.error('Email sign in error:', error);
+        
+        // Enhanced error reporting
+        if (error.message?.includes("Invalid login credentials")) {
+          return { 
+            error: { 
+              ...error, 
+              message: "Invalid email or password. Please check your credentials and try again."
+            } 
+          };
+        }
+        
         return { error };
       }
 
@@ -179,8 +181,24 @@ export const useAuthOperations = () => {
       return { data };
     } catch (error: any) {
       console.error('Email sign in exception:', error);
-      // Don't show toast here, let the calling component handle it
-      return { error };
+      
+      // Better error handling for specific cases
+      let enhancedError = error;
+      if (error.message) {
+        if (error.message.includes("network") || error.message.includes("fetch")) {
+          enhancedError = { 
+            ...error, 
+            message: "Server connection issue. Please try again in a moment."
+          };
+        } else if (error.message.includes("auth/too-many-requests")) {
+          enhancedError = { 
+            ...error, 
+            message: "Too many login attempts. Please try again later."
+          };
+        }
+      }
+      
+      return { error: enhancedError };
     }
   };
 

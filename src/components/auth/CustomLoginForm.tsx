@@ -48,9 +48,15 @@ export const CustomLoginForm = ({ authView }: CustomLoginFormProps) => {
         console.error("Auth error:", result.error);
         let errorMessage = result.error.message || "An unexpected error occurred";
         
-        // Handle network errors more gracefully
-        if (errorMessage.includes("fetch") || result.error.name === "FetchError") {
-          errorMessage = "Network error. Please check your internet connection and try again.";
+        // Map specific error codes or messages to more user-friendly messages
+        if (errorMessage.includes("Invalid login credentials")) {
+          errorMessage = "Invalid email or password. Please check your credentials and try again.";
+        } else if (errorMessage.includes("Email not confirmed")) {
+          errorMessage = "Your email has not been confirmed. Please check your inbox and confirm your email.";
+        } else if (errorMessage.includes("User already registered")) {
+          errorMessage = "This email is already registered. Please try signing in instead.";
+        } else if (errorMessage.includes("fetch") || result.error.name === "FetchError") {
+          errorMessage = "Server connection issue. Please try again in a moment.";
         }
         
         toast({
@@ -66,11 +72,15 @@ export const CustomLoginForm = ({ authView }: CustomLoginFormProps) => {
       console.error("Authentication error:", error);
       setLoading(false);
       
-      // Improved error handling for network issues
-      let errorMessage = "An unexpected error occurred. Please try again.";
+      // Improved error handling with more specific messages
+      let errorMessage = "Authentication failed. Please try again.";
       if (error?.message) {
         if (error.message.includes("fetch") || error.message.includes("network")) {
-          errorMessage = "Network error. Please check your internet connection and try again.";
+          errorMessage = "Server connection issue. Please try again in a moment.";
+        } else if (error.message.includes("Invalid login credentials")) {
+          errorMessage = "Invalid email or password. Please check your credentials and try again.";
+        } else if (error.message.includes("Email not confirmed")) {
+          errorMessage = "Your email has not been confirmed. Please check your inbox and confirm your email.";
         } else {
           errorMessage = error.message;
         }
