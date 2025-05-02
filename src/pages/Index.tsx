@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -6,30 +7,29 @@ import { MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthOperations } from "@/hooks/use-auth-operations";
 import { AuthContent } from "@/components/auth/AuthContent";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+
 const Index = () => {
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
-  const {
-    checkEmailConfirmation
-  } = useAuthOperations();
+  const { toast } = useToast();
+  const { checkEmailConfirmation } = useAuthOperations();
+  const [isChecking, setIsChecking] = useState(true);
+
   useEffect(() => {
     // Check if user is already logged in and has confirmed email
     const checkUser = async () => {
+      setIsChecking(true);
       try {
-        const {
-          data: {
-            session
-          },
-          error
-        } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
         if (error) {
           console.error("Session error:", error);
           // Clear any invalid session data
           await supabase.auth.signOut();
+          setIsChecking(false);
           return;
         }
+        
         if (session) {
           const isConfirmed = await checkEmailConfirmation();
           if (isConfirmed) {
@@ -45,20 +45,20 @@ const Index = () => {
             await supabase.auth.signOut();
           }
         }
+        setIsChecking(false);
       } catch (error) {
         console.error("Auth error:", error);
+        setIsChecking(false);
       }
     };
     checkUser();
 
     // Listen for auth changes
-    const {
-      data: {
-        subscription
-      }
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event);
+      
       if (event === 'SIGNED_IN' && session) {
+        setIsChecking(true);
         const isConfirmed = await checkEmailConfirmation();
         if (isConfirmed) {
           toast({
@@ -75,14 +75,18 @@ const Index = () => {
           });
           await supabase.auth.signOut();
         }
+        setIsChecking(false);
       }
+      
       if (event === 'SIGNED_OUT') {
         toast({
           title: "Signed out",
           description: "You have been signed out."
         });
       }
+      
       if (event === 'USER_UPDATED') {
+        setIsChecking(true);
         const isConfirmed = await checkEmailConfirmation();
         if (isConfirmed) {
           toast({
@@ -91,6 +95,7 @@ const Index = () => {
           });
           navigate('/chat');
         }
+        setIsChecking(false);
       }
     });
 
@@ -98,15 +103,10 @@ const Index = () => {
     const addTestCompany = async () => {
       try {
         // Check if test company already exists
-        const {
-          data: existingCompany
-        } = await supabase.from('companies').select('*').eq('code', 12345678).maybeSingle();
+        const { data: existingCompany } = await supabase.from('companies').select('*').eq('code', 12345678).maybeSingle();
         if (!existingCompany) {
           console.log("Creating test company with code 12345678");
-          const {
-            data,
-            error
-          } = await supabase.from('companies').insert({
+          const { data, error } = await supabase.from('companies').insert({
             code: 12345678,
             company_name: 'Test Company',
             company_description: 'This is a test company for development purposes'
@@ -124,19 +124,29 @@ const Index = () => {
       }
     };
     addTestCompany();
+    
     return () => {
       subscription.unsubscribe();
     };
   }, [navigate, toast, checkEmailConfirmation]);
-  return <div className="min-h-screen flex flex-col items-center justify-center p-4 relative" style={{
-    backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url("https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=80")',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat'
-  }}>
+
+  return (
+    <div 
+      className="min-h-screen flex flex-col items-center justify-center p-4 relative" 
+      style={{
+        backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url("https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=80")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
       {/* Company Logo - Positioned at the top left */}
       <div className="absolute top-4 left-4 z-20">
-        <img src="/lovable-uploads/aacf68b0-e0c4-472e-9f50-8289a498979b.png" alt="FIDDS Company Emblem" className="h-16 w-auto" />
+        <img 
+          src="/lovable-uploads/aacf68b0-e0c4-472e-9f50-8289a498979b.png" 
+          alt="FIDDS Company Emblem" 
+          className="h-16 w-auto" 
+        />
       </div>
 
       <div className="w-full max-w-md relative z-10">
@@ -146,9 +156,17 @@ const Index = () => {
         </div>
 
         <Card className="p-6 shadow-md bg-white border-0">
-          <AuthContent />
+          {isChecking ? (
+            <div className="py-8 flex justify-center">
+              <LoadingSpinner />
+            </div>
+          ) : (
+            <AuthContent />
+          )}
         </Card>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Index;

@@ -44,8 +44,17 @@ export const useAuthOperations = () => {
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate('/');
+    try {
+      await supabase.auth.signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Sign out error:', error);
+      toast({
+        title: "Sign Out Failed",
+        description: "An error occurred while signing out. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSignInWithGithub = async () => {
