@@ -5,165 +5,57 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAuthOperations } from "@/hooks/use-auth-operations";
 import { AuthContent } from "@/components/auth/AuthContent";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { checkEmailConfirmation, clearEmailConfirmationCache } = useAuthOperations();
-  const [isChecking, setIsChecking] = useState(false);
-  const [authCheckCompleted, setAuthCheckCompleted] = useState(false);
-  const checkingRef = useRef(false);
-  const initialCheckDone = useRef(false);
-  const redirectInProgress = useRef(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const authCheckingRef = useRef(false);
 
+  // Simplified auth checking that runs once on component mount
   useEffect(() => {
-    // Check if user is already logged in and has confirmed email
-    const checkUser = async () => {
-      // Skip if already checking or check already completed
-      if (checkingRef.current || initialCheckDone.current) return;
-      
-      checkingRef.current = true;
-      setIsChecking(true);
+    const checkAuth = async () => {
+      if (authCheckingRef.current) return;
+      authCheckingRef.current = true;
       
       try {
-        console.log("Checking user session");
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error("Session error:", error);
-          // Clear any invalid session data
-          await supabase.auth.signOut();
-          setIsChecking(false);
-          checkingRef.current = false;
-          initialCheckDone.current = true;
-          setAuthCheckCompleted(true);
-          return;
-        }
+        setIsLoading(true);
+        const { data: { session } } = await supabase.auth.getSession();
         
         if (session) {
-          console.log("User has an active session, checking email confirmation");
-          clearEmailConfirmationCache(); // Clear cache to ensure fresh check
-          const isConfirmed = await checkEmailConfirmation();
+          // If we have a session, let's check if the email is confirmed
+          const { data: { user } } = await supabase.auth.getUser();
           
-          if (isConfirmed) {
-            console.log("Email confirmed, redirecting to chat");
-            if (!redirectInProgress.current) {
-              redirectInProgress.current = true;
-              navigate('/chat');
-            }
-            return; // Important: return early to prevent further execution
-          } else {
-            console.log("Email not confirmed, signing out");
-            toast({
-              title: "Email Not Confirmed",
-              description: "Please check your email and confirm your account before accessing the chat.",
-              variant: "destructive",
-              duration: 6000
-            });
-            // Keep on login page if email isn't confirmed
-            await supabase.auth.signOut();
+          if (user && user.email_confirmed_at) {
+            // Email is confirmed, navigate to chat
+            navigate('/chat');
+            return; // Exit early
           }
-        } else {
-          console.log("No active session found");
+          
+          // If email isn't confirmed, we'll stay on the login page
+          // Sign out to ensure clean state
+          await supabase.auth.signOut();
         }
-        
       } catch (error) {
-        console.error("Auth error:", error);
+        console.error("Error checking auth:", error);
       } finally {
-        setIsChecking(false);
-        checkingRef.current = false;
-        initialCheckDone.current = true;
-        setAuthCheckCompleted(true);
+        setIsLoading(false);
+        authCheckingRef.current = false;
       }
     };
     
-    checkUser();
-
-    // Listen for auth changes
+    // Run the auth check
+    checkAuth();
+    
+    // Listen for auth state changes to handle navigation correctly
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event);
-      
-      // Skip duplicate checks if currently checking
-      if (checkingRef.current) return;
-      
       if (event === 'SIGNED_IN' && session) {
-        checkingRef.current = true;
-        setIsChecking(true);
-        
-        try {
-          // Wait a moment to ensure session is fully established
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          // Ensure we don't use cached data
-          clearEmailConfirmationCache();
-          const isConfirmed = await checkEmailConfirmation();
-          
-          if (isConfirmed) {
-            toast({
-              title: "Welcome!",
-              description: "Successfully signed in. Redirecting to chat..."
-            });
-            
-            // Add a slight delay before navigating to ensure toast is visible
-            // and session is fully established
-            if (!redirectInProgress.current) {
-              redirectInProgress.current = true;
-              setTimeout(() => {
-                navigate('/chat');
-              }, 500);
-            }
-          } else {
-            toast({
-              title: "Email Not Confirmed",
-              description: "Please check your email and confirm your account before accessing the chat.",
-              variant: "destructive",
-              duration: 6000
-            });
-            await supabase.auth.signOut();
-          }
-        } catch (error) {
-          console.error("Error during sign in:", error);
-        } finally {
-          setIsChecking(false);
-          checkingRef.current = false;
-        }
-      }
-      
-      if (event === 'SIGNED_OUT') {
-        redirectInProgress.current = false;
-        toast({
-          title: "Signed out",
-          description: "You have been signed out."
-        });
-      }
-      
-      if (event === 'USER_UPDATED') {
-        // Skip if already checking
-        if (checkingRef.current) return;
-        
-        try {
-          checkingRef.current = true;
-          setIsChecking(true);
-          
-          // Clear cache to ensure fresh check
-          clearEmailConfirmationCache();
-          const isConfirmed = await checkEmailConfirmation();
-          
-          if (isConfirmed && !redirectInProgress.current) {
-            redirectInProgress.current = true;
-            toast({
-              title: "Email Confirmed",
-              description: "Your email has been confirmed. Redirecting to chat..."
-            });
-            navigate('/chat');
-          }
-        } catch (error) {
-          console.error("Error during user update:", error);
-        } finally {
-          setIsChecking(false);
-          checkingRef.current = false;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user && user.email_confirmed_at) {
+          // Email confirmed, navigate to chat
+          navigate('/chat');
         }
       }
     });
@@ -171,7 +63,15 @@ const Index = () => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate, toast, checkEmailConfirmation, clearEmailConfirmationCache, authCheckCompleted]);
+  }, [navigate, toast]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
   return (
     <div 

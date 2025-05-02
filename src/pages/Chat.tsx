@@ -37,22 +37,22 @@ const Chat = () => {
     hasFeedback 
   } = useChatMessages(currentSessionId);
   
-  const { handleSignOut, checkEmailConfirmation, clearEmailConfirmationCache } = useAuthOperations();
+  const { handleSignOut } = useAuthOperations();
   const { showOnboarding, setShowOnboarding } = useOnboarding();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [authCheckCompleted, setAuthCheckCompleted] = useState(false);
   const checkingRef = useRef(false);
 
-  // Check if user is authenticated and has confirmed email
+  // Check if user is authenticated
   useEffect(() => {
-    // Only perform the check once
-    if (authCheckCompleted || checkingRef.current) return;
+    // Only perform the check if not already checking
+    if (checkingRef.current) return;
     
     const checkAuth = async () => {
       checkingRef.current = true;
       setIsCheckingAuth(true);
       
       try {
+        // Get the current session
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
@@ -61,11 +61,12 @@ const Chat = () => {
           return;
         }
         
-        // Clear cache to ensure fresh check
-        clearEmailConfirmationCache();
-        const isConfirmed = await checkEmailConfirmation();
-        if (!isConfirmed) {
+        // Check if email is confirmed
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user || !user.email_confirmed_at) {
           console.log("Email not confirmed, navigating to login");
+          await supabase.auth.signOut();
           navigate('/');
           return;
         }
@@ -77,15 +78,24 @@ const Chat = () => {
       } finally {
         setIsCheckingAuth(false);
         checkingRef.current = false;
-        setAuthCheckCompleted(true);
       }
     };
     
     checkAuth();
-  }, [navigate, checkEmailConfirmation, clearEmailConfirmationCache, authCheckCompleted]);
+    
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        navigate('/');
+      }
+    });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   const handleConsultFinish = (sessionId: string) => {
-    // This now gets called only when the user clicks "End Session" in the dialog
     markConsultFinished(sessionId);
   };
 

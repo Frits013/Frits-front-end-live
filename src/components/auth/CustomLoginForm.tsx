@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthOperations } from "@/hooks/use-auth-operations";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface CustomLoginFormProps {
   authView: 'sign_in' | 'sign_up';
@@ -18,6 +19,7 @@ export const CustomLoginForm = ({ authView }: CustomLoginFormProps) => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { handleEmailSignIn, handleEmailSignUp } = useAuthOperations();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,10 +37,22 @@ export const CustomLoginForm = ({ authView }: CustomLoginFormProps) => {
     try {
       console.log(`Attempting to ${authView === 'sign_in' ? 'sign in' : 'sign up'} with email: ${email}`);
       
-      // Clear any previous errors
       let result;
       if (authView === 'sign_in') {
         result = await handleEmailSignIn(email, password);
+        
+        // If sign-in was successful and there was no error
+        if (result && !result.error) {
+          toast({
+            title: "Sign In Successful",
+            description: "You've been signed in successfully! Redirecting...",
+          });
+          
+          // Navigate to chat page after successful login
+          setTimeout(() => {
+            navigate('/chat');
+          }, 1000); // Longer delay to ensure state updates properly
+        }
       } else {
         result = await handleEmailSignUp(email, password);
       }
@@ -57,10 +71,6 @@ export const CustomLoginForm = ({ authView }: CustomLoginFormProps) => {
           errorMessage = "This email is already registered. Please try signing in instead.";
         } else if (errorMessage.includes("fetch") || result.error.name === "FetchError") {
           errorMessage = "Server connection issue. Please try again in a moment.";
-        } else if (errorMessage.includes("Sign in already in progress")) {
-          // Silent handling for duplicate requests
-          setLoading(false);
-          return;
         }
         
         toast({
@@ -68,13 +78,10 @@ export const CustomLoginForm = ({ authView }: CustomLoginFormProps) => {
           description: errorMessage,
           variant: "destructive",
         });
-        setLoading(false);
       }
-      // Don't set loading to false on success as the page will redirect
       
     } catch (error: any) {
       console.error("Authentication error:", error);
-      setLoading(false);
       
       // Improved error handling with more specific messages
       let errorMessage = "Authentication failed. Please try again.";
@@ -95,6 +102,8 @@ export const CustomLoginForm = ({ authView }: CustomLoginFormProps) => {
         description: errorMessage,
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 

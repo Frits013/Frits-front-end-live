@@ -14,19 +14,28 @@ export const useAuthOperations = () => {
 
   // Check email confirmation status on mount and when auth state changes
   useEffect(() => {
-    // Initial check on mount
-    checkEmailConfirmation();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    // Set up auth state listener FIRST (best practice)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed:", event);
+      
       if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && !isCheckingRef.current) {
-        checkEmailConfirmation();
+        // Don't run other Supabase functions directly inside the callback
+        // Use setTimeout to avoid Supabase deadlocks
+        setTimeout(() => {
+          checkEmailConfirmation();
+        }, 0);
       }
       
       // Reset sign in progress when signed out
       if (event === 'SIGNED_OUT') {
         signInInProgressRef.current = false;
+        // Clear email confirmation cache on sign out
+        emailConfirmationCache.current = {};
       }
     });
+
+    // THEN check for existing session (best practice order)
+    checkEmailConfirmation();
 
     return () => {
       subscription.unsubscribe();
@@ -211,7 +220,6 @@ export const useAuthOperations = () => {
       console.log("Sign in successful:", data);
 
       // Check if email is confirmed using a direct user fetch
-      // instead of the cached session that might be outdated
       const { data: userData } = await supabase.auth.getUser();
       const isConfirmed = userData?.user?.email_confirmed_at !== null;
       
@@ -235,19 +243,14 @@ export const useAuthOperations = () => {
         return { error: { message: "Email not confirmed" } };
       }
 
-      toast({
-        title: "Sign In Successful",
-        description: "You've been signed in successfully!",
-      });
-      
-      // Navigate to chat page after successful login
-      // Use a longer delay to ensure state has time to stabilize
+      // Success path - Let the component handle the navigation
+      // We'll reset the sign-in flag after a delay to allow navigation to complete
       setTimeout(() => {
-        navigate('/chat');
         signInInProgressRef.current = false;
-      }, 500);
+      }, 2000);
       
       return { data };
+      
     } catch (error: any) {
       console.error('Email sign in exception:', error);
       signInInProgressRef.current = false;
