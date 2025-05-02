@@ -29,6 +29,9 @@ export const useAuthOperations = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
+        console.log("Checking email confirmation for user:", user.email);
+        console.log("Email confirmed at:", user.email_confirmed_at);
+        
         const isConfirmed = user.email_confirmed_at !== null;
         setIsEmailConfirmed(isConfirmed);
         return isConfirmed;
@@ -137,6 +140,8 @@ export const useAuthOperations = () => {
 
   const handleEmailSignIn = async (email: string, password: string) => {
     try {
+      console.log("Attempting to sign in with email:", email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -152,10 +157,13 @@ export const useAuthOperations = () => {
         return { error };
       }
 
+      console.log("Sign in successful:", data);
+
       // Check if email is confirmed
       const isConfirmed = await checkEmailConfirmation();
       
       if (!isConfirmed) {
+        console.log("Email not confirmed, signing out user");
         toast({
           title: "Email Not Confirmed",
           description: "Please check your email and confirm your account before signing in.",

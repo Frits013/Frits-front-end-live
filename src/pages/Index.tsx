@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -6,7 +7,6 @@ import { MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthOperations } from "@/hooks/use-auth-operations";
 import { AuthContent } from "@/components/auth/AuthContent";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -19,6 +19,7 @@ const Index = () => {
     const checkUser = async () => {
       setIsChecking(true);
       try {
+        console.log("Checking user session");
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -30,10 +31,13 @@ const Index = () => {
         }
         
         if (session) {
+          console.log("User has an active session, checking email confirmation");
           const isConfirmed = await checkEmailConfirmation();
           if (isConfirmed) {
+            console.log("Email confirmed, redirecting to chat");
             navigate('/chat');
           } else {
+            console.log("Email not confirmed, signing out");
             toast({
               title: "Email Not Confirmed",
               description: "Please check your email and confirm your account before accessing the chat.",
@@ -43,6 +47,8 @@ const Index = () => {
             // Keep on login page if email isn't confirmed
             await supabase.auth.signOut();
           }
+        } else {
+          console.log("No active session found");
         }
         setIsChecking(false);
       } catch (error) {
@@ -50,6 +56,7 @@ const Index = () => {
         setIsChecking(false);
       }
     };
+    
     checkUser();
 
     // Listen for auth changes

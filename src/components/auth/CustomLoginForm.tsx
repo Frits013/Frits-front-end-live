@@ -33,6 +33,9 @@ export const CustomLoginForm = ({ authView }: CustomLoginFormProps) => {
     
     setLoading(true);
     try {
+      console.log(`Attempting to ${authView === 'sign_in' ? 'sign in' : 'sign up'} with email: ${email}`);
+      
+      // Clear any previous errors
       let result;
       if (authView === 'sign_in') {
         result = await handleEmailSignIn(email, password);
@@ -40,18 +43,24 @@ export const CustomLoginForm = ({ authView }: CustomLoginFormProps) => {
         result = await handleEmailSignUp(email, password);
       }
       
-      // If there was an error, we still want to set loading to false
+      // Check for errors and handle accordingly
       if (result?.error) {
+        console.error("Auth error:", result.error);
+        toast({
+          title: authView === 'sign_in' ? "Sign In Failed" : "Sign Up Failed",
+          description: result.error.message || "An unexpected error occurred",
+          variant: "destructive",
+        });
         setLoading(false);
       }
-      // We don't set loading to false on success because the page will redirect
+      // Don't set loading to false on success as the page will redirect
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Authentication error:", error);
       setLoading(false);
       toast({
         title: "Authentication Failed",
-        description: "An unexpected error occurred. Please try again.",
+        description: error?.message || "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     }
