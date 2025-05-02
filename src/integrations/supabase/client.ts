@@ -16,4 +16,20 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       apikey: supabaseAnonKey,
     },
   },
+  // Add retry logic for network failures
+  fetch: (url, options) => {
+    const fetchWithRetry = async (attempt = 0) => {
+      try {
+        return await fetch(url, options);
+      } catch (error) {
+        if (attempt < 2) {  // Try up to 3 times total
+          console.log(`Fetch attempt ${attempt + 1} failed, retrying...`);
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retrying
+          return fetchWithRetry(attempt + 1);
+        }
+        throw error;
+      }
+    };
+    return fetchWithRetry();
+  }
 });

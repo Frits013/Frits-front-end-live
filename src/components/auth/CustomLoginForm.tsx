@@ -46,9 +46,16 @@ export const CustomLoginForm = ({ authView }: CustomLoginFormProps) => {
       // Check for errors and handle accordingly
       if (result?.error) {
         console.error("Auth error:", result.error);
+        let errorMessage = result.error.message || "An unexpected error occurred";
+        
+        // Handle network errors more gracefully
+        if (errorMessage.includes("fetch") || result.error.name === "FetchError") {
+          errorMessage = "Network error. Please check your internet connection and try again.";
+        }
+        
         toast({
           title: authView === 'sign_in' ? "Sign In Failed" : "Sign Up Failed",
-          description: result.error.message || "An unexpected error occurred",
+          description: errorMessage,
           variant: "destructive",
         });
         setLoading(false);
@@ -58,9 +65,20 @@ export const CustomLoginForm = ({ authView }: CustomLoginFormProps) => {
     } catch (error: any) {
       console.error("Authentication error:", error);
       setLoading(false);
+      
+      // Improved error handling for network issues
+      let errorMessage = "An unexpected error occurred. Please try again.";
+      if (error?.message) {
+        if (error.message.includes("fetch") || error.message.includes("network")) {
+          errorMessage = "Network error. Please check your internet connection and try again.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         title: "Authentication Failed",
-        description: error?.message || "An unexpected error occurred. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     }

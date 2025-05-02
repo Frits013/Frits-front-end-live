@@ -101,11 +101,6 @@ export const useAuthOperations = () => {
 
       if (error) {
         console.error('Email sign up error:', error);
-        toast({
-          title: "Sign Up Failed",
-          description: error.message,
-          variant: "destructive",
-        });
         return { error };
       }
       
@@ -127,13 +122,9 @@ export const useAuthOperations = () => {
       }
       
       return { data };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Email sign up exception:', error);
-      toast({
-        title: "Sign Up Failed",
-        description: "An unexpected error occurred during sign up.",
-        variant: "destructive",
-      });
+      // Don't show toast here, let the calling component handle it
       return { error };
     }
   };
@@ -142,18 +133,22 @@ export const useAuthOperations = () => {
     try {
       console.log("Attempting to sign in with email:", email);
       
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      // Add a small delay to ensure the request has time to succeed or fail completely
+      const { data, error } = await Promise.race([
+        supabase.auth.signInWithPassword({
+          email,
+          password,
+        }),
+        new Promise<{data: null, error: {message: string}}>((resolve) => 
+          setTimeout(() => resolve({
+            data: null, 
+            error: {message: "Request timed out. Please try again."}
+          }), 10000)
+        )
+      ]);
 
       if (error) {
         console.error('Email sign in error:', error);
-        toast({
-          title: "Sign In Failed",
-          description: error.message,
-          variant: "destructive",
-        });
         return { error };
       }
 
@@ -182,13 +177,9 @@ export const useAuthOperations = () => {
       });
       
       return { data };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Email sign in exception:', error);
-      toast({
-        title: "Sign In Failed",
-        description: "An unexpected error occurred during sign in.",
-        variant: "destructive",
-      });
+      // Don't show toast here, let the calling component handle it
       return { error };
     }
   };
