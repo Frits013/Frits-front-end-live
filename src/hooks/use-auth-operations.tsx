@@ -225,6 +225,11 @@ export const useAuthOperations = () => {
         description: "You've been signed in successfully!",
       });
       
+      // Add a navigation action to /chat after successful login
+      setTimeout(() => {
+        navigate('/chat');
+      }, 300);
+      
       return { data };
     } catch (error: any) {
       console.error('Email sign in exception:', error);

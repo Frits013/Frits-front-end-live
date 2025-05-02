@@ -48,6 +48,7 @@ const Index = () => {
           if (isConfirmed) {
             console.log("Email confirmed, redirecting to chat");
             navigate('/chat');
+            return; // Important: return early to prevent further execution
           } else {
             console.log("Email not confirmed, signing out");
             toast({
@@ -90,12 +91,17 @@ const Index = () => {
           // Ensure we don't use cached data
           clearEmailConfirmationCache();
           const isConfirmed = await checkEmailConfirmation();
+          
           if (isConfirmed) {
             toast({
               title: "Welcome!",
               description: "Successfully signed in. Redirecting to chat..."
             });
-            navigate('/chat');
+            
+            // Add a slight delay before navigating to ensure toast is visible
+            setTimeout(() => {
+              navigate('/chat');
+            }, 300);
           } else {
             toast({
               title: "Email Not Confirmed",
@@ -105,6 +111,8 @@ const Index = () => {
             });
             await supabase.auth.signOut();
           }
+        } catch (error) {
+          console.error("Error during sign in:", error);
         } finally {
           setIsChecking(false);
           checkingRef.current = false;
