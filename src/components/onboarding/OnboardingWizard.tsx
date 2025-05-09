@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { MessageSquare } from "lucide-react";
 
 interface OnboardingWizardProps {
   open: boolean;
@@ -20,8 +21,8 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [codeError, setCodeError] = useState("");
 
-  const handleNext = () => setStep(2);
-  const handlePrevious = () => setStep(1);
+  const handleNext = () => setStep(prevStep => prevStep + 1);
+  const handlePrevious = () => setStep(prevStep => prevStep - 1);
 
   const validateCompanyCode = async (code: string) => {
     if (!code) return true; // Empty code is allowed (will not link to company)
@@ -120,7 +121,7 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-semibold">Welcome!</h2>
             <div className="text-sm text-muted-foreground">
-              Step {step} of 2
+              Step {step} of 3
             </div>
           </div>
 
@@ -154,7 +155,7 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
                 </Button>
               </div>
             </div>
-          ) : (
+          ) : step === 2 ? (
             <div className="space-y-4">
               <div>
                 <h3 className="text-lg font-medium mb-2">Tell Us About Yourself</h3>
@@ -172,6 +173,37 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
                   PRO TIP: Ask ChatGPT to make a summary about yourself. Specifically a summary which an AI readiness consultant can use to prepare itself for an interview. Paste the answer here.
                 </p>
               </div>
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={handlePrevious}>
+                  Previous
+                </Button>
+                <Button onClick={handleNext}>
+                  Next
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center justify-center mb-4">
+                <MessageSquare className="h-8 w-8 text-blue-600 mr-2" />
+                <h3 className="text-xl font-medium">About Frits</h3>
+              </div>
+              
+              <div className="space-y-3 text-sm">
+                <p>
+                  Welcome to Frits! Frits is an AI agent designed to be an AI readiness assesor to help organizations identify how prepared they are for using this new technology.
+                </p>
+                <p>
+                  The goal is to identify gaps or challenges your organization may need to address before taking on advanced AI initiatives.
+                </p>
+                <p>
+                  Frits guides you through concise questions, adapting to your level of AI experience, so don't worry if you feel overwhelmed right now. Frits is meant to be straightforward and efficient. A consult session takes around 20 minutes and you can start one by just typing what you want. Frits knows about his role so if you have any questions, just ask him!
+                </p>
+                <p className="font-medium">
+                  Sidenode; the first response of Frits can take up to 2 minutes, after that it takes about 20 seconds per answer.
+                </p>
+              </div>
+              
               <div className="flex justify-between">
                 <Button variant="outline" onClick={handlePrevious}>
                   Previous
