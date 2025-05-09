@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { MessageSquare } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface OnboardingWizardProps {
   open: boolean;
@@ -19,21 +20,27 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
   const [userDescription, setUserDescription] = useState("");
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [codeError, setCodeError] = useState("");
+  const [error, setError] = useState("");
 
-  const handleNext = () => setStep(prevStep => prevStep + 1);
-  const handlePrevious = () => setStep(prevStep => prevStep - 1);
+  const handleNext = () => {
+    setError("");
+    setStep(prevStep => prevStep + 1);
+  };
+  
+  const handlePrevious = () => {
+    setError("");
+    setStep(prevStep => prevStep - 1);
+  };
 
   const validateCompanyCode = async (code: string) => {
     if (!code) return true; // Empty code is allowed (will not link to company)
     
     // Make sure code only contains numbers and is at most 8 digits
     if (!/^\d{1,8}$/.test(code)) {
-      setCodeError("Company code must be an 8-digit number");
+      setError("Company code must be an 8-digit number");
       return false;
     }
     
-    setCodeError("");
     console.log("Validating company code:", code);
     
     // Convert string code to number before querying
@@ -48,7 +55,7 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
       .maybeSingle();
 
     if (!validCode) {
-      setCodeError("Company code not found");
+      setError("Company code not found");
       return false;
     }
     
@@ -57,6 +64,7 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
 
   const handleSave = async () => {
     try {
+      setError("");
       setIsSubmitting(true);
       
       // Validate company code if provided
@@ -78,7 +86,7 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
 
         if (functionError) throw functionError;
         if (!success) {
-          setCodeError("Failed to link company code");
+          setError("Failed to link company code");
           setIsSubmitting(false);
           return;
         }
@@ -104,12 +112,7 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
       onComplete();
     } catch (error) {
       console.error('Error saving profile:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save your profile. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
+      setError("Failed to save your profile. Please try again.");
       setIsSubmitting(false);
     }
   };
@@ -139,15 +142,12 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
                     // Only allow numeric input with max 8 digits
                     const value = e.target.value.replace(/\D/g, '').slice(0, 8);
                     setCompanyCode(value);
-                    setCodeError("");
+                    setError("");
                   }}
                   className="font-mono"
                   maxLength={8}
                   inputMode="numeric"
                 />
-                {codeError && (
-                  <p className="text-sm text-destructive mt-2">{codeError}</p>
-                )}
               </div>
               <div className="flex justify-end">
                 <Button onClick={handleNext}>
@@ -203,6 +203,12 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
                   Sidenode; the first response of Frits can take up to 2 minutes, after that it takes about 20 seconds per answer.
                 </p>
               </div>
+              
+              {error && (
+                <Alert variant="destructive" className="mt-4">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
               
               <div className="flex justify-between">
                 <Button variant="outline" onClick={handlePrevious}>
