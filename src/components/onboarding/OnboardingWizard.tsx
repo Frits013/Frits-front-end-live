@@ -191,7 +191,7 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
               
               <div className="space-y-3 text-sm">
                 <p>
-                  Welcome to Frits! Frits is an AI agent designed to be an AI readiness assesor to help organizations identify how prepared they are for using this new technology.
+                  Welcome to Frits! Frits is an AI agent designed to mimick an AI readiness assesor. He helps organizations assess how prepared they are for using AI and identifies opportunities for improvement.
                 </p>
                 <p>
                   The goal is to identify gaps or challenges your organization may need to address before taking on advanced AI initiatives.
