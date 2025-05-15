@@ -77,7 +77,7 @@ const ProfileDialog = ({ open, onOpenChange }: ProfileDialogProps) => {
               value={userDescription}
               onChange={(e) => setUserDescription(e.target.value)}
               className="min-h-[250px] resize-y w-full"
-              placeholder="You can provide a summary about yourself including your name, role at the company, hobbies, characteristics, and any other relevant information. This helps the AI consultant better understand your background.
+              placeholder="You can provide a summary about yourself including your name, role at the company, hobbies, characteristics, and any other relevant information. This helps Frits the AI consultant in personalizing your experience.
 
 PRO TIP: Ask ChatGPT to write a summary of you with detailed information that a consultant can read to prepare for an interview."
             />
