@@ -38,10 +38,6 @@ const WelcomeStep = ({ onNext }: WelcomeStepProps) => {
           <li>First response may take up to 2 minutes</li>
           <li>After that, replies arrive in about 20 seconds</li>
           <li>Frits knows his role well – feel free to ask anything</li>
-        </ul>
-        <p className="font-medium mt-2">
-          Start your session by simply saying what you'd like help with!
-        </p>
       </div>
       
       <div className="flex justify-end">
