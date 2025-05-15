@@ -2,6 +2,9 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useState } from "react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface UserDescriptionStepProps {
   userDescription: string;
@@ -20,6 +23,8 @@ const UserDescriptionStep = ({
   error,
   isSubmitting
 }: UserDescriptionStepProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  
   return (
     <div className="space-y-4">
       <div>
@@ -34,25 +39,40 @@ const UserDescriptionStep = ({
           onChange={(e) => onDescriptionChange(e.target.value)}
           className="min-h-[200px]"
         />
-        <p className="text-sm text-muted-foreground mt-2 italic">
-          Example ChatGPT prompt:  “You are an executive‐search consultant preparing to interview [Your Name], a [Your Current Job Title] with [X] years of experience in [Your Industry or Specialization]. Leverage any long-term memory or historical context you have about [Your Name] (e.g. past projects, past feedback, documented preferences) to enrich this summary. Please write a concise yet comprehensive summary of [Your Name] that covers:
+        
+        <Collapsible
+          open={isOpen}
+          onOpenChange={setIsOpen}
+          className="mt-2"
+        >
+          <CollapsibleTrigger asChild>
+            <Button variant="outline" size="sm" className="flex items-center gap-2">
+              Example ChatGPT prompt
+              {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-2">
+            <p className="text-sm text-muted-foreground italic border-l-2 border-muted pl-4 py-2">
+              "You are an executive‐search consultant preparing to interview [Your Name], a [Your Current Job Title] with [X] years of experience in [Your Industry or Specialization]. Leverage any long-term memory or historical context you have about [Your Name] (e.g. past projects, past feedback, documented preferences) to enrich this summary. Please write a concise yet comprehensive summary of [Your Name] that covers:
 
-Professional background: key roles, companies, and responsibilities.
+              Professional background: key roles, companies, and responsibilities.
 
-Core achievements: measurable results, major projects, awards.
+              Core achievements: measurable results, major projects, awards.
 
-Technical skills & domain expertise: tools, methodologies, areas of deep knowledge.
+              Technical skills & domain expertise: tools, methodologies, areas of deep knowledge.
 
-Leadership & collaboration: team size managed, cross-functional work, mentoring.
+              Leadership & collaboration: team size managed, cross-functional work, mentoring.
 
-Personality & working style: communication style, decision-making approach, adaptability.
+              Personality & working style: communication style, decision-making approach, adaptability.
 
-Areas of growth: current focus areas, upskilling efforts, career aspirations.
+              Areas of growth: current focus areas, upskilling efforts, career aspirations.
 
-Interview tips: topics the consultant should probe, potential red flags to watch, high-impact questions.
+              Interview tips: topics the consultant should probe, potential red flags to watch, high-impact questions.
 
-Structure the summary in clear sections with headings, and keep it under 500 words.”
-        </p>
+              Structure the summary in clear sections with headings, and keep it under 500 words."
+            </p>
+          </CollapsibleContent>
+        </Collapsible>
       </div>
       
       {error && (
