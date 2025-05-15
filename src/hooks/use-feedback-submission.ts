@@ -105,7 +105,8 @@ export const useFeedbackSubmission = ({ sessionId, onFinish }: UseFeedbackSubmis
         description: "Thank you for your feedback!",
       });
       
-      // After saving the feedback, call the onFinish prop
+      // After saving the feedback successfully, call the onFinish callback
+      // This will trigger the markConsultFinished function in the parent component
       onFinish();
       return true;
     } catch (error) {

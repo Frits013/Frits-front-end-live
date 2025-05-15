@@ -33,7 +33,7 @@ export const useChatSessions = () => {
       .insert([{
         user_id: session.user.id,
         session_name: `Consult Session - ${formattedDateTime}`,
-        finished: false
+        finished: false // Always start as not finished
       }])
       .select()
       .single();

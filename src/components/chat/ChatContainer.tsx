@@ -58,7 +58,6 @@ const ChatContainer = ({
   }, [isConsultComplete, showCompleteDialog, hasFeedback, dialogDismissed]);
 
   // Replace the auto-showing dialog effect with button-triggered approach
-  // Note: We're no longer automatically showing the dialog based on isConsultComplete
   const handleCompleteButtonClick = useCallback(() => {
     if (currentChatId) {
       setShowCompleteDialog(true);

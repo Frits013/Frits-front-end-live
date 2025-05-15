@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import {
   Dialog,
@@ -57,6 +58,10 @@ const ConsultCompleteDialog = ({
   }, [open]);
 
   const handleFinish = async () => {
+    // This function will:
+    // 1. Submit the feedback
+    // 2. Trigger onFinish which will mark the session as complete in the database
+    // This ensures the session is only marked as complete after clicking "End Session"
     const success = await handleSubmit();
     if (success) {
       // The onFinish callback is already called in the hook if submission is successful
