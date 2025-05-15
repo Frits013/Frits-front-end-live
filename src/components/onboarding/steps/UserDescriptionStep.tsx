@@ -35,7 +35,23 @@ const UserDescriptionStep = ({
           className="min-h-[200px]"
         />
         <p className="text-sm text-muted-foreground mt-2 italic">
-          PRO TIP: Ask ChatGPT to make a summary about yourself. Specifically a summary which an AI readiness consultant can use to prepare itself for an interview. Paste the answer here.
+          Example ChatGPT prompt:  “You are an executive‐search consultant preparing to interview [Your Name], a [Your Current Job Title] with [X] years of experience in [Your Industry or Specialization]. Leverage any long-term memory or historical context you have about [Your Name] (e.g. past projects, past feedback, documented preferences) to enrich this summary. Please write a concise yet comprehensive summary of [Your Name] that covers:
+
+Professional background: key roles, companies, and responsibilities.
+
+Core achievements: measurable results, major projects, awards.
+
+Technical skills & domain expertise: tools, methodologies, areas of deep knowledge.
+
+Leadership & collaboration: team size managed, cross-functional work, mentoring.
+
+Personality & working style: communication style, decision-making approach, adaptability.
+
+Areas of growth: current focus areas, upskilling efforts, career aspirations.
+
+Interview tips: topics the consultant should probe, potential red flags to watch, high-impact questions.
+
+Structure the summary in clear sections with headings, and keep it under 500 words.”
         </p>
       </div>
       
