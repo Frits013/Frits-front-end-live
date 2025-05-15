@@ -59,9 +59,9 @@ Structure your summary with clear section headings and keep it under 500 words.`
           Optional for advanced users: connect your AI (ChatGPT, Perplexity, Claude) to auto-generate your profile from past chats.
         </p>
         <p className="text-sm text-muted-foreground mb-4">
-          1. Copy our prompt
-          2. Paste the AI’s reply here
-          3. Jump straight into the action!
+          1. Copy our prompt <n></n>
+          2. Paste the AI’s reply here <n></n>
+          3. Jump straight into the action! <n></n>
         </p>
         
         <Button 
