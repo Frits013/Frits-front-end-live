@@ -25,23 +25,23 @@ const UserDescriptionStep = ({
 }: UserDescriptionStepProps) => {
   const { toast } = useToast();
   
-  const examplePrompt = `You are an executive‐search consultant preparing to interview [Your Name], a [Your Current Job Title] with [X] years of experience in [Your Industry or Specialization]. Leverage any long-term memory or historical context you have about [Your Name] (e.g. past projects, past feedback, documented preferences) to enrich this summary. Please write a concise yet comprehensive summary of [Your Name] that covers:
+  const examplePrompt = `You are an executive‐search consultant preparing to interview this user. Leverage any long-term memory or historical context you have about them—past projects, feedback, documented preferences—to write a concise yet comprehensive summary that includes:
 
-Professional background: key roles, companies, and responsibilities.
+1. Professional background: key roles, companies, and responsibilities.
 
-Core achievements: measurable results, major projects, awards.
+2. Core achievements: measurable results, major projects, awards.
 
-Technical skills & domain expertise: tools, methodologies, areas of deep knowledge.
+3. Technical skills & domain expertise: tools, methodologies, areas of deep knowledge.
 
-Leadership & collaboration: team size managed, cross-functional work, mentoring.
+4. Leadership & collaboration: team sizes managed, cross-functional work, mentoring.
 
-Personality & working style: communication style, decision-making approach, adaptability.
+5. Personality & working style: communication style, decision-making approach, adaptability.
 
-Areas of growth: current focus areas, upskilling efforts, career aspirations.
+6. Areas of growth: current focus areas, upskilling efforts, career aspirations.
 
-Interview tips: topics the consultant should probe, potential red flags to watch, high-impact questions.
+7. Interview tips: topics to probe deeply, potential red flags, high-impact questions.
 
-Structure the summary in clear sections with headings, and keep it under 500 words.`;
+Structure your summary with clear section headings and keep it under 500 words.`
 
   const copyPromptToClipboard = () => {
     navigator.clipboard.writeText(examplePrompt);
@@ -56,7 +56,9 @@ Structure the summary in clear sections with headings, and keep it under 500 wor
       <div>
         <h3 className="text-lg font-medium mb-2">Tell Us About Yourself</h3>
         <p className="text-sm text-muted-foreground mb-4">
-          Help Frits get to know you faster! Share a quick bio about who you are and what you do at your company.
+          Optional for advanced AI users; link your preferred AI provider (ChatGPT, Perplexity, Claude) to auto-generate your profile summary from past chats and memory, so that you can dive right into the action.
+
+        Just copy our prompt & paste the provider's answer here
         </p>
         
         <Button 
@@ -65,7 +67,7 @@ Structure the summary in clear sections with headings, and keep it under 500 wor
           className="flex items-center gap-2 mb-4"
           onClick={copyPromptToClipboard}
         >
-          <span>Copy example ChatGPT prompt</span>
+          <span>Copy prompt</span>
           <Copy className="h-4 w-4" />
         </Button>
         
