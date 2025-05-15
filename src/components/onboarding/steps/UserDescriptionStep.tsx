@@ -74,7 +74,7 @@ Structure your summary with clear section headings and keep it under 500 words.`
         </Button>
         
         <Textarea
-          placeholder="Enter your description..."
+          placeholder="Paste your profile summary here..."
           value={userDescription}
           onChange={(e) => onDescriptionChange(e.target.value)}
           className="min-h-[200px]"
