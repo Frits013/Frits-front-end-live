@@ -137,16 +137,34 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
               
               <div className="space-y-3 text-sm">
                 <p>
-                  Welcome to Frits! Frits is an AI agent designed to mimick an AI readiness assesor. He helps organizations assess how prepared they are for using AI and identifies opportunities for improvement.
+                  Welcome to Frits - Your AI Readiness assessor
                 </p>
                 <p>
-                  The goal is to identify gaps or challenges your organization may need to address before taking on advanced AI initiatives.
+                  Frits is your personal assistant for assessing how prepared your organization is for using AI. In just 20 minutes, he helps you:
                 </p>
-                <p>
-                  Frits guides you through concise questions, adapting to your level of AI experience, so don't worry if you feel overwhelmed right now. Frits is meant to be straightforward and efficient. A consult session takes around 20 minutes and you can start one by just typing what you want. Frits knows about his role so if you have any questions, just ask him!
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>Identify opportunities for AI adoption</li>
+                  <li>Spot gaps or challenges in your current approach</li>
+                  <li>Understand next steps, tailored to your experience level</li>
+                </ul>
+                <p className="font-medium mt-2">
+                  What to expect:
                 </p>
-                <p className="font-medium">
-                  Sidenode; the first response of Frits can take up to 2 minutes, after that it takes about 20 seconds per answer.
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>Frits asks short, easy-to-follow questions</li>
+                  <li>He adapts to your knowledge – no AI background needed</li>
+                  <li>Just type your goal or question to begin</li>
+                </ul>
+                <p className="font-medium mt-2">
+                  Good to know:
+                </p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>First response may take up to 2 minutes</li>
+                  <li>After that, replies arrive in about 20 seconds</li>
+                  <li>Frits knows his role well – feel free to ask anything</li>
+                </ul>
+                <p className="font-medium mt-2">
+                  Start your session by simply saying what you'd like help with!
                 </p>
               </div>
               
