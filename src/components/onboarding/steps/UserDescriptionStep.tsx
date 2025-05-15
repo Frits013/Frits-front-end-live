@@ -56,9 +56,10 @@ Structure your summary with clear section headings and keep it under 500 words.`
       <div>
         <h3 className="text-lg font-medium mb-2">Tell Us About Yourself</h3>
         <p className="text-sm text-muted-foreground mb-4">
-          Optional for advanced AI users; link your preferred AI provider (ChatGPT, Perplexity, Claude) to auto-generate your profile summary from past chats and memory, so that you can dive right into the action.
-
-        Just copy our prompt & paste the provider's answer here
+          Optional for advanced AI users; link your preferred AI provider (ChatGPT, Perplexity, Claude) to auto-generate your profile summary from past chats and memory.
+        </p>
+        <p className="text-sm text-muted-foreground mb-4">
+          Just copy our prompt & paste the provider's answer here so that you can dive right into the action!
         </p>
         
         <Button 
