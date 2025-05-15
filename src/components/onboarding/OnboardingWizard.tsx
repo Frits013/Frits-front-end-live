@@ -119,7 +119,7 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
   return (
     <Dialog open={open}>
       <DialogContent hideCloseButton={true} className="sm:max-w-[800px]">
-        <div className="grid gap-6 py-4">
+        <div className="grid gap-4 py-4">
           <div className="flex justify-between items-center">
             {step === 1 && (
               <h2 className="text-2xl font-semibold">Welcome to Frits! - Your AI Readiness assessor</h2>

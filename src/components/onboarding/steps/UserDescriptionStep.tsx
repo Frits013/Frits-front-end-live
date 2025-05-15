@@ -54,7 +54,7 @@ Structure your summary with clear section headings and keep it under 500 words.`
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-xl font-semibold mb-2">Tell Us About Yourself</h3>
+        <h3 className="text-2xl font-semibold mb-2">Tell Us About Yourself</h3>
         <p className="text-sm text-muted-foreground mb-4">
           Optional for advanced users: connect your AI (ChatGPT, Perplexity, Claude) to auto-generate your profile from past chats.
         </p>
