@@ -55,7 +55,7 @@ Structure your summary with clear section headings and keep it under 500 words.`
     <div className="space-y-4">
       <div>
         <p className="text-sm text-muted-foreground mb-4">
-          Optional for advanced users: connect your AI (ChatGPT, Perplexity, Claude) to auto-generate your profile from past chats.
+          Advanced AI user? Generate a profile from past chats with your favorite provider (ChatGPT, Perplexity, Claude).
         </p>
         <p className="text-sm text-muted-foreground mb-4">
           1. Copy our prompt to your providers chat<br />
