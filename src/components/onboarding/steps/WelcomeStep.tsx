@@ -16,15 +16,15 @@ const WelcomeStep = ({ onNext }: WelcomeStepProps) => {
       
       <div className="space-y-3 text-sm">
         <p>
-          Welcome to Frits - Your AI Readiness assessor
+          This is  Frits - Your AI Readiness assessor
         </p>
         <p>
-          Frits is your personal assistant for assessing how prepared your organization is for using AI. In just 20 minutes, he helps you:
+          Frits is your personal AI assistant created to assess how prepared your organization is for using AI. In just 20 minutes, he helps you:
         </p>
         <ul className="list-disc pl-5 space-y-1">
-          <li>Identify opportunities for AI adoption</li>
-          <li>Spot gaps or challenges in your current approach</li>
-          <li>Understand next steps, tailored to your experience level</li>
+          <li>Identify AI opportunities</li>
+          <li>Spot gaps and challenges</li>
+          <li>Understand practical improvement steps, tailored to your experience level</li>
         </ul>
         <p className="font-medium mt-2">
           What to expect:
