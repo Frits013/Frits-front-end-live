@@ -3,8 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useState } from "react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp, Copy } from "lucide-react";
+import { Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface UserDescriptionStepProps {
@@ -24,7 +23,6 @@ const UserDescriptionStep = ({
   error,
   isSubmitting
 }: UserDescriptionStepProps) => {
-  const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
   
   const examplePrompt = `You are an executive‐search consultant preparing to interview [Your Name], a [Your Current Job Title] with [X] years of experience in [Your Industry or Specialization]. Leverage any long-term memory or historical context you have about [Your Name] (e.g. past projects, past feedback, documented preferences) to enrich this summary. Please write a concise yet comprehensive summary of [Your Name] that covers:
@@ -61,31 +59,15 @@ Structure the summary in clear sections with headings, and keep it under 500 wor
           Help Frits get to know you faster! Share a quick bio about who you are and what you do at your company.
         </p>
         
-        <Collapsible
-          open={isOpen}
-          onOpenChange={setIsOpen}
-          className="mb-4"
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="flex items-center gap-2 mb-4"
+          onClick={copyPromptToClipboard}
         >
-          <CollapsibleTrigger asChild>
-            <Button variant="outline" size="sm" className="flex items-center gap-2 w-full justify-between">
-              <span>Example ChatGPT prompt</span>
-              {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="pt-2">
-            <div className="text-sm text-muted-foreground italic border-l-2 border-muted pl-4 py-2 relative">
-              <p>{examplePrompt}</p>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="absolute top-2 right-2"
-                onClick={copyPromptToClipboard}
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
+          <span>Copy example ChatGPT prompt</span>
+          <Copy className="h-4 w-4" />
+        </Button>
         
         <Textarea
           placeholder="Enter your description..."
