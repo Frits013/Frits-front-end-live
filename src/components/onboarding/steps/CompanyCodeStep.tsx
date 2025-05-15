@@ -18,7 +18,6 @@ const CompanyCodeStep = ({
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-2xl font-semibold mb-2">Company Code</h3>
         <p className="text-sm text-muted-foreground mb-4">
           If you have an 8-digit company code, enter it below. Otherwise, you can skip this step.
         </p>

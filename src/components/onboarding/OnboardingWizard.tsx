@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -116,15 +115,27 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
     }
   };
 
+  // Get the appropriate header title based on current step
+  const getHeaderTitle = () => {
+    switch(step) {
+      case 1:
+        return "Welcome to Frits! - Your AI Readiness assessor";
+      case 2:
+        return "Company Code";
+      case 3:
+        return "Tell Us About Yourself";
+      default:
+        return "";
+    }
+  };
+
   return (
     <Dialog open={open}>
       <DialogContent hideCloseButton={true} className="sm:max-w-[800px]">
         <div className="grid gap-4 py-4">
           <div className="flex justify-between items-center">
-            {step === 1 && (
-              <h2 className="text-2xl font-semibold">Welcome to Frits! - Your AI Readiness assessor</h2>
-            )}
-            <div className={`text-sm text-muted-foreground ${step === 1 ? '' : 'ml-auto'}`}>
+            <h2 className="text-2xl font-semibold">{getHeaderTitle()}</h2>
+            <div className="text-sm text-muted-foreground">
               Step {step} of 3
             </div>
           </div>
