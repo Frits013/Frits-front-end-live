@@ -123,7 +123,7 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
       case 2:
         return "Company Code";
       case 3:
-        return "Tell Us About Yourself";
+        return "Take the fast lane [optional]";
       default:
         return "";
     }
