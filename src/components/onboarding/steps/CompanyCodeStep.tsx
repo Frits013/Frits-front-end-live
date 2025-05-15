@@ -16,7 +16,7 @@ const CompanyCodeStep = ({
   onPrevious 
 }: CompanyCodeStepProps) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <div>
         <h3 className="text-xl font-semibold mb-2">Company Code</h3>
         <p className="text-sm text-muted-foreground mb-4">
