@@ -1,6 +1,8 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { CheckCircle } from "lucide-react";
 import { ChatMessage } from "@/types/chat";
 import ConsultCompleteDialog from "@/components/chat/ConsultCompleteDialog";
 import { useToast } from "@/hooks/use-toast";
@@ -40,18 +42,29 @@ const ChatContainer = ({
   const [audioData, setAudioData] = useState<number[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
+  
+  // Add a new state to track whether the complete button is showing
+  const [showCompleteButton, setShowCompleteButton] = useState(false);
 
-  // Watch for changes in isConsultComplete to show dialog
+  // Update the button visibility when isConsultComplete changes
   useEffect(() => {
-    if (isConsultComplete && !dialogDismissed && !hasFeedback) {
-      // Only show dialog for completed sessions without feedback
-      // and that haven't been dismissed
-      setShowCompleteDialog(true);
+    // Show the button when the session is completed but dialog is not showing
+    // and there's no feedback yet and dialog hasn't been dismissed
+    if (isConsultComplete && !showCompleteDialog && !hasFeedback && !dialogDismissed) {
+      setShowCompleteButton(true);
     } else {
-      // Hide dialog in all other cases
-      setShowCompleteDialog(false);
+      setShowCompleteButton(false);
     }
-  }, [isConsultComplete, dialogDismissed, currentChatId, hasFeedback]);
+  }, [isConsultComplete, showCompleteDialog, hasFeedback, dialogDismissed]);
+
+  // Replace the auto-showing dialog effect with button-triggered approach
+  // Note: We're no longer automatically showing the dialog based on isConsultComplete
+  const handleCompleteButtonClick = useCallback(() => {
+    if (currentChatId) {
+      setShowCompleteDialog(true);
+      setShowCompleteButton(false); // Hide the button when dialog is shown
+    }
+  }, [currentChatId]);
 
   const handleFinishConsult = () => {
     if (currentChatId) {
@@ -86,6 +99,19 @@ const ChatContainer = ({
             messages={messages} 
             errorMessage={errorMessage} 
           />
+          
+          {/* Finish Consult Button that appears above the input */}
+          {showCompleteButton && (
+            <div className="mx-4 mb-2">
+              <Button 
+                onClick={handleCompleteButtonClick}
+                className="w-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center gap-2 py-2"
+              >
+                <CheckCircle className="w-5 h-5" />
+                <span>Finish Interview</span>
+              </Button>
+            </div>
+          )}
           
           <ChatInputContainer
             messages={messages}
