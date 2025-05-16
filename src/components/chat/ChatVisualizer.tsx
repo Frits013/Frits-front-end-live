@@ -7,9 +7,10 @@ import { createBrainStructure } from "./three/BrainStructure";
 interface ThreeSceneProps {
   isThinking: boolean;
   audioData?: number[];
+  currentSessionId?: string | null;
 }
 
-const ThreeScene = ({ isThinking, audioData }: ThreeSceneProps) => {
+const ThreeScene = ({ isThinking, audioData, currentSessionId }: ThreeSceneProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const brainRef = useRef<THREE.Group | null>(null);
