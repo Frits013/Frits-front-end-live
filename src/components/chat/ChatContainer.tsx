@@ -1,5 +1,5 @@
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import ChatVisualizer from "./ChatVisualizer";
 import ChatMessagesContainer from "./ChatMessagesContainer";
 import ChatInputContainer from "./ChatInputContainer";
-import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ChatContainerProps {
   messages: ChatMessage[];
@@ -45,6 +45,37 @@ const ChatContainer = ({
   
   // Add a new state to track whether the complete button is showing
   const [showCompleteButton, setShowCompleteButton] = useState(false);
+
+  // Setup real-time monitoring of processing state
+  useEffect(() => {
+    if (!currentChatId) return;
+    
+    // Listen for new messages from the backend to know when processing is complete
+    const channel = supabase
+      .channel(`processing-${currentChatId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `session_id=eq.${currentChatId} AND (role=eq.writer OR role=eq.assistant)`
+        },
+        (payload) => {
+          console.log('Backend response received:', payload);
+          // When we get a response from the backend, stop the thinking animation
+          if (isProcessing) {
+            setIsProcessing(false);
+            isThinkingRef.current = false;
+          }
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentChatId, isProcessing]);
 
   // Update the button visibility when isConsultComplete changes
   useEffect(() => {
@@ -87,7 +118,7 @@ const ChatContainer = ({
     <div className="flex-1 flex flex-col h-[100dvh] w-full">
       <div className="flex-1 overflow-hidden p-4 flex flex-col">
         <ChatVisualizer 
-          isThinking={isThinkingRef.current} 
+          isThinking={isThinkingRef.current || isProcessing} 
           audioData={audioData}
           currentSessionId={currentChatId}
         />
