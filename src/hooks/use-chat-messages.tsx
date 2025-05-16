@@ -11,6 +11,54 @@ export const useChatMessages = (sessionId: string | null) => {
   // Add a flag to track if automatic message was sent in a new session
   const [autoMessageSent, setAutoMessageSent] = useState(false);
 
+  // Set up a subscription to listen for real-time changes to the chat_messages table
+  useEffect(() => {
+    if (!sessionId) return;
+    
+    const channel = supabase
+      .channel(`messages-${sessionId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `session_id=eq.${sessionId}`
+        },
+        (payload) => {
+          console.log('New message received via realtime:', payload);
+          
+          // Only process messages that aren't system messages or automatic "hey" messages
+          if (
+            payload.new && 
+            payload.new.role !== 'system' && 
+            !(payload.new.role === 'user' && payload.new.content === 'hey')
+          ) {
+            const newMessage = {
+              id: payload.new.message_id,
+              content: payload.new.content,
+              role: payload.new.role === 'writer' ? 'assistant' : payload.new.role,
+              created_at: new Date(payload.new.created_at),
+            };
+            
+            // Check if this message is already in the state (to prevent duplicates)
+            setMessages(currentMessages => {
+              const exists = currentMessages.some(msg => msg.id === newMessage.id);
+              if (!exists) {
+                return [...currentMessages, newMessage];
+              }
+              return currentMessages;
+            });
+          }
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [sessionId]);
+
   // Fetch messages for the current session
   useEffect(() => {
     const fetchMessages = async () => {
