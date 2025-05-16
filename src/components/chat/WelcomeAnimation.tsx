@@ -1,6 +1,5 @@
 
 import { useEffect, useState } from "react";
-import Confetti from "@/components/ui/confetti";
 import { useChatMessages } from "@/hooks/use-chat-messages";
 
 interface WelcomeAnimationProps {
@@ -25,7 +24,8 @@ const WelcomeAnimation = ({ currentSessionId }: WelcomeAnimationProps) => {
     }
   }, [autoMessageSent]);
 
-  return <Confetti active={showAnimation} />;
+  // We return null since we don't want the confetti anymore
+  return null;
 };
 
 export default WelcomeAnimation;

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ChatMessage } from "@/types/chat";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +8,7 @@ export const useChatMessages = (sessionId: string | null) => {
   const [isConsultComplete, setIsConsultComplete] = useState(false);
   const [dialogDismissed, setDialogDismissed] = useState(false);
   const [hasFeedback, setHasFeedback] = useState(false);
-  // Add a flag to track if automatic message was sent
+  // Add a flag to track if automatic message was sent in a new session
   const [autoMessageSent, setAutoMessageSent] = useState(false);
 
   // Fetch messages for the current session
@@ -21,7 +22,7 @@ export const useChatMessages = (sessionId: string | null) => {
         // First, check if the session is marked as finished
         const { data: sessionData, error: sessionError } = await supabase
           .from('chat_sessions')
-          .select('finished')
+          .select('finished, created_at')
           .eq('id', sessionId)
           .single();
 
@@ -96,11 +97,20 @@ export const useChatMessages = (sessionId: string | null) => {
           console.log('Processed messages:', validMessages);
           setMessages(validMessages);
           
-          // Check if an automatic message was sent in this session
+          // Check if an automatic message was sent in this session and if the session was created within the last 5 seconds
+          // This ensures animation only shows for newly created sessions, not on page refresh
           const hasAutoMessage = data.some(msg => 
             msg.role === 'user' && msg.content === "hey"
           );
-          setAutoMessageSent(hasAutoMessage);
+          
+          // Get session creation time
+          const sessionCreationTime = sessionData ? new Date(sessionData.created_at) : null;
+          const currentTime = new Date();
+          const isNewSession = sessionCreationTime && 
+            (currentTime.getTime() - sessionCreationTime.getTime() < 5000); // 5 seconds threshold
+          
+          // Only set auto message flag if it's a new session with the auto message
+          setAutoMessageSent(hasAutoMessage && isNewSession);
         }
       } catch (error) {
         console.error('Error in fetchMessages:', error);
@@ -109,8 +119,8 @@ export const useChatMessages = (sessionId: string | null) => {
 
     // Reset messages when session changes
     setMessages([]);
-    // We don't reset isConsultComplete, dialogDismissed, or hasFeedback here
-    // as we'll set them correctly in fetchMessages
+    // Reset the autoMessageSent flag when switching sessions
+    setAutoMessageSent(false);
     
     fetchMessages();
   }, [sessionId]);
