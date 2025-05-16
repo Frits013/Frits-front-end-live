@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -34,7 +33,7 @@ const Chat = () => {
     setIsConsultComplete, 
     dialogDismissed, 
     setDialogDismissed,
-    hasFeedback 
+    hasFeedback
   } = useChatMessages(currentSessionId);
   
   const { handleSignOut } = useAuthOperations();

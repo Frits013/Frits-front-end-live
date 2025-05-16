@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -65,10 +64,56 @@ export const useChatSessions = () => {
     setCurrentSessionId(newSession.id);
     setChatSessions([newSession, ...chatSessions]);
     
+    // Send an automatic "hey" message to initiate the conversation
+    // This will be invisible to the user
+    await sendAutomaticHeyMessage(newSession.id, session.user.id);
+    
     toast({
       title: "Success",
       description: "New consult session created",
     });
+  };
+
+  // Function to send an automatic "hey" message
+  const sendAutomaticHeyMessage = async (sessionId: string, userId: string) => {
+    try {
+      // Generate a message_id
+      const message_id = crypto.randomUUID();
+
+      // Save the invisible "hey" message to the database
+      const { error } = await supabase
+        .from('chat_messages')
+        .insert({
+          message_id,
+          content: "hey",
+          role: 'user',
+          user_id: userId,
+          session_id: sessionId,
+        });
+
+      if (error) {
+        console.error('Error sending automatic message:', error);
+        return;
+      }
+
+      // Get the access token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      // Call the edge function with the JWT token to process the message
+      await supabase.functions.invoke('chat', {
+        body: {
+          session_id: sessionId,
+          message_id,
+          message: "hey", // The content of our automatic message
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+    } catch (error) {
+      console.error('Error in sendAutomaticHeyMessage:', error);
+    }
   };
 
   const updateSessionTitle = async (sessionId: string, newTitle: string) => {

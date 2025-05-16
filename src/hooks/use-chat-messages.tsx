@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ChatMessage } from "@/types/chat";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +7,8 @@ export const useChatMessages = (sessionId: string | null) => {
   const [isConsultComplete, setIsConsultComplete] = useState(false);
   const [dialogDismissed, setDialogDismissed] = useState(false);
   const [hasFeedback, setHasFeedback] = useState(false);
+  // Add a flag to track if automatic message was sent
+  const [autoMessageSent, setAutoMessageSent] = useState(false);
 
   // Fetch messages for the current session
   useEffect(() => {
@@ -69,12 +70,13 @@ export const useChatMessages = (sessionId: string | null) => {
         }
 
         if (data) {
-          // Process the messages - keep only user messages and writer (assistant) responses
+          // Process the messages - filter out automatic "hey" messages and keep only user messages and writer (assistant) responses
           const validMessages = data
             .filter(msg => {
-              // Keep user messages
+              // Keep user messages that aren't automatic "hey" messages
               if (msg.role === 'user') {
-                return true;
+                // Filter out messages with content "hey" which are our automatic messages
+                return msg.content !== "hey";
               }
               
               // Keep writer messages (assistant messages for the user)
@@ -93,6 +95,12 @@ export const useChatMessages = (sessionId: string | null) => {
 
           console.log('Processed messages:', validMessages);
           setMessages(validMessages);
+          
+          // Check if an automatic message was sent in this session
+          const hasAutoMessage = data.some(msg => 
+            msg.role === 'user' && msg.content === "hey"
+          );
+          setAutoMessageSent(hasAutoMessage);
         }
       } catch (error) {
         console.error('Error in fetchMessages:', error);
@@ -175,6 +183,7 @@ export const useChatMessages = (sessionId: string | null) => {
     setIsConsultComplete,
     dialogDismissed,
     setDialogDismissed,
-    hasFeedback
+    hasFeedback,
+    autoMessageSent
   };
 };
