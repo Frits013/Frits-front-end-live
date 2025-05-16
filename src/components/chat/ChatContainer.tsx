@@ -46,36 +46,79 @@ const ChatContainer = ({
   // Add a new state to track whether the complete button is showing
   const [showCompleteButton, setShowCompleteButton] = useState(false);
 
-  // Setup real-time monitoring of processing state
+  // Setup real-time monitoring of ongoing backend processing
   useEffect(() => {
     if (!currentChatId) return;
     
-    // Listen for new messages from the backend to know when processing is complete
+    // First, check if there are any pending messages (backend still processing)
+    const checkPendingMessages = async () => {
+      try {
+        const { data: pendingMessages, error } = await supabase
+          .from('chat_messages')
+          .select('message_id')
+          .eq('session_id', currentChatId)
+          .eq('processing', true)
+          .limit(1);
+          
+        if (!error && pendingMessages && pendingMessages.length > 0) {
+          // There's an ongoing backend process, set thinking state
+          setIsProcessing(true);
+          isThinkingRef.current = true;
+        }
+      } catch (err) {
+        console.error("Error checking pending messages:", err);
+      }
+    };
+    
+    checkPendingMessages();
+    
+    // Listen for message processing status updates to track backend state
     const channel = supabase
       .channel(`processing-${currentChatId}`)
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'chat_messages',
-          filter: `session_id=eq.${currentChatId} AND (role=eq.writer OR role=eq.assistant)`
+          filter: `session_id=eq.${currentChatId}`
         },
         (payload) => {
-          console.log('Backend response received:', payload);
-          // When we get a response from the backend, stop the thinking animation
-          if (isProcessing) {
+          // When we get a response from the backend or a status update
+          if (payload.eventType === 'INSERT' && 
+              (payload.new.role === 'writer' || payload.new.role === 'assistant')) {
+            console.log('Backend response received:', payload);
+            // Backend response received, stop thinking animation
             setIsProcessing(false);
             isThinkingRef.current = false;
+          } 
+          // Check if processing status changed
+          else if (payload.eventType === 'UPDATE' && 
+                  payload.old.processing !== payload.new.processing) {
+            console.log('Processing status changed:', payload.new.processing);
+            // Update thinking state based on backend processing status
+            setIsProcessing(payload.new.processing);
+            isThinkingRef.current = payload.new.processing;
           }
         }
       )
       .subscribe();
       
+    // Handle tab visibility changes to maintain animation state
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // When tab becomes visible again, check pending messages
+        checkPendingMessages();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+      
     return () => {
       supabase.removeChannel(channel);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [currentChatId, isProcessing]);
+  }, [currentChatId]);
 
   // Update the button visibility when isConsultComplete changes
   useEffect(() => {
