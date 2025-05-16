@@ -24,7 +24,7 @@ const WelcomeAnimation = ({ currentSessionId }: WelcomeAnimationProps) => {
     }
   }, [autoMessageSent]);
 
-  // We return null since we don't want the confetti anymore
+  // Return null since we don't want any visual animation component
   return null;
 };
 

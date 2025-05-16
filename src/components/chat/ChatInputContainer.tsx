@@ -167,6 +167,10 @@ const ChatInputContainer = ({
         // Update messages including both user message and assistant response
         setMessages([...updatedMessages, agentResponse]);
       }
+      
+      // Ensure the thinking state is turned off
+      setIsProcessing(false);
+      isThinkingRef.current = false;
   
     } catch (error) {
       console.error('Error getting response:', error);
@@ -179,7 +183,8 @@ const ChatInputContainer = ({
         description: error instanceof Error ? error.message : "Failed to get response from AI",
         variant: "destructive",
       });
-    } finally {
+      
+      // Make sure to turn off processing state in case of errors
       setIsProcessing(false);
       isThinkingRef.current = false;
     }

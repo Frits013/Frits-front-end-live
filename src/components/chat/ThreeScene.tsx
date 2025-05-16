@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { setupScene, setupLighting } from "./three/SceneSetup";

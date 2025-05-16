@@ -70,14 +70,15 @@ export const useChatSessions = () => {
     // Set the flag to indicate that we need to send an automatic message
     pendingAutoMessageRef.current = true;
     
-    // Send an automatic "hey" message to initiate the conversation
-    // This will be invisible to the user
-    await sendAutomaticHeyMessage(newSession.id, session.user.id);
-    
+    // Show a toast notification immediately when a new chat session is created
     toast({
       title: "Success",
       description: "New consult session created",
     });
+    
+    // Send an automatic "hey" message to initiate the conversation
+    // This will be invisible to the user
+    await sendAutomaticHeyMessage(newSession.id, session.user.id);
   };
 
   // Function to send an automatic "hey" message
