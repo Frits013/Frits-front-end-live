@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ChatSession } from "@/types/chat";
@@ -12,7 +11,6 @@ export const useChatSessions = () => {
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const pendingAutoMessageRef = useRef<boolean>(false);
 
   const createNewChat = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -63,29 +61,22 @@ export const useChatSessions = () => {
       console.error('Error creating initial message:', messageError);
     }
 
-    console.log("New chat session created:", newSession.id);
     setCurrentSessionId(newSession.id);
     setChatSessions([newSession, ...chatSessions]);
-    
-    // Set the flag to indicate that we need to send an automatic message
-    pendingAutoMessageRef.current = true;
-    
-    // Show a toast notification immediately when a new chat session is created
-    toast({
-      title: "Success",
-      description: "New consult session created",
-    });
     
     // Send an automatic "hey" message to initiate the conversation
     // This will be invisible to the user
     await sendAutomaticHeyMessage(newSession.id, session.user.id);
+    
+    toast({
+      title: "Success",
+      description: "New consult session created",
+    });
   };
 
   // Function to send an automatic "hey" message
   const sendAutomaticHeyMessage = async (sessionId: string, userId: string) => {
     try {
-      console.log("Sending automatic hey message for session:", sessionId);
-      
       // Generate a message_id
       const message_id = crypto.randomUUID();
 
@@ -120,15 +111,8 @@ export const useChatSessions = () => {
           Authorization: `Bearer ${session.access_token}`,
         },
       });
-      
-      console.log("Automatic hey message processed successfully");
-      
-      // Reset the pending flag
-      pendingAutoMessageRef.current = false;
-      
     } catch (error) {
       console.error('Error in sendAutomaticHeyMessage:', error);
-      pendingAutoMessageRef.current = false;
     }
   };
 
@@ -271,6 +255,5 @@ export const useChatSessions = () => {
     updateSessionTitle,
     markConsultFinished,
     isLoading,
-    isPendingAutoMessage: pendingAutoMessageRef.current
   };
 };

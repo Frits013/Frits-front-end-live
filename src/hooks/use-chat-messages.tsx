@@ -10,88 +10,6 @@ export const useChatMessages = (sessionId: string | null) => {
   const [hasFeedback, setHasFeedback] = useState(false);
   // Add a flag to track if automatic message was sent in a new session
   const [autoMessageSent, setAutoMessageSent] = useState(false);
-  // Add a flag to track if any messages are currently being processed
-  const [hasProcessingMessages, setHasProcessingMessages] = useState(false);
-
-  // Set up a subscription to listen for real-time changes to the chat_messages table
-  useEffect(() => {
-    if (!sessionId) return;
-    
-    const checkForProcessingMessages = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('chat_messages')
-          .select('message_id')
-          .eq('session_id', sessionId)
-          .eq('processing', true)
-          .limit(1);
-          
-        if (!error) {
-          setHasProcessingMessages(data && data.length > 0);
-        }
-      } catch (err) {
-        console.error('Error checking for processing messages:', err);
-      }
-    };
-    
-    // Initial check
-    checkForProcessingMessages();
-    
-    const channel = supabase
-      .channel(`messages-${sessionId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // Listen for all events (INSERT, UPDATE, DELETE)
-          schema: 'public',
-          table: 'chat_messages',
-          filter: `session_id=eq.${sessionId}`
-        },
-        (payload) => {
-          console.log('Message change received via realtime:', payload);
-          
-          // Handle regular messages
-          if (
-            payload.eventType === 'INSERT' &&
-            payload.new && 
-            payload.new.role !== 'system' && 
-            !(payload.new.role === 'user' && payload.new.content === 'hey')
-          ) {
-            const newMessage = {
-              id: payload.new.message_id,
-              content: payload.new.content,
-              role: payload.new.role === 'writer' ? 'assistant' : payload.new.role,
-              created_at: new Date(payload.new.created_at),
-            };
-            
-            // Check if this message is already in the state (to prevent duplicates)
-            setMessages(currentMessages => {
-              const exists = currentMessages.some(msg => msg.id === newMessage.id);
-              if (!exists) {
-                return [...currentMessages, newMessage];
-              }
-              return currentMessages;
-            });
-          }
-          
-          // Track processing status changes
-          if (payload.eventType === 'UPDATE' && 
-              payload.old && payload.new && 
-              payload.old.processing !== payload.new.processing) {
-            console.log('Processing status changed:', 
-              payload.new.message_id, payload.new.processing);
-            
-            // Check if any messages are still being processed
-            checkForProcessingMessages();
-          }
-        }
-      )
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [sessionId]);
 
   // Fetch messages for the current session
   useEffect(() => {
@@ -189,14 +107,10 @@ export const useChatMessages = (sessionId: string | null) => {
           const sessionCreationTime = sessionData ? new Date(sessionData.created_at) : null;
           const currentTime = new Date();
           const isNewSession = sessionCreationTime && 
-            (currentTime.getTime() - sessionCreationTime.getTime() < 10000); // 10 seconds threshold
+            (currentTime.getTime() - sessionCreationTime.getTime() < 5000); // 5 seconds threshold
           
           // Only set auto message flag if it's a new session with the auto message
           setAutoMessageSent(hasAutoMessage && isNewSession);
-          
-          // Check if any messages are being processed
-          const processingMessages = data.filter(msg => msg.processing === true);
-          setHasProcessingMessages(processingMessages.length > 0);
         }
       } catch (error) {
         console.error('Error in fetchMessages:', error);
@@ -207,8 +121,6 @@ export const useChatMessages = (sessionId: string | null) => {
     setMessages([]);
     // Reset the autoMessageSent flag when switching sessions
     setAutoMessageSent(false);
-    // Reset processing status
-    setHasProcessingMessages(false);
     
     fetchMessages();
   }, [sessionId]);
@@ -282,7 +194,6 @@ export const useChatMessages = (sessionId: string | null) => {
     dialogDismissed,
     setDialogDismissed,
     hasFeedback,
-    autoMessageSent,
-    hasProcessingMessages
+    autoMessageSent
   };
 };

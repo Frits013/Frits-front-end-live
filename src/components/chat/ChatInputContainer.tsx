@@ -70,13 +70,11 @@ const ChatInputContainer = ({
     const updatedMessages = [...messages, newUserMessage];
     setMessages(updatedMessages);
     setInputMessage("");
-    
-    // Set processing state to true to show thinking animation
     setIsProcessing(true);
     isThinkingRef.current = true;
   
     try {
-      // Save the user message to Supabase - with processing flag set to true
+      // Save the user message to Supabase
       const { error: saveError } = await supabase
         .from('chat_messages')
         .insert({
@@ -85,7 +83,6 @@ const ChatInputContainer = ({
           role: 'user',
           user_id: session.user.id,
           session_id: currentChatId,
-          processing: true, // Mark as processing for backend tracking
         });
 
       if (saveError) {
@@ -118,16 +115,6 @@ const ChatInputContainer = ({
       });
       
       console.log('Function response received:', functionResponse);
-      
-      // Update the message processing status to false since backend has responded
-      const { error: updateError } = await supabase
-        .from('chat_messages')
-        .update({ processing: false })
-        .eq('message_id', message_id);
-        
-      if (updateError) {
-        console.error('Error updating message processing status:', updateError);
-      }
       
       // Check for errors in the response
       if (functionResponse.error) {
@@ -180,10 +167,6 @@ const ChatInputContainer = ({
         // Update messages including both user message and assistant response
         setMessages([...updatedMessages, agentResponse]);
       }
-      
-      // Turn off thinking state once we've processed the response
-      setIsProcessing(false);
-      isThinkingRef.current = false;
   
     } catch (error) {
       console.error('Error getting response:', error);
@@ -196,22 +179,9 @@ const ChatInputContainer = ({
         description: error instanceof Error ? error.message : "Failed to get response from AI",
         variant: "destructive",
       });
-      
-      // Make sure to turn off processing state in case of errors
+    } finally {
       setIsProcessing(false);
       isThinkingRef.current = false;
-      
-      // Also update the message in the database to mark processing as finished
-      if (currentChatId) {
-        try {
-          await supabase
-            .from('chat_messages')
-            .update({ processing: false })
-            .eq('message_id', message_id);
-        } catch (e) {
-          console.error('Error updating message processing status after error:', e);
-        }
-      }
     }
   };
 
