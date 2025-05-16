@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -12,6 +13,7 @@ import { useOnboarding } from "@/hooks/use-onboarding";
 import OnboardingWizard from "@/components/onboarding/OnboardingWizard";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import WelcomeAnimation from "@/components/chat/WelcomeAnimation";
 
 const Chat = () => {
   const navigate = useNavigate();
@@ -109,6 +111,7 @@ const Chat = () => {
 
   return (
     <SidebarProvider>
+      <WelcomeAnimation currentSessionId={currentSessionId} />
       <ChatLayout
         sidebar={
           <ChatSidebar

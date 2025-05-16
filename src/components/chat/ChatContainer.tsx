@@ -88,7 +88,8 @@ const ChatContainer = ({
       <div className="flex-1 overflow-hidden p-4 flex flex-col">
         <ChatVisualizer 
           isThinking={isThinkingRef.current} 
-          audioData={audioData} 
+          audioData={audioData}
+          currentSessionId={currentChatId}
         />
         
         <Card className="flex-1 flex flex-col bg-white/20 backdrop-blur-xl border-purple-100/50 shadow-xl rounded-xl relative overflow-hidden">
