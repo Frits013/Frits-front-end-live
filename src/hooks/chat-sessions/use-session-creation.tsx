@@ -4,6 +4,9 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ChatSession } from "@/types/chat";
 
+// Configurable initial message - change this value to modify the automatic initial message
+const INITIAL_MESSAGE = "hey";
+
 export const useSessionCreation = (
   chatSessions: ChatSession[],
   setChatSessions: (sessions: ChatSession[]) => void,
@@ -69,22 +72,22 @@ export const useSessionCreation = (
     setCurrentSessionId(newSession.id);
     setChatSessions([newSession, ...chatSessions]);
     
-    // Send an automatic "hey" message to initiate the conversation
+    // Send an automatic message to initiate the conversation
     await sendAutomaticHeyMessage(newSession.id, session.user.id);
   };
 
-  // Function to send an automatic "hey" message
+  // Function to send an automatic initial message
   const sendAutomaticHeyMessage = async (sessionId: string, userId: string) => {
     try {
       // Generate a message_id
       const message_id = crypto.randomUUID();
 
-      // Save the invisible "hey" message to the database
+      // Save the invisible initial message to the database
       const { error } = await supabase
         .from('chat_messages')
         .insert({
           message_id,
-          content: "hey",
+          content: INITIAL_MESSAGE,
           role: 'user',
           user_id: userId,
           session_id: sessionId,
@@ -104,7 +107,7 @@ export const useSessionCreation = (
         body: {
           session_id: sessionId,
           message_id,
-          message: "hey", // The content of our automatic message
+          message: INITIAL_MESSAGE, // Using the configurable message
         },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
