@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -26,52 +27,65 @@ export const useChatSessions = () => {
     // Format current date and time in a readable format
     const formattedDateTime = format(new Date(), "MMM d, yyyy h:mm a");
 
-    // Create a new session in the chat_sessions table
-    const { data: newSession, error } = await supabase
-      .from('chat_sessions')
-      .insert([{
-        user_id: session.user.id,
-        session_name: `Consult Session - ${formattedDateTime}`,
-        finished: false // Always start as not finished
-      }])
-      .select()
-      .single();
+    try {
+      // Create a new session in the chat_sessions table
+      const { data: newSession, error } = await supabase
+        .from('chat_sessions')
+        .insert([{
+          user_id: session.user.id,
+          session_name: `Consult Session - ${formattedDateTime}`,
+          finished: false // Always start as not finished
+        }])
+        .select()
+        .single();
 
-    if (error) {
-      console.error('Error creating new chat session:', error);
+      if (error) {
+        console.error('Error creating new chat session:', error);
+        toast({
+          title: "Error",
+          description: "Failed to create new chat session",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Add the new session to the list and set it as current immediately
+      // This ensures the UI updates right away
+      setCurrentSessionId(newSession.id);
+      setChatSessions(prevSessions => [newSession, ...prevSessions]);
+      
+      toast({
+        title: "Success",
+        description: "New consult session created",
+      });
+      
+      // Add a system message to identify the new chat session
+      // Run this in the background without awaiting
+      supabase
+        .from('chat_messages')
+        .insert([{
+          content: "", // Empty initial message
+          role: 'system',
+          user_id: session.user.id,
+          session_id: newSession.id,
+        }])
+        .then(({ error }) => {
+          if (error) {
+            console.error('Error creating initial message:', error);
+          }
+          
+          // After system message is created, send the automatic "hey" message
+          // This happens in the background and doesn't block the UI
+          sendAutomaticHeyMessage(newSession.id, session.user.id);
+        });
+    } catch (error) {
+      console.error('Error in createNewChat:', error);
       toast({
         title: "Error",
-        description: "Failed to create new chat session",
+        description: "An unexpected error occurred",
         variant: "destructive",
       });
-      return;
     }
-
-    // Add a system message to identify the new chat session
-    const { error: messageError } = await supabase
-      .from('chat_messages')
-      .insert([{
-        content: "", // Empty initial message
-        role: 'system',
-        user_id: session.user.id,
-        session_id: newSession.id,
-      }]);
-
-    if (messageError) {
-      console.error('Error creating initial message:', messageError);
-    }
-
-    setCurrentSessionId(newSession.id);
-    setChatSessions([newSession, ...chatSessions]);
-    
-    // Send an automatic "hey" message to initiate the conversation
-    // This will be invisible to the user
-    await sendAutomaticHeyMessage(newSession.id, session.user.id);
-    
-    toast({
-      title: "Success",
-      description: "New consult session created",
-    });
   };
 
   // Function to send an automatic "hey" message

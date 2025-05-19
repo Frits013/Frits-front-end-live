@@ -1,43 +1,100 @@
-
-import { useEffect, useState } from "react";
-import ThreeScene from "@/components/chat/ThreeScene";
-import { useChatMessages } from "@/hooks/use-chat-messages";
+import React, { useState, useEffect } from 'react';
+import { getRandomShape } from "@/utils/shapes";
+import { generatePoints } from "@/utils/points";
+import { useTheme } from "next-themes";
 
 interface ChatVisualizerProps {
   isThinking: boolean;
   audioData: number[];
   currentSessionId: string | null;
+  previousSessionId?: string | null;
 }
 
-const ChatVisualizer = ({ isThinking, audioData, currentSessionId }: ChatVisualizerProps) => {
-  const [showWelcomeAnimation, setShowWelcomeAnimation] = useState(false);
-  const { autoMessageSent, isProcessing } = useChatMessages(currentSessionId);
+export default function ChatVisualizer({ 
+  isThinking, 
+  audioData,
+  currentSessionId,
+  previousSessionId
+}: ChatVisualizerProps) {
+  // Add a state to detect new session creation
+  const [newSession, setNewSession] = useState(false);
   
-  // Show welcome animation when a new session is created with auto-message
-  // or during any processing state
+  // Detect when a new session is created
   useEffect(() => {
-    if ((autoMessageSent && isProcessing) || isThinking) {
-      setShowWelcomeAnimation(true);
-    } else {
-      // Small delay before hiding to avoid abrupt transitions
+    if (currentSessionId && currentSessionId !== previousSessionId) {
+      setNewSession(true);
+      // Reset new session flag after some time
       const timer = setTimeout(() => {
-        setShowWelcomeAnimation(false);
-      }, 500);
-      
+        setNewSession(false);
+      }, 10000); // Keep "thinking" animation for 10 seconds or until real data arrives
       return () => clearTimeout(timer);
     }
-  }, [autoMessageSent, isProcessing, isThinking, currentSessionId]);
+  }, [currentSessionId, previousSessionId]);
 
-  return (
-    <div className="w-full max-w-[500px] mx-auto mb-8">
-      <div className="aspect-square w-full">
-        <ThreeScene 
-          isThinking={isThinking || showWelcomeAnimation || isProcessing} 
-          audioData={audioData} 
-        />
+  // Show thinking animation for new sessions or when isThinking is true
+  const shouldShowThinking = isThinking || newSession;
+
+  const [points, setPoints] = useState(generatePoints());
+  const [shape, setShape] = useState(getRandomShape());
+  const { theme } = useTheme();
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setPoints(generatePoints());
+      setShape(getRandomShape());
+    }, 2000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  const renderThinkingAnimation = () => (
+    <div className="absolute inset-0 flex items-center justify-center">
+      <div className="relative w-48 h-48">
+        {Array.from({ length: 5 }).map((_, index) => {
+          const size = Math.random() * 20 + 10;
+          const speed = Math.random() * 2 + 1;
+          const opacity = Math.random() * 0.6 + 0.4;
+          const positionX = Math.random() * 100;
+          const positionY = Math.random() * 100;
+          const animationDuration = Math.random() * 3 + 2;
+
+          return (
+            <span
+              key={index}
+              style={{
+                position: 'absolute',
+                top: `${positionY}%`,
+                left: `${positionX}%`,
+                width: `${size}px`,
+                height: `${size}px`,
+                backgroundColor: theme === 'dark' ? 'white' : 'black',
+                opacity: opacity,
+                borderRadius: '50%',
+                animation: `float ${animationDuration}s infinite alternate`,
+                animationDelay: `${Math.random()}s`,
+              }}
+            />
+          );
+        })}
       </div>
+      <style>
+        {`
+          @keyframes float {
+            from {
+              transform: translateY(0);
+            }
+            to {
+              transform: translateY(-10px);
+            }
+          }
+        `}
+      </style>
     </div>
   );
-};
-
-export default ChatVisualizer;
+  
+  return (
+    <div className="relative w-full h-32">
+      {shouldShowThinking && renderThinkingAnimation()}
+    </div>
+  );
+}
