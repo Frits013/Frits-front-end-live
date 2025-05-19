@@ -10,6 +10,8 @@ export const useChatMessages = (sessionId: string | null) => {
   const [hasFeedback, setHasFeedback] = useState(false);
   // Add a flag to track if automatic message was sent in a new session
   const [autoMessageSent, setAutoMessageSent] = useState(false);
+  // Add a flag to track backend processing state
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Fetch messages for the current session
   useEffect(() => {
@@ -97,17 +99,39 @@ export const useChatMessages = (sessionId: string | null) => {
           console.log('Processed messages:', validMessages);
           setMessages(validMessages);
           
-          // Check if an automatic message was sent in this session and if the session was created within the last 5 seconds
-          // This ensures animation only shows for newly created sessions, not on page refresh
+          // Check if an automatic message was sent in this session
           const hasAutoMessage = data.some(msg => 
             msg.role === 'user' && msg.content === "hey"
           );
           
+          // Look for a recent "hey" message to determine if we're in automatic processing state
+          const recentAutoMessage = data.find(msg => 
+            msg.role === 'user' && 
+            msg.content === "hey" && 
+            new Date(msg.created_at).getTime() > Date.now() - 60000 // Within the last minute
+          );
+          
+          // Check if we have a "hey" message but no corresponding assistant response yet
+          const hasAutoResponse = data.some(msg => 
+            (msg.role === 'writer' || msg.role === 'assistant') && 
+            data.some(userMsg => 
+              userMsg.role === 'user' && 
+              userMsg.content === "hey" &&
+              new Date(userMsg.created_at).getTime() < new Date(msg.created_at).getTime()
+            )
+          );
+          
+          // Set processing state based on whether we have a recent auto message without response
+          const shouldBeProcessing = recentAutoMessage && !hasAutoResponse;
+          setIsProcessing(shouldBeProcessing);
+          
           // Get session creation time
           const sessionCreationTime = sessionData ? new Date(sessionData.created_at) : null;
           const currentTime = new Date();
+          
+          // Consider it a new session if created within the last 60 seconds
           const isNewSession = sessionCreationTime && 
-            (currentTime.getTime() - sessionCreationTime.getTime() < 5000); // 5 seconds threshold
+            (currentTime.getTime() - sessionCreationTime.getTime() < 60000); 
           
           // Only set auto message flag if it's a new session with the auto message
           setAutoMessageSent(hasAutoMessage && isNewSession);
@@ -121,8 +145,16 @@ export const useChatMessages = (sessionId: string | null) => {
     setMessages([]);
     // Reset the autoMessageSent flag when switching sessions
     setAutoMessageSent(false);
+    setIsProcessing(false);
     
     fetchMessages();
+    
+    // Set up a polling mechanism to check for new messages regularly
+    const pollInterval = setInterval(fetchMessages, 3000); // Poll every 3 seconds
+    
+    return () => {
+      clearInterval(pollInterval);
+    };
   }, [sessionId]);
 
   // Set up a subscription to listen for changes to the chat_sessions table
@@ -157,9 +189,77 @@ export const useChatMessages = (sessionId: string | null) => {
         }
       )
       .subscribe();
+      
+    // Also subscribe to new messages for this session
+    const messagesChannel = supabase
+      .channel(`messages-${sessionId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen for all events (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `session_id=eq.${sessionId}`
+        },
+        (payload) => {
+          console.log('Message change detected:', payload);
+          
+          // Refresh messages when a new message is detected
+          // This ensures we always have the latest messages without a page refresh
+          const fetchLatestMessages = async () => {
+            const { data, error } = await supabase
+              .from('chat_messages')
+              .select('*')
+              .eq('session_id', sessionId)
+              .order('created_at', { ascending: true });
+              
+            if (error) {
+              console.error('Error loading latest messages:', error);
+              return;
+            }
+            
+            if (data) {
+              const validMessages = data
+                .filter(msg => {
+                  if (msg.role === 'user') {
+                    return msg.content !== "hey";
+                  }
+                  
+                  if (msg.role === 'writer' || msg.role === 'assistant') {
+                    return true;
+                  }
+                  
+                  return false;
+                })
+                .map(msg => ({
+                  id: msg.message_id,
+                  content: msg.content,
+                  role: msg.role === 'writer' ? 'assistant' : msg.role,
+                  created_at: new Date(msg.content ? msg.created_at : null),
+                }));
+                
+              console.log('Updated messages from subscription:', validMessages);
+              
+              // Check for new assistant messages that indicate processing is complete
+              const hasNewAssistantMessage = payload.new && 
+                (payload.new.role === 'writer' || payload.new.role === 'assistant');
+                
+              if (hasNewAssistantMessage) {
+                setIsProcessing(false);
+              }
+              
+              setMessages(validMessages);
+            }
+          };
+          
+          fetchLatestMessages();
+        }
+      )
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(messagesChannel);
     };
   }, [sessionId, isConsultComplete]);
 
@@ -186,6 +286,51 @@ export const useChatMessages = (sessionId: string | null) => {
     }
   };
 
+  // Track visibility changes to ensure animation continues when tab is backgrounded
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && sessionId && autoMessageSent) {
+        // When coming back to the tab, check if we should still be in processing state
+        const checkProcessingStatus = async () => {
+          try {
+            // Check if there's a "hey" message without a response
+            const { data, error } = await supabase
+              .from('chat_messages')
+              .select('*')
+              .eq('session_id', sessionId)
+              .order('created_at', { ascending: true });
+              
+            if (error) {
+              console.error('Error checking processing status:', error);
+              return;
+            }
+            
+            if (data) {
+              const userMessages = data.filter(msg => msg.role === 'user');
+              const assistantMessages = data.filter(msg => 
+                msg.role === 'writer' || msg.role === 'assistant'
+              );
+              
+              // If we have more user messages than assistant messages, we're still processing
+              // This assumes each user message should get an assistant response
+              setIsProcessing(userMessages.length > assistantMessages.length);
+            }
+          } catch (error) {
+            console.error('Error in visibility change handler:', error);
+          }
+        };
+        
+        checkProcessingStatus();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [sessionId, autoMessageSent]);
+
   return {
     messages,
     setMessages,
@@ -194,6 +339,8 @@ export const useChatMessages = (sessionId: string | null) => {
     dialogDismissed,
     setDialogDismissed,
     hasFeedback,
-    autoMessageSent
+    autoMessageSent,
+    isProcessing,
+    setIsProcessing
   };
 };

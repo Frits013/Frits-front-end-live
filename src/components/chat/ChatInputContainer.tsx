@@ -70,6 +70,8 @@ const ChatInputContainer = ({
     const updatedMessages = [...messages, newUserMessage];
     setMessages(updatedMessages);
     setInputMessage("");
+    
+    // Set thinking state to true before making the API call
     setIsProcessing(true);
     isThinkingRef.current = true;
   
@@ -144,7 +146,6 @@ const ChatInputContainer = ({
         
       if (!sessionCheckError && sessionData && sessionData.finished) {
         console.log('Session is marked as completed in the database');
-        // You'll need to pass this information to the parent component somehow
       }
       
       // Get response content, prioritizing the 'response' field
@@ -180,6 +181,7 @@ const ChatInputContainer = ({
         variant: "destructive",
       });
     } finally {
+      // Always make sure processing state is reset regardless of success/failure
       setIsProcessing(false);
       isThinkingRef.current = false;
     }

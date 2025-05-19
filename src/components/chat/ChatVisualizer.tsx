@@ -11,27 +11,28 @@ interface ChatVisualizerProps {
 
 const ChatVisualizer = ({ isThinking, audioData, currentSessionId }: ChatVisualizerProps) => {
   const [showWelcomeAnimation, setShowWelcomeAnimation] = useState(false);
-  const { autoMessageSent } = useChatMessages(currentSessionId);
+  const { autoMessageSent, isProcessing } = useChatMessages(currentSessionId);
   
   // Show welcome animation when a new session is created with auto-message
+  // or during any processing state
   useEffect(() => {
-    if (autoMessageSent) {
+    if ((autoMessageSent && isProcessing) || isThinking) {
       setShowWelcomeAnimation(true);
-      
-      // Turn off welcome animation after a few seconds
+    } else {
+      // Small delay before hiding to avoid abrupt transitions
       const timer = setTimeout(() => {
         setShowWelcomeAnimation(false);
-      }, 5000);
+      }, 500);
       
       return () => clearTimeout(timer);
     }
-  }, [autoMessageSent, currentSessionId]);
+  }, [autoMessageSent, isProcessing, isThinking, currentSessionId]);
 
   return (
     <div className="w-full max-w-[500px] mx-auto mb-8">
       <div className="aspect-square w-full">
         <ThreeScene 
-          isThinking={isThinking || showWelcomeAnimation} 
+          isThinking={isThinking || showWelcomeAnimation || isProcessing} 
           audioData={audioData} 
         />
       </div>

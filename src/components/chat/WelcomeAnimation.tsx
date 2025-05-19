@@ -8,21 +8,28 @@ interface WelcomeAnimationProps {
 
 const WelcomeAnimation = ({ currentSessionId }: WelcomeAnimationProps) => {
   const [showAnimation, setShowAnimation] = useState(false);
-  const { autoMessageSent } = useChatMessages(currentSessionId);
+  const { autoMessageSent, isProcessing } = useChatMessages(currentSessionId);
   
   useEffect(() => {
     // Show welcome animation when a new session is created
     if (autoMessageSent) {
       setShowAnimation(true);
       
-      // Hide animation after a few seconds
-      const timer = setTimeout(() => {
+      // Only hide animation when processing is complete
+      if (!isProcessing) {
+        const timer = setTimeout(() => {
+          setShowAnimation(false);
+        }, 1000); // Short fade-out time after processing completes
+        
+        return () => clearTimeout(timer);
+      }
+    } else {
+      // If no auto message or processing complete, don't show animation
+      if (!isProcessing) {
         setShowAnimation(false);
-      }, 4000);
-      
-      return () => clearTimeout(timer);
+      }
     }
-  }, [autoMessageSent]);
+  }, [autoMessageSent, isProcessing]);
 
   // We return null since we don't want the confetti anymore
   return null;
