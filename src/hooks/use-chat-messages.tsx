@@ -240,8 +240,10 @@ export const useChatMessages = (sessionId: string | null) => {
                 
               console.log('Updated messages from subscription:', validMessages);
               
-              // Check for new assistant messages that indicate processing is complete
+              // Fix: Check if payload.new exists and if so, access its properties
               const hasNewAssistantMessage = payload.new && 
+                typeof payload.new === 'object' && 
+                'role' in payload.new &&
                 (payload.new.role === 'writer' || payload.new.role === 'assistant');
                 
               if (hasNewAssistantMessage) {
