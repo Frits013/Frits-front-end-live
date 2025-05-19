@@ -129,7 +129,7 @@ Structure your summary with clear section headings and keep it under 500 words.`
               checked={ttsEnabled}
               onCheckedChange={setTtsEnabled}
             />
-            <Label htmlFor="tts">Enable audio responses</Label>
+            <Label htmlFor="tts">Enable audio responses (working on for next version)</Label>
           </div>
         </div>
         <div className="flex justify-end gap-2">
