@@ -1,7 +1,6 @@
 
 import { useEffect, useState } from "react";
 import { useChatMessages } from "@/hooks/use-chat-messages";
-import Confetti from "@/components/ui/confetti";
 
 interface WelcomeAnimationProps {
   currentSessionId: string | null;
@@ -23,7 +22,7 @@ const WelcomeAnimation = ({ currentSessionId }: WelcomeAnimationProps) => {
       if (!isProcessing) {
         const timer = setTimeout(() => {
           setShowAnimation(false);
-        }, 3000); // Longer display time for better visibility
+        }, 1000); // Short fade-out time after processing completes
         
         return () => clearTimeout(timer);
       }
@@ -35,7 +34,7 @@ const WelcomeAnimation = ({ currentSessionId }: WelcomeAnimationProps) => {
       if (!isProcessing) {
         const timer = setTimeout(() => {
           setShowAnimation(false);
-        }, 3000); // Longer display time for better visibility
+        }, 1000); // Short fade-out time after processing completes
         
         return () => clearTimeout(timer);
       }
@@ -47,8 +46,8 @@ const WelcomeAnimation = ({ currentSessionId }: WelcomeAnimationProps) => {
     }
   }, [currentSessionId, autoMessageSent, isProcessing, prevSessionId]);
 
-  // Return the Confetti component to show the animation
-  return <Confetti active={showAnimation} />;
+  // We return null since we don't want the confetti anymore
+  return null;
 };
 
 export default WelcomeAnimation;
