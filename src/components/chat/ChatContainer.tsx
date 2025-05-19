@@ -1,5 +1,5 @@
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import ChatVisualizer from "./ChatVisualizer";
 import ChatMessagesContainer from "./ChatMessagesContainer";
 import ChatInputContainer from "./ChatInputContainer";
+import { useEffect } from "react";
 
 interface ChatContainerProps {
   messages: ChatMessage[];
@@ -41,17 +42,9 @@ const ChatContainer = ({
   const [audioData, setAudioData] = useState<number[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
-  const [previousChatId, setPreviousChatId] = useState<string | null>(null);
   
   // Add a new state to track whether the complete button is showing
   const [showCompleteButton, setShowCompleteButton] = useState(false);
-
-  // Track previous chat ID to detect new sessions
-  useEffect(() => {
-    if (currentChatId !== previousChatId) {
-      setPreviousChatId(currentChatId);
-    }
-  }, [currentChatId]);
 
   // Update the button visibility when isConsultComplete changes
   useEffect(() => {
@@ -97,7 +90,6 @@ const ChatContainer = ({
           isThinking={isThinkingRef.current} 
           audioData={audioData}
           currentSessionId={currentChatId}
-          previousSessionId={previousChatId}
         />
         
         <Card className="flex-1 flex flex-col bg-white/20 backdrop-blur-xl border-purple-100/50 shadow-xl rounded-xl relative overflow-hidden">
