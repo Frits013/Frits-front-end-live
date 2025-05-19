@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { getRandomShape } from "@/utils/shapes";
 import { generatePoints } from "@/utils/points";
@@ -34,28 +35,27 @@ export default function ChatVisualizer({
   // Show thinking animation for new sessions or when isThinking is true
   const shouldShowThinking = isThinking || newSession;
 
-  const [points, setPoints] = useState(generatePoints());
+  const [points, setPoints] = useState(generatePoints(8, 100, 100));
   const [shape, setShape] = useState(getRandomShape());
   const { theme } = useTheme();
 
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      setPoints(generatePoints());
-      setShape(getRandomShape());
-    }, 2000);
+    if (shouldShowThinking) {
+      const intervalId = setInterval(() => {
+        setPoints(generatePoints(8, 100, 100));
+        setShape(getRandomShape());
+      }, 1500);
 
-    return () => clearInterval(intervalId);
-  }, []);
+      return () => clearInterval(intervalId);
+    }
+  }, [shouldShowThinking]);
 
   const renderThinkingAnimation = () => (
     <div className="absolute inset-0 flex items-center justify-center">
       <div className="relative w-48 h-48">
-        {Array.from({ length: 5 }).map((_, index) => {
+        {points.map((point, index) => {
           const size = Math.random() * 20 + 10;
-          const speed = Math.random() * 2 + 1;
           const opacity = Math.random() * 0.6 + 0.4;
-          const positionX = Math.random() * 100;
-          const positionY = Math.random() * 100;
           const animationDuration = Math.random() * 3 + 2;
 
           return (
@@ -63,13 +63,16 @@ export default function ChatVisualizer({
               key={index}
               style={{
                 position: 'absolute',
-                top: `${positionY}%`,
-                left: `${positionX}%`,
+                top: `${point.y}%`,
+                left: `${point.x}%`,
                 width: `${size}px`,
                 height: `${size}px`,
                 backgroundColor: theme === 'dark' ? 'white' : 'black',
                 opacity: opacity,
-                borderRadius: '50%',
+                borderRadius: shape === 'circle' ? '50%' : 
+                             shape === 'square' ? '0' : 
+                             shape === 'triangle' ? '50% 0 50% 50%' : 
+                             shape === 'diamond' ? '25%' : '30%',
                 animation: `float ${animationDuration}s infinite alternate`,
                 animationDelay: `${Math.random()}s`,
               }}
@@ -81,10 +84,10 @@ export default function ChatVisualizer({
         {`
           @keyframes float {
             from {
-              transform: translateY(0);
+              transform: translateY(0) rotate(0deg);
             }
             to {
-              transform: translateY(-10px);
+              transform: translateY(-10px) rotate(${Math.random() > 0.5 ? '45' : '-45'}deg);
             }
           }
         `}

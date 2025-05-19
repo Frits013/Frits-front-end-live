@@ -69,6 +69,23 @@ const Confetti: React.FC<ConfettiProps> = ({ active }) => {
 
   return (
     <div className="fixed inset-0 pointer-events-none z-[9999] overflow-hidden">
+      <style>
+        {`
+          @keyframes confetti-fall {
+            0% {
+              transform: translateY(-100vh) rotate(0deg);
+              opacity: 1;
+            }
+            100% {
+              transform: translateY(100vh) rotate(720deg);
+              opacity: 0;
+            }
+          }
+          .animate-confetti-fall {
+            animation: confetti-fall 6s linear forwards;
+          }
+        `}
+      </style>
       {particles.map((particle) => {
         // Determine which icon to use
         const ParticleIcon = 
