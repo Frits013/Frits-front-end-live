@@ -23,6 +23,12 @@ export const useChatSessions = () => {
       return;
     }
 
+    // Show the success toast immediately when user clicks
+    toast({
+      title: "Success",
+      description: "New consult session created",
+    });
+
     // Format current date and time in a readable format
     const formattedDateTime = format(new Date(), "MMM d, yyyy h:mm a");
 
@@ -67,11 +73,6 @@ export const useChatSessions = () => {
     // Send an automatic "hey" message to initiate the conversation
     // This will be invisible to the user
     await sendAutomaticHeyMessage(newSession.id, session.user.id);
-    
-    toast({
-      title: "Success",
-      description: "New consult session created",
-    });
   };
 
   // Function to send an automatic "hey" message
