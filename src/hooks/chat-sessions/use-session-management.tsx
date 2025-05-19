@@ -25,14 +25,14 @@ export const useSessionManagement = (
       return false;
     }
 
-    // Update the title in local state
-    setChatSessions(prevSessions => 
-      prevSessions.map(session => 
-        session.id === sessionId 
-          ? { ...session, session_name: newTitle } 
-          : session
-      )
-    );
+    // Fetch the updated sessions list
+    const { data: updatedSessions } = await supabase
+      .from('chat_sessions')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    // Update the state with the fetched sessions
+    setChatSessions(updatedSessions || []);
     return true;
   };
 
@@ -53,14 +53,14 @@ export const useSessionManagement = (
       return false;
     }
 
-    // Update the finished flag in local state
-    setChatSessions(prevSessions => 
-      prevSessions.map(session => 
-        session.id === sessionId 
-          ? { ...session, finished: true } 
-          : session
-      )
-    );
+    // Fetch the updated sessions list
+    const { data: updatedSessions } = await supabase
+      .from('chat_sessions')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    // Update the state with the fetched sessions
+    setChatSessions(updatedSessions || []);
     
     return true;
   };
