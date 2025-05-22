@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { ChatMessage } from "@/types/chat";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,8 +73,8 @@ export const useMessageSubscription = (
     return data
       .filter(msg => {
         if (msg.role === 'user') {
-          // Filter out the specific initial message and "hey" messages
-          return msg.content !== "hey" && msg.content !== INITIAL_MESSAGE;
+          // Only filter out the specific initial message, but keep "hey" messages
+          return msg.content !== INITIAL_MESSAGE;
         }
         
         if (msg.role === 'writer' || msg.role === 'assistant') {
