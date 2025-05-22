@@ -61,14 +61,14 @@ export const useMessageFetcher = (sessionId: string | null) => {
         }
 
         if (data) {
-          // Process the messages - filter out automatic "hey" messages and keep only user messages and writer (assistant) responses
+          // Process the messages - filter out automatic initialization messages and keep only user messages and writer (assistant) responses
           const validMessages = processMessages(data);
           console.log('Processed messages:', validMessages);
           setMessages(validMessages);
           
           // Check if an automatic message was sent in this session
           const hasAutoMessage = data.some(msg => 
-            msg.role === 'user' && msg.content === "hey"
+            msg.role === 'user' && (msg.content === "hey" || msg.content.includes("### Task"))
           );
           
           // Get session creation time
@@ -105,10 +105,10 @@ export const useMessageFetcher = (sessionId: string | null) => {
   const processMessages = (data: any[]): ChatMessage[] => {
     return data
       .filter(msg => {
-        // Keep user messages that aren't automatic "hey" messages
+        // Keep user messages that aren't automatic initialization messages
         if (msg.role === 'user') {
-          // Filter out messages with content "hey" which are our automatic messages
-          return msg.content !== "hey";
+          // Filter out messages with content "hey" or that contain the task prompt
+          return msg.content !== "hey" && !msg.content.includes("### Task");
         }
         
         // Keep writer messages (assistant messages for the user)

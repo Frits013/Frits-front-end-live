@@ -73,7 +73,8 @@ export const useMessageSubscription = (
     return data
       .filter(msg => {
         if (msg.role === 'user') {
-          return msg.content !== "hey";
+          // Filter out messages with content "hey" or that contain the task prompt
+          return msg.content !== "hey" && !msg.content.includes("### Task");
         }
         
         if (msg.role === 'writer' || msg.role === 'assistant') {
