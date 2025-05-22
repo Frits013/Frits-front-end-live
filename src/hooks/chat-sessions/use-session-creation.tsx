@@ -5,7 +5,8 @@ import { format } from "date-fns";
 import { ChatSession } from "@/types/chat";
 
 // Configurable initial message - change this value to modify the automatic initial message
-const INITIAL_MESSAGE = `
+// Export the constant so it can be used in other files
+export const INITIAL_MESSAGE = `
 ### Task
 Write the first visible message of an AI-readiness consultation.
 
