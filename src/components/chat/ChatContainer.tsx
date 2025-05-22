@@ -1,5 +1,5 @@
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
@@ -9,7 +9,6 @@ import { useToast } from "@/hooks/use-toast";
 import ChatVisualizer from "./ChatVisualizer";
 import ChatMessagesContainer from "./ChatMessagesContainer";
 import ChatInputContainer from "./ChatInputContainer";
-import { useEffect } from "react";
 
 interface ChatContainerProps {
   messages: ChatMessage[];
@@ -42,6 +41,7 @@ const ChatContainer = ({
   const [audioData, setAudioData] = useState<number[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
+  const inputContainerRef = useRef<HTMLDivElement>(null);
   
   // Add a new state to track whether the complete button is showing
   const [showCompleteButton, setShowCompleteButton] = useState(false);
@@ -56,6 +56,18 @@ const ChatContainer = ({
       setShowCompleteButton(false);
     }
   }, [isConsultComplete, showCompleteDialog, hasFeedback, dialogDismissed]);
+
+  // Ensure the input is visible when the component mounts or chat changes
+  useEffect(() => {
+    // Small delay to allow for rendering
+    const timer = setTimeout(() => {
+      if (inputContainerRef.current) {
+        inputContainerRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [currentChatId]);
 
   // Replace the auto-showing dialog effect with button-triggered approach
   const handleCompleteButtonClick = useCallback(() => {
@@ -113,15 +125,17 @@ const ChatContainer = ({
             </div>
           )}
           
-          <ChatInputContainer
-            messages={messages}
-            setMessages={setMessages}
-            currentChatId={currentChatId}
-            setErrorMessage={setErrorMessage}
-            isProcessing={isProcessing}
-            setIsProcessing={setIsProcessing}
-            isThinkingRef={isThinkingRef}
-          />
+          <div ref={inputContainerRef}>
+            <ChatInputContainer
+              messages={messages}
+              setMessages={setMessages}
+              currentChatId={currentChatId}
+              setErrorMessage={setErrorMessage}
+              isProcessing={isProcessing}
+              setIsProcessing={setIsProcessing}
+              isThinkingRef={isThinkingRef}
+            />
+          </div>
         </Card>
       </div>
 
