@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ChatMessage } from "@/types/chat";
 import { supabase } from "@/integrations/supabase/client";
+import { INITIAL_MESSAGE } from "@/hooks/chat-sessions/use-session-creation";
 
 export const useMessageFetcher = (sessionId: string | null) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -68,7 +69,7 @@ export const useMessageFetcher = (sessionId: string | null) => {
           
           // Check if an automatic message was sent in this session
           const hasAutoMessage = data.some(msg => 
-            msg.role === 'user' && (msg.content === "hey" || msg.content.includes("### Task"))
+            msg.role === 'user' && (msg.content === "hey" || msg.content === INITIAL_MESSAGE)
           );
           
           // Get session creation time
@@ -107,8 +108,8 @@ export const useMessageFetcher = (sessionId: string | null) => {
       .filter(msg => {
         // Keep user messages that aren't automatic initialization messages
         if (msg.role === 'user') {
-          // Filter out messages with content "hey" or that contain the task prompt
-          return msg.content !== "hey" && !msg.content.includes("### Task");
+          // Filter out the specific initial message and "hey" messages
+          return msg.content !== "hey" && msg.content !== INITIAL_MESSAGE;
         }
         
         // Keep writer messages (assistant messages for the user)

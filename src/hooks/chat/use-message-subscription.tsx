@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { ChatMessage } from "@/types/chat";
 import { supabase } from "@/integrations/supabase/client";
+import { INITIAL_MESSAGE } from "@/hooks/chat-sessions/use-session-creation";
 
 export const useMessageSubscription = (
   sessionId: string | null, 
@@ -73,8 +74,8 @@ export const useMessageSubscription = (
     return data
       .filter(msg => {
         if (msg.role === 'user') {
-          // Filter out messages with content "hey" or that contain the task prompt
-          return msg.content !== "hey" && !msg.content.includes("### Task");
+          // Filter out the specific initial message and "hey" messages
+          return msg.content !== "hey" && msg.content !== INITIAL_MESSAGE;
         }
         
         if (msg.role === 'writer' || msg.role === 'assistant') {
