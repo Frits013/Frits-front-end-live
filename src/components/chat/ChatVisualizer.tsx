@@ -29,8 +29,8 @@ const ChatVisualizer = ({ isThinking, audioData, currentSessionId }: ChatVisuali
   }, [autoMessageSent, isProcessing, isThinking, currentSessionId]);
 
   return (
-    <div className="w-full max-w-[500px] mx-auto mb-8">
-      <div className="aspect-square w-full">
+    <div className="w-full h-full flex items-center justify-center p-4">
+      <div className="aspect-square w-full max-w-full max-h-full">
         <ThreeScene 
           isThinking={isThinking || showWelcomeAnimation || isProcessing} 
           audioData={audioData} 

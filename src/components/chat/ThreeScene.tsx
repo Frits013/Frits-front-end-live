@@ -18,6 +18,7 @@ const ThreeScene = ({ isThinking, audioData }: ThreeSceneProps) => {
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const nodesRef = useRef<THREE.Mesh[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   // Initial setup
   useEffect(() => {
@@ -61,10 +62,35 @@ const ThreeScene = ({ isThinking, audioData }: ThreeSceneProps) => {
     // Run initialization
     initializeScene();
 
+    // Setup ResizeObserver to handle container resizing from the resizable panels
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (!cameraRef.current || !rendererRef.current) continue;
+        
+        const width = entry.contentRect.width;
+        const height = entry.contentRect.height;
+        
+        if (width === 0 || height === 0) continue;
+        
+        cameraRef.current.aspect = width / height;
+        cameraRef.current.updateProjectionMatrix();
+        rendererRef.current.setSize(width, height);
+      }
+    });
+    
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+      resizeObserverRef.current = resizeObserver;
+    }
+
     // Cleanup function
     return () => {
       if (rendererRef.current) {
         rendererRef.current.dispose();
+      }
+      
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
       }
     };
   }, []);
@@ -110,7 +136,7 @@ const ThreeScene = ({ isThinking, audioData }: ThreeSceneProps) => {
     animate();
   }, [isInitialized, isThinking, audioData]);
 
-  // Handle resize events
+  // Handle window resize events separately from ResizeObserver
   useEffect(() => {
     if (!isInitialized) return;
     
@@ -123,15 +149,10 @@ const ThreeScene = ({ isThinking, audioData }: ThreeSceneProps) => {
       
       if (newWidth === 0 || newHeight === 0) return;
       
-      console.log("Resizing scene to:", newWidth, newHeight);
-      
       cameraRef.current.aspect = newWidth / newHeight;
       cameraRef.current.updateProjectionMatrix();
       rendererRef.current.setSize(newWidth, newHeight);
     };
-
-    // Initial resize to ensure proper dimensions
-    handleResize();
     
     window.addEventListener('resize', handleResize);
     
@@ -140,10 +161,10 @@ const ThreeScene = ({ isThinking, audioData }: ThreeSceneProps) => {
   }, [isInitialized]);
 
   return (
-    <div className="flex justify-center w-full">
+    <div className="relative w-full h-full">
       <div 
         ref={containerRef}
-        className="relative w-full aspect-square max-w-[800px] bg-gradient-to-b from-transparent to-purple-50/20 dark:to-purple-900/20 rounded-full"
+        className="w-full h-full bg-gradient-to-b from-transparent to-purple-50/20 dark:to-purple-900/20 rounded-full"
       >
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
         {isThinking && (
