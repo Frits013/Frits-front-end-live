@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -52,6 +51,13 @@ const ChatContainer = ({
     // and there's no feedback yet and dialog hasn't been dismissed
     if (isConsultComplete && !showCompleteDialog && !hasFeedback && !dialogDismissed) {
       setShowCompleteButton(true);
+      
+      // When the button appears, scroll to input field to keep it visible
+      setTimeout(() => {
+        if (inputContainerRef.current) {
+          inputContainerRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
     } else {
       setShowCompleteButton(false);
     }
@@ -112,9 +118,9 @@ const ChatContainer = ({
             errorMessage={errorMessage} 
           />
           
-          {/* Finish Consult Button that appears above the input */}
+          {/* Finish Consult Button that appears as a fixed position element */}
           {showCompleteButton && (
-            <div className="mx-4 mb-2">
+            <div className="sticky bottom-[72px] mx-4 mb-2 z-10">
               <Button 
                 onClick={handleCompleteButtonClick}
                 className="w-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center gap-2 py-2"
@@ -125,7 +131,7 @@ const ChatContainer = ({
             </div>
           )}
           
-          <div ref={inputContainerRef}>
+          <div ref={inputContainerRef} className="sticky bottom-0 z-10 bg-white/50 backdrop-blur-sm">
             <ChatInputContainer
               messages={messages}
               setMessages={setMessages}
