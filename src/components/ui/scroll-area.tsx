@@ -3,26 +3,32 @@ import * as React from "react"
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"
 
 import { cn } from "@/lib/utils"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 const ScrollArea = React.forwardRef<
   React.ElementRef<typeof ScrollAreaPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root> & { onScroll?: React.UIEventHandler<HTMLDivElement> }
->(({ className, children, onScroll, ...props }, ref) => (
-  <ScrollAreaPrimitive.Root
-    ref={ref}
-    className={cn("relative overflow-hidden", className)}
-    {...props}
-  >
-    <ScrollAreaPrimitive.Viewport 
-      className="h-full w-full rounded-[inherit]"
-      onScroll={onScroll}
+>(({ className, children, onScroll, ...props }, ref) => {
+  const isMobile = useIsMobile();
+  
+  return (
+    <ScrollAreaPrimitive.Root
+      ref={ref}
+      className={cn("relative overflow-hidden", className)}
+      {...props}
+      type={isMobile ? "scroll" : "hover"}
     >
-      {children}
-    </ScrollAreaPrimitive.Viewport>
-    <ScrollBar />
-    <ScrollAreaPrimitive.Corner />
-  </ScrollAreaPrimitive.Root>
-))
+      <ScrollAreaPrimitive.Viewport 
+        className="h-full w-full rounded-[inherit] overflow-y-auto"
+        onScroll={onScroll}
+      >
+        {children}
+      </ScrollAreaPrimitive.Viewport>
+      {!isMobile && <ScrollBar />}
+      <ScrollAreaPrimitive.Corner />
+    </ScrollAreaPrimitive.Root>
+  );
+})
 ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName
 
 const ScrollBar = React.forwardRef<

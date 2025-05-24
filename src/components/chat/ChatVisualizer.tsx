@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import ThreeScene from "@/components/chat/ThreeScene";
 import { useChatMessages } from "@/hooks/use-chat-messages";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ChatVisualizerProps {
   isThinking: boolean;
@@ -12,6 +13,7 @@ interface ChatVisualizerProps {
 const ChatVisualizer = ({ isThinking, audioData, currentSessionId }: ChatVisualizerProps) => {
   const [showWelcomeAnimation, setShowWelcomeAnimation] = useState(false);
   const { autoMessageSent, isProcessing } = useChatMessages(currentSessionId);
+  const isMobile = useIsMobile();
   
   // Show welcome animation when a new session is created with auto-message
   // or during any processing state
@@ -29,8 +31,8 @@ const ChatVisualizer = ({ isThinking, audioData, currentSessionId }: ChatVisuali
   }, [autoMessageSent, isProcessing, isThinking, currentSessionId]);
 
   return (
-    <div className="w-full h-full flex items-center justify-center p-4">
-      <div className="aspect-square w-full max-w-full max-h-full">
+    <div className="w-full h-full flex items-center justify-center p-2 sm:p-4 overflow-hidden touch-none">
+      <div className={`aspect-square max-w-full max-h-full ${isMobile ? 'w-3/4' : 'w-full'}`}>
         <ThreeScene 
           isThinking={isThinking || showWelcomeAnimation || isProcessing} 
           audioData={audioData} 

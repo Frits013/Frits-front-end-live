@@ -10,6 +10,7 @@ import ChatVisualizer from "./ChatVisualizer";
 import ChatMessagesContainer from "./ChatMessagesContainer";
 import ChatInputContainer from "./ChatInputContainer";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ChatContainerProps {
   messages: ChatMessage[];
@@ -43,12 +44,18 @@ const ChatContainer = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const inputContainerRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
   
   // Add a new state to track whether the complete button is showing
   const [showCompleteButton, setShowCompleteButton] = useState(false);
   
-  // Track the default size of the visualizer panel
-  const [defaultVisualizerSize, setDefaultVisualizerSize] = useState(40);
+  // Track the default size of the visualizer panel - smaller on mobile
+  const [defaultVisualizerSize, setDefaultVisualizerSize] = useState(isMobile ? 25 : 40);
+
+  // Update default size when mobile status changes
+  useEffect(() => {
+    setDefaultVisualizerSize(isMobile ? 25 : 40);
+  }, [isMobile]);
 
   // Update the button visibility when isConsultComplete changes
   useEffect(() => {
@@ -60,25 +67,25 @@ const ChatContainer = ({
       // When the button appears, scroll to input field to keep it visible
       setTimeout(() => {
         if (inputContainerRef.current) {
-          inputContainerRef.current.scrollIntoView({ behavior: 'smooth' });
+          inputContainerRef.current.scrollIntoView({ behavior: isMobile ? 'auto' : 'smooth' });
         }
       }, 100);
     } else {
       setShowCompleteButton(false);
     }
-  }, [isConsultComplete, showCompleteDialog, hasFeedback, dialogDismissed]);
+  }, [isConsultComplete, showCompleteDialog, hasFeedback, dialogDismissed, isMobile]);
 
   // Ensure the input is visible when the component mounts or chat changes
   useEffect(() => {
     // Small delay to allow for rendering
     const timer = setTimeout(() => {
       if (inputContainerRef.current) {
-        inputContainerRef.current.scrollIntoView({ behavior: 'smooth' });
+        inputContainerRef.current.scrollIntoView({ behavior: isMobile ? 'auto' : 'smooth' });
       }
     }, 100);
     
     return () => clearTimeout(timer);
-  }, [currentChatId]);
+  }, [currentChatId, isMobile]);
 
   // Replace the auto-showing dialog effect with button-triggered approach
   const handleCompleteButtonClick = useCallback(() => {
@@ -107,8 +114,8 @@ const ChatContainer = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col h-[100dvh] w-full">
-      <div className="flex-1 overflow-hidden p-4 flex flex-col">
+    <div className="flex-1 flex flex-col h-[100dvh] w-full overflow-hidden">
+      <div className="flex-1 overflow-hidden p-2 sm:p-4 flex flex-col">
         <ResizablePanelGroup 
           direction="vertical" 
           className="min-h-[calc(100dvh-2rem)]"
@@ -116,7 +123,7 @@ const ChatContainer = ({
           {/* Visualizer Panel */}
           <ResizablePanel 
             defaultSize={defaultVisualizerSize} 
-            minSize={15}
+            minSize={isMobile ? 10 : 15}
             className="flex items-center justify-center"
           >
             <ChatVisualizer 
@@ -127,10 +134,13 @@ const ChatContainer = ({
           </ResizablePanel>
           
           {/* Resizable Handle */}
-          <ResizableHandle withHandle className="bg-purple-100 dark:bg-purple-900 h-1.5 hover:bg-purple-200 dark:hover:bg-purple-700 transition-colors" />
+          <ResizableHandle 
+            withHandle 
+            className="bg-purple-100 dark:bg-purple-900 h-1.5 hover:bg-purple-200 dark:hover:bg-purple-700 transition-colors z-10"
+          />
           
           {/* Chat Panel */}
-          <ResizablePanel defaultSize={100 - defaultVisualizerSize} minSize={30}>
+          <ResizablePanel defaultSize={100 - defaultVisualizerSize} minSize={isMobile ? 40 : 30}>
             <Card className="flex-1 flex flex-col bg-white/20 backdrop-blur-xl border-purple-100/50 shadow-xl rounded-xl relative overflow-hidden h-full">
               <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-purple-50/30 pointer-events-none" />
               
@@ -141,7 +151,7 @@ const ChatContainer = ({
               
               {/* Finish Consult Button that appears as a fixed position element */}
               {showCompleteButton && (
-                <div className="sticky bottom-[72px] mx-4 mb-2 z-10">
+                <div className="sticky bottom-[72px] mx-2 sm:mx-4 mb-2 z-10">
                   <Button 
                     onClick={handleCompleteButtonClick}
                     className="w-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center gap-2 py-2"
@@ -152,7 +162,10 @@ const ChatContainer = ({
                 </div>
               )}
               
-              <div ref={inputContainerRef} className="sticky bottom-0 z-10 bg-white/50 backdrop-blur-sm">
+              <div 
+                ref={inputContainerRef} 
+                className="sticky bottom-0 z-10 bg-white/50 backdrop-blur-sm px-2 sm:px-4 py-2"
+              >
                 <ChatInputContainer
                   messages={messages}
                   setMessages={setMessages}

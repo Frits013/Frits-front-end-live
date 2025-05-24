@@ -3,6 +3,7 @@ import { ChatMessage } from "@/types/chat";
 import ChatMessages from "./ChatMessages";
 import { useEffect, useRef, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ChatMessageListProps {
   messages: ChatMessage[];
@@ -14,6 +15,7 @@ const ChatMessageList = ({ messages }: ChatMessageListProps) => {
   const [userScrolled, setUserScrolled] = useState(false);
   const prevMessagesLength = useRef(messages.length);
   const chatSessionId = useRef<string | null>(null);
+  const isMobile = useIsMobile();
 
   // Only scroll to bottom when new messages arrive and user hasn't scrolled up
   useEffect(() => {
@@ -56,7 +58,7 @@ const ChatMessageList = ({ messages }: ChatMessageListProps) => {
   }, [userScrolled]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: isMobile ? "auto" : "smooth" });
   };
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
@@ -74,7 +76,7 @@ const ChatMessageList = ({ messages }: ChatMessageListProps) => {
 
   return (
     <ScrollArea 
-      className="flex-1 h-full w-full pt-4"
+      className="flex-1 h-full w-full pt-4 overflow-y-auto"
       onScroll={handleScroll}
       ref={scrollAreaRef}
     >
