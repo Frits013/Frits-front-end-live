@@ -16,6 +16,7 @@ const ScrollArea = React.forwardRef<
       ref={ref}
       className={cn("relative overflow-hidden", className)}
       {...props}
+      // Use "scroll" type on mobile for native scrolling, "hover" on desktop
       type={isMobile ? "scroll" : "hover"}
     >
       <ScrollAreaPrimitive.Viewport 
@@ -24,6 +25,7 @@ const ScrollArea = React.forwardRef<
       >
         {children}
       </ScrollAreaPrimitive.Viewport>
+      {/* Only show scrollbar on desktop */}
       {!isMobile && <ScrollBar />}
       <ScrollAreaPrimitive.Corner />
     </ScrollAreaPrimitive.Root>
