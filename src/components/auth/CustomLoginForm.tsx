@@ -7,6 +7,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuthOperations } from "@/hooks/use-auth-operations";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle } from "lucide-react";
 
 interface CustomLoginFormProps {
   authView: 'sign_in' | 'sign_up';
@@ -17,8 +19,9 @@ export const CustomLoginForm = ({ authView }: CustomLoginFormProps) => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [emailConfirmed, setEmailConfirmed] = useState(false);
   const { toast } = useToast();
-  const { handleEmailSignIn, handleEmailSignUp } = useAuthOperations();
+  const { handleEmailSignIn, handleEmailSignUp, checkEmailConfirmation } = useAuthOperations();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,6 +44,24 @@ export const CustomLoginForm = ({ authView }: CustomLoginFormProps) => {
       if (authView === 'sign_in') {
         result = await handleEmailSignIn(email, password);
         
+        // Check if email is confirmed
+        if (result?.data?.user) {
+          const isConfirmed = await checkEmailConfirmation();
+          if (isConfirmed) {
+            setEmailConfirmed(true);
+            toast({
+              title: "Email Confirmed",
+              description: "Your email has been successfully confirmed. Welcome back!",
+            });
+            
+            // Navigate to chat page after successful login
+            setTimeout(() => {
+              navigate('/chat');
+            }, 1500); // Longer delay to ensure state updates properly
+            return;
+          }
+        }
+        
         // If sign-in was successful and there was no error
         if (result && !result.error) {
           toast({
@@ -51,7 +72,7 @@ export const CustomLoginForm = ({ authView }: CustomLoginFormProps) => {
           // Navigate to chat page after successful login
           setTimeout(() => {
             navigate('/chat');
-          }, 1000); // Longer delay to ensure state updates properly
+          }, 1000);
         }
       } else {
         result = await handleEmailSignUp(email, password);
@@ -113,6 +134,15 @@ export const CustomLoginForm = ({ authView }: CustomLoginFormProps) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {emailConfirmed && (
+        <Alert className="bg-green-50 border-green-200">
+          <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
+          <AlertDescription className="text-green-800">
+            Email confirmed successfully! You're now logged in.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <div className="space-y-2">
         <Label htmlFor="email" className="sr-only">Email address</Label>
         <div className="relative">
