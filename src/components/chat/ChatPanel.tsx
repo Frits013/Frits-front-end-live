@@ -57,7 +57,7 @@ const ChatPanel = ({
         
         <div 
           ref={inputContainerRef} 
-          className="sticky bottom-0 z-10"
+          className="z-10"
         >
           <ChatInputContainer
             messages={messages}
