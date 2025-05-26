@@ -48,6 +48,7 @@ const ChatPanel = ({
           messages={messages} 
           errorMessage={errorMessage}
           currentSessionId={currentChatId}
+          showFinishButton={showCompleteButton}
         />
         
         <FinishInterviewButton 

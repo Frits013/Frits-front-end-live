@@ -1,12 +1,12 @@
 
-
 import { ChatMessage } from "@/types/chat";
 
 interface ChatMessagesProps {
   messages: ChatMessage[];
+  showFinishButton?: boolean;
 }
 
-const ChatMessages = ({ messages }: ChatMessagesProps) => {
+const ChatMessages = ({ messages, showFinishButton = false }: ChatMessagesProps) => {
   const formatText = (text: string) => {
     // Handle bold text wrapped in **
     return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -55,7 +55,7 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className={`flex flex-col gap-4 p-4 ${showFinishButton ? 'pb-24' : ''}`}>
       {messages.map((message) => (
         <div
           key={message.id}
@@ -79,4 +79,3 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
 };
 
 export default ChatMessages;
-
