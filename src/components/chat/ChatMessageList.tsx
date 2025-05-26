@@ -1,7 +1,7 @@
 
 import { ChatMessage } from "@/types/chat";
 import ChatMessages from "./ChatMessages";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 
 interface ChatMessageListProps {
   messages: ChatMessage[];
@@ -14,15 +14,7 @@ const ChatMessageList = ({
   currentSessionId,
   showFinishButton = false
 }: ChatMessageListProps) => {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // Simple auto-scroll to bottom when messages change
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages]);
 
   return (
     <div 
@@ -46,7 +38,6 @@ const ChatMessageList = ({
         ) : (
           <div className="py-4">
             <ChatMessages messages={messages} showFinishButton={showFinishButton} />
-            <div ref={messagesEndRef} />
           </div>
         )}
       </div>

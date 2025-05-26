@@ -169,8 +169,8 @@ const ThreeScene = ({ isThinking, audioData }: ThreeSceneProps) => {
       >
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
         
-        {/* Profile button positioned within canvas */}
-        <div className="absolute top-4 right-4 z-50">
+        {/* Profile button positioned further to the right */}
+        <div className="absolute top-4 right-6 z-50">
           <ChatHeader onSignOut={handleSignOut} isInCanvas={true} />
         </div>
         
