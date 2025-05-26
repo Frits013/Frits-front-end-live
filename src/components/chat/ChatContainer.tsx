@@ -53,35 +53,32 @@ const ChatContainer = ({
     setDefaultVisualizerSize(isMobile ? 25 : 35);
   }, [isMobile]);
 
-  // Update the button visibility when relevant states change
+  // Updated button visibility logic - show button when session is complete but no feedback exists yet
   useEffect(() => {
     console.log('Button visibility check:', {
       isConsultComplete,
-      showCompleteDialog,
       hasFeedback,
       dialogDismissed
     });
     
     // Show the button when:
     // 1. Session is marked as complete in database (isConsultComplete)
-    // 2. Dialog is not currently showing
-    // 3. No feedback exists yet
-    // 4. Dialog hasn't been manually dismissed
+    // 2. No feedback exists yet
+    // 3. Dialog hasn't been manually dismissed by closing without submitting
     const shouldShowButton = isConsultComplete && 
-                            !showCompleteDialog && 
                             !hasFeedback && 
                             !dialogDismissed;
     
     console.log('Should show complete button:', shouldShowButton);
     setShowCompleteButton(shouldShowButton);
-  }, [isConsultComplete, showCompleteDialog, hasFeedback, dialogDismissed]);
+  }, [isConsultComplete, hasFeedback, dialogDismissed]);
 
-  // Show dialog immediately when session is marked complete
+  // Show dialog when session is complete, but don't hide button - let user choose
   useEffect(() => {
     if (isConsultComplete && !hasFeedback && !dialogDismissed) {
       console.log('Session marked complete, showing dialog');
       setShowCompleteDialog(true);
-      setShowCompleteButton(false);
+      // Don't hide the button here - let user choose between button and dialog
     }
   }, [isConsultComplete, hasFeedback, dialogDismissed]);
 
@@ -90,7 +87,6 @@ const ChatContainer = ({
     console.log('Complete button clicked');
     if (currentChatId) {
       setShowCompleteDialog(true);
-      setShowCompleteButton(false); // Hide the button when dialog is shown
     }
   }, [currentChatId]);
 
