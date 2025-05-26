@@ -15,7 +15,13 @@ const ChatLayout = ({ sidebar, content }: ChatLayoutProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="flex min-h-[100dvh] w-full bg-gradient-to-br from-gray-50 via-purple-50/30 to-indigo-50/30 dark:from-gray-900 dark:via-purple-900/20 dark:to-indigo-900/20 overflow-hidden">
+    <div 
+      className="flex min-h-[100dvh] w-full bg-gradient-to-br from-gray-50 via-purple-50/30 to-indigo-50/30 dark:from-gray-900 dark:via-purple-900/20 dark:to-indigo-900/20 overflow-hidden"
+      style={isMobile ? {
+        overscrollBehavior: 'none',
+        touchAction: 'pan-x pan-y'
+      } : undefined}
+    >
       {isMobile ? (
         <>
           <Sheet open={isOpen} onOpenChange={setIsOpen}>

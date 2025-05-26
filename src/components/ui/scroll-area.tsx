@@ -20,7 +20,15 @@ const ScrollArea = React.forwardRef<
       type={isMobile ? "scroll" : "hover"}
     >
       <ScrollAreaPrimitive.Viewport 
-        className="h-full w-full rounded-[inherit] overflow-y-auto"
+        className={cn(
+          "h-full w-full rounded-[inherit] overflow-y-auto",
+          // Prevent pull-to-refresh on mobile
+          isMobile && "overscroll-none touch-pan-y"
+        )}
+        style={isMobile ? {
+          overscrollBehavior: 'none',
+          WebkitOverflowScrolling: 'touch'
+        } : undefined}
         onScroll={onScroll}
       >
         {children}
