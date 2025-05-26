@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { setupScene, setupLighting } from "./three/SceneSetup";
 import { createBrainStructure } from "./three/BrainStructure";
+import ChatHeader from "./ChatHeader";
+import { useAuthOperations } from "@/hooks/use-auth-operations";
 
 interface ThreeSceneProps {
   isThinking: boolean;
@@ -18,6 +20,7 @@ const ThreeScene = ({ isThinking, audioData }: ThreeSceneProps) => {
   const nodesRef = useRef<THREE.Mesh[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const { handleSignOut } = useAuthOperations();
 
   // Initial setup
   useEffect(() => {
@@ -162,9 +165,15 @@ const ThreeScene = ({ isThinking, audioData }: ThreeSceneProps) => {
     <div className="relative w-full h-full">
       <div 
         ref={containerRef}
-        className="w-full h-full bg-gradient-to-b from-transparent to-purple-50/20 dark:to-purple-900/20 rounded-full"
+        className="w-full h-full bg-gradient-to-b from-transparent to-purple-50/20 dark:to-purple-900/20 rounded-full relative"
       >
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
+        
+        {/* Profile button positioned within canvas */}
+        <div className="absolute top-4 right-4 z-50">
+          <ChatHeader onSignOut={handleSignOut} isInCanvas={true} />
+        </div>
+        
         {isThinking && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="bg-white/80 dark:bg-black/80 backdrop-blur-sm px-4 py-2 rounded-full">

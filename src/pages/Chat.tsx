@@ -1,10 +1,8 @@
-
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import ChatLayout from "@/components/chat/ChatLayout";
 import ChatSidebar from "@/components/chat/ChatSidebar";
-import ChatHeader from "@/components/chat/ChatHeader";
 import ChatContainer from "@/components/chat/ChatContainer";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
 import { useChatMessages } from "@/hooks/use-chat-messages";
@@ -125,7 +123,6 @@ const Chat = () => {
         }
         content={
           <>
-            <ChatHeader onSignOut={handleSignOut} />
             <ChatContainer
               messages={messages}
               setMessages={setMessages}
