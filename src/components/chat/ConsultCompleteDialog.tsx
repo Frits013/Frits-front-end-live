@@ -86,9 +86,9 @@ const ConsultCompleteDialog = ({
   };
 
   const handleConfirmExit = () => {
-    console.log('User confirmed exit without feedback');
+    console.log('User confirmed exit without feedback - ending session immediately');
     setShowExitConfirm(false);
-    onFinish(); // End the session without feedback
+    onFinish(); // End the session immediately, which should move it to completed
   };
 
   const handleCancelExit = () => {
