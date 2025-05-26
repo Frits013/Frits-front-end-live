@@ -92,8 +92,9 @@ const ConsultCompleteDialog = ({
   };
 
   const handleCancelExit = () => {
-    console.log('User cancelled exit - staying in dialog');
+    console.log('User cancelled exit - going back to chat');
     setShowExitConfirm(false);
+    onClose(); // Close the entire feedback dialog and return to chat
   };
 
   return (
