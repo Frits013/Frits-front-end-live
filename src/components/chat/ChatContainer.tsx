@@ -53,26 +53,41 @@ const ChatContainer = ({
     setDefaultVisualizerSize(isMobile ? 25 : 35);
   }, [isMobile]);
 
-  // Update the button visibility when isConsultComplete changes
+  // Update the button visibility when relevant states change
   useEffect(() => {
-    // Show the button when the session is completed but dialog is not showing
-    // and there's no feedback yet and dialog hasn't been dismissed
-    if (isConsultComplete && !showCompleteDialog && !hasFeedback && !dialogDismissed) {
-      setShowCompleteButton(true);
-    } else {
-      setShowCompleteButton(false);
-    }
+    console.log('Button visibility check:', {
+      isConsultComplete,
+      showCompleteDialog,
+      hasFeedback,
+      dialogDismissed
+    });
+    
+    // Show the button when:
+    // 1. Session is marked as complete in database (isConsultComplete)
+    // 2. Dialog is not currently showing
+    // 3. No feedback exists yet
+    // 4. Dialog hasn't been manually dismissed
+    const shouldShowButton = isConsultComplete && 
+                            !showCompleteDialog && 
+                            !hasFeedback && 
+                            !dialogDismissed;
+    
+    console.log('Should show complete button:', shouldShowButton);
+    setShowCompleteButton(shouldShowButton);
   }, [isConsultComplete, showCompleteDialog, hasFeedback, dialogDismissed]);
 
-  // Replace the auto-showing dialog effect with button-triggered approach
+  // Handle when user clicks the finish interview button
   const handleCompleteButtonClick = useCallback(() => {
+    console.log('Complete button clicked');
     if (currentChatId) {
       setShowCompleteDialog(true);
       setShowCompleteButton(false); // Hide the button when dialog is shown
     }
   }, [currentChatId]);
 
+  // Handle when user confirms finishing the session
   const handleFinishConsult = () => {
+    console.log('Finishing consult session');
     if (currentChatId) {
       // Call onConsultFinish only when the user confirms by clicking "End Session"
       onConsultFinish(currentChatId);
@@ -85,7 +100,9 @@ const ChatContainer = ({
     setDialogDismissed(true);
   };
 
+  // Handle when user chooses to continue chatting
   const handleContinueChat = () => {
+    console.log('Continuing chat session');
     setShowCompleteDialog(false);
     setDialogDismissed(true);
   };

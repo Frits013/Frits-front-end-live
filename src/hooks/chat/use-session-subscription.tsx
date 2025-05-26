@@ -13,6 +13,8 @@ export const useSessionSubscription = (
   useEffect(() => {
     if (!sessionId) return;
 
+    console.log('Setting up session subscription for session:', sessionId);
+
     // Subscribe to changes on the specific session
     const channel = supabase
       .channel(`session-${sessionId}`)
@@ -25,31 +27,43 @@ export const useSessionSubscription = (
           filter: `id=eq.${sessionId}`
         },
         (payload) => {
+          console.log('Session update received:', payload);
+          
           // Check if the finished status has changed
           const newFinishedStatus = payload.new.finished;
-          if (newFinishedStatus !== isConsultComplete) {
-            console.log('Session finished status changed:', newFinishedStatus);
+          const oldFinishedStatus = payload.old?.finished;
+          
+          console.log('Finished status - old:', oldFinishedStatus, 'new:', newFinishedStatus);
+          
+          // Only update if the status actually changed
+          if (newFinishedStatus !== oldFinishedStatus) {
+            console.log('Session finished status changed to:', newFinishedStatus);
             setIsConsultComplete(newFinishedStatus);
             
-            // Important: Reset dialog dismissed state when session is newly marked as complete
+            // Important: Reset dialog dismissed state when session status changes
             if (newFinishedStatus) {
+              console.log('Resetting dialog dismissed state and checking feedback');
               setDialogDismissed(false);
-              // We'll check if feedback exists separately
+              // Check if feedback exists separately
               checkFeedbackExists(sessionId);
             }
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+      });
 
     return () => {
+      console.log('Cleaning up session subscription for:', sessionId);
       supabase.removeChannel(channel);
     };
-  }, [sessionId, isConsultComplete, setIsConsultComplete, setDialogDismissed]);
+  }, [sessionId, setIsConsultComplete, setDialogDismissed, setHasFeedback]);
 
   // Helper function to check if feedback exists for a session
   const checkFeedbackExists = async (sessionId: string) => {
     try {
+      console.log('Checking feedback existence for session:', sessionId);
       const { data, error } = await supabase
         .from('feedback')
         .select('id')
@@ -59,7 +73,9 @@ export const useSessionSubscription = (
       if (error) {
         console.error('Error checking feedback existence:', error);
       } else {
-        setHasFeedback(!!data);
+        const hasFeedback = !!data;
+        console.log('Feedback exists:', hasFeedback);
+        setHasFeedback(hasFeedback);
         // If feedback exists, consider the dialog dismissed
         if (data) {
           setDialogDismissed(true);
