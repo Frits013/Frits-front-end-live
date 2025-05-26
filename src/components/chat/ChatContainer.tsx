@@ -1,3 +1,4 @@
+
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -144,7 +145,8 @@ const ChatContainer = ({
               
               <ChatMessagesContainer 
                 messages={messages} 
-                errorMessage={errorMessage} 
+                errorMessage={errorMessage}
+                currentSessionId={currentChatId}
               />
               
               {/* Finish Consult Button that appears as a fixed position element */}

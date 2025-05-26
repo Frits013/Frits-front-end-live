@@ -20,7 +20,7 @@ export const useChatMessages = (sessionId: string | null) => {
     autoMessageSent
   } = useMessageFetcher(sessionId);
   
-  const { isProcessing, setIsProcessing } = useProcessingState(sessionId, autoMessageSent);
+  const { isProcessing, setIsProcessing } = useProcessingState(sessionId);
   
   // Set up subscription to session changes
   useSessionSubscription(
