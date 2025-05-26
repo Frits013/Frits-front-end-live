@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -134,6 +133,33 @@ export const useAuthOperations = () => {
       toast({
         title: "Sign In Failed",
         description: "An unexpected error occurred during GitHub sign in.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSignInWithGoogle = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+
+      if (error) {
+        console.error('Google sign in error:', error);
+        toast({
+          title: "Sign In Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Google sign in exception:', error);
+      toast({
+        title: "Sign In Failed",
+        description: "An unexpected error occurred during Google sign in.",
         variant: "destructive",
       });
     }
@@ -319,6 +345,7 @@ export const useAuthOperations = () => {
   return {
     handleSignOut,
     handleSignInWithGithub,
+    handleSignInWithGoogle,
     handleEmailSignUp,
     handleEmailSignIn,
     resendConfirmationEmail,
