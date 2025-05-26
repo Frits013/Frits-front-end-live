@@ -1,14 +1,15 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ChatHistoryItem from "./ChatHistoryItem";
 import ChatHistoryEditItem from "./ChatHistoryEditItem";
-import { ChatSession } from "@/types/chat";
+import { SessionWithFeedback } from "@/types/chat";
 
 interface ChatHistoryProps {
-  chatHistories: ChatSession[];
+  chatHistories: SessionWithFeedback[];
   currentChatId: string | null;
-  setChatHistories: (chats: ChatSession[]) => void;
+  setChatHistories: (chats: SessionWithFeedback[]) => void;
   setCurrentChatId: (id: string | null) => void;
 }
 
@@ -177,7 +178,8 @@ const ChatHistoryComponent = ({
               id={chat.id}
               title={chat.session_name}
               isActive={currentChatId === chat.id}
-              isCompleted={chat.finished}
+              isCompleted={chat.finished && chat.hasUserFeedback}
+              isFinishable={chat.isFinishable}
               onSelect={() => setCurrentChatId(chat.id)}
               onEdit={() => handleEditTitle(chat)}
               onDelete={handleDeleteChat}

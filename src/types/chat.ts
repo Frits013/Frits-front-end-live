@@ -32,3 +32,8 @@ export interface MultiAgentState {
 export interface ChatMessageWithState extends ChatMessage {
   multi_agent_state?: MultiAgentState;
 }
+
+export interface SessionWithFeedback extends ChatSession {
+  hasUserFeedback?: boolean;
+  isFinishable?: boolean;
+}

@@ -13,6 +13,7 @@ import ChatHistoryComponent from "./ChatHistory";
 import { ChatSession } from "@/types/chat";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { supabase } from "@/integrations/supabase/client";
+import { SessionWithFeedback } from "@/types/chat";
 
 interface ChatSidebarProps {
   chatSessions: ChatSession[];
@@ -21,10 +22,6 @@ interface ChatSidebarProps {
   setCurrentSessionId: (id: string | null) => void;
   onNewChat: () => void;
   isLoading?: boolean;
-}
-
-interface SessionWithFeedback extends ChatSession {
-  hasUserFeedback?: boolean;
 }
 
 const ChatSidebar = ({
@@ -38,9 +35,9 @@ const ChatSidebar = ({
   const [sessionsWithFeedback, setSessionsWithFeedback] = useState<SessionWithFeedback[]>([]);
   const [feedbackLoading, setFeedbackLoading] = useState(true);
 
-  // Check feedback status for all sessions
+  // Check feedback status and finishable status for all sessions
   useEffect(() => {
-    const checkFeedbackStatus = async () => {
+    const checkSessionStatus = async () => {
       if (chatSessions.length === 0) {
         setSessionsWithFeedback([]);
         setFeedbackLoading(false);
@@ -48,38 +45,54 @@ const ChatSidebar = ({
       }
 
       try {
-        const sessionsWithFeedbackStatus = await Promise.all(
+        const sessionsWithStatus = await Promise.all(
           chatSessions.map(async (session) => {
-            if (!session.finished) {
-              return { ...session, hasUserFeedback: false };
+            let hasUserFeedback = false;
+            let isFinishable = false;
+            
+            if (session.finished) {
+              // Check if feedback exists for finished sessions
+              const { data: feedback } = await supabase
+                .from('feedback')
+                .select('id')
+                .eq('session_id', session.id)
+                .maybeSingle();
+              
+              hasUserFeedback = !!feedback;
+            } else {
+              // For non-finished sessions, check if they have messages to determine if finishable
+              const { data: messages } = await supabase
+                .from('chat_messages')
+                .select('message_id')
+                .eq('session_id', session.id)
+                .limit(1);
+              
+              // A session is finishable if it has messages but isn't finished yet
+              isFinishable = !!(messages && messages.length > 0);
             }
             
-            // Check if feedback exists for this session
-            const { data: feedback } = await supabase
-              .from('feedback')
-              .select('id')
-              .eq('session_id', session.id)
-              .maybeSingle();
-            
-            return { ...session, hasUserFeedback: !!feedback };
+            return { ...session, hasUserFeedback, isFinishable };
           })
         );
         
-        setSessionsWithFeedback(sessionsWithFeedbackStatus);
+        setSessionsWithFeedback(sessionsWithStatus);
       } catch (error) {
-        console.error('Error checking feedback status:', error);
-        setSessionsWithFeedback(chatSessions.map(s => ({ ...s, hasUserFeedback: false })));
+        console.error('Error checking session status:', error);
+        setSessionsWithFeedback(chatSessions.map(s => ({ ...s, hasUserFeedback: false, isFinishable: false })));
       } finally {
         setFeedbackLoading(false);
       }
     };
 
-    checkFeedbackStatus();
+    checkSessionStatus();
   }, [chatSessions]);
 
-  // Separate sessions: ongoing (not finished OR finished but no feedback) vs completed (finished AND has feedback)
-  const ongoingConsults = sessionsWithFeedback.filter(chat => 
-    !chat.finished || (chat.finished && !chat.hasUserFeedback)
+  // Separate sessions into three categories
+  const readyConsults = sessionsWithFeedback.filter(chat => 
+    !chat.finished && !chat.isFinishable
+  );
+  const finishableConsults = sessionsWithFeedback.filter(chat => 
+    !chat.finished && chat.isFinishable
   );
   const completedConsults = sessionsWithFeedback.filter(chat => 
     chat.finished && chat.hasUserFeedback
@@ -141,16 +154,16 @@ const ChatSidebar = ({
       
       <SidebarContent className="flex-1 overflow-auto px-3 py-4">
         <div className="space-y-6">
-          {/* Ongoing consults section */}
+          {/* Ready consults section */}
           <SidebarGroup>
             <SidebarGroupLabel className="px-3 mb-3 text-xs font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider">
-              Active Consults
+              Ready Consults
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              {ongoingConsults.length > 0 ? (
+              {readyConsults.length > 0 ? (
                 <div className="space-y-2">
                   <ChatHistoryComponent
-                    chatHistories={ongoingConsults}
+                    chatHistories={readyConsults}
                     currentChatId={currentSessionId}
                     setChatHistories={setChatSessions}
                     setCurrentChatId={setCurrentSessionId}
@@ -162,7 +175,7 @@ const ChatSidebar = ({
                     <Sparkles className="w-6 h-6 text-purple-400" />
                   </div>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    No active consults
+                    No ready consults
                   </p>
                   <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                     Start a new consultation above
@@ -171,6 +184,25 @@ const ChatSidebar = ({
               )}
             </SidebarGroupContent>
           </SidebarGroup>
+
+          {/* Finishable consults section */}
+          {finishableConsults.length > 0 && (
+            <SidebarGroup>
+              <SidebarGroupLabel className="px-3 mb-3 text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
+                Finishable Consults
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <div className="space-y-2">
+                  <ChatHistoryComponent
+                    chatHistories={finishableConsults}
+                    currentChatId={currentSessionId}
+                    setChatHistories={setChatSessions}
+                    setCurrentChatId={setCurrentSessionId}
+                  />
+                </div>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          )}
 
           {/* Completed consults section */}
           {completedConsults.length > 0 && (
