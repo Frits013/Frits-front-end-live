@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Check } from "lucide-react";
+import { Pencil, Trash2, Check, MessageCircle, Clock } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,7 +12,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { SidebarMenuButton } from "@/components/ui/sidebar";
 
 interface ChatHistoryItemProps {
   id: string;
@@ -34,55 +33,113 @@ const ChatHistoryItem = ({
   onDelete,
 }: ChatHistoryItemProps) => {
   return (
-    <div className="flex items-center w-full gap-2">
-      <SidebarMenuButton
+    <div className={`group relative rounded-xl border transition-all duration-200 ${
+      isActive 
+        ? "bg-gradient-to-r from-purple-500 to-indigo-600 border-purple-400 shadow-lg shadow-purple-500/25" 
+        : isCompleted
+        ? "bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
+        : "bg-white hover:bg-purple-50 dark:bg-slate-800/30 dark:hover:bg-purple-900/20 border-purple-100 dark:border-purple-800/30 hover:border-purple-200 dark:hover:border-purple-700/50 hover:shadow-md"
+    }`}>
+      <button
         onClick={onSelect}
-        isActive={isActive}
-        className="flex-1 flex items-center gap-2"
+        className="w-full p-4 text-left focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 rounded-xl"
       >
-        {title}
-        {isCompleted && (
-          <span className="ml-auto">
-            <Check className="h-4 w-4 text-green-500" />
-          </span>
-        )}
-      </SidebarMenuButton>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onEdit}
-        className="h-8 w-8"
-      >
-        <Pencil className="h-4 w-4" />
-      </Button>
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Chat History</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete the chat history? Your conversation will be lost.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => onDelete(id)}
-              className="bg-red-500 hover:bg-red-600"
+        <div className="flex items-start gap-3">
+          <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
+            isActive 
+              ? "bg-white/20 text-white" 
+              : isCompleted
+              ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400"
+              : "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+          }`}>
+            {isCompleted ? (
+              <Check className="w-4 h-4" />
+            ) : isActive ? (
+              <MessageCircle className="w-4 h-4" />
+            ) : (
+              <Clock className="w-4 h-4" />
+            )}
+          </div>
+          
+          <div className="flex-1 min-w-0">
+            <h3 className={`font-medium text-sm truncate ${
+              isActive 
+                ? "text-white" 
+                : "text-slate-900 dark:text-slate-100"
+            }`}>
+              {title}
+            </h3>
+            <p className={`text-xs mt-1 ${
+              isActive 
+                ? "text-purple-100" 
+                : isCompleted
+                ? "text-slate-500 dark:text-slate-400"
+                : "text-purple-600 dark:text-purple-400"
+            }`}>
+              {isCompleted ? "Completed" : isActive ? "Active" : "Ready"}
+            </p>
+          </div>
+        </div>
+      </button>
+      
+      {/* Action buttons */}
+      <div className={`absolute top-2 right-2 flex gap-1 transition-opacity duration-200 ${
+        isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+      }`}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+          className={`h-7 w-7 ${
+            isActive 
+              ? "hover:bg-white/20 text-white/80 hover:text-white" 
+              : "hover:bg-purple-100 dark:hover:bg-purple-900/50 text-slate-500 hover:text-purple-600 dark:text-slate-400 dark:hover:text-purple-400"
+          }`}
+        >
+          <Pencil className="h-3 w-3" />
+        </Button>
+        
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => e.stopPropagation()}
+              className={`h-7 w-7 ${
+                isActive 
+                  ? "hover:bg-red-500/20 text-white/80 hover:text-red-200" 
+                  : "hover:bg-red-50 dark:hover:bg-red-900/30 text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
+              }`}
             >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent className="border-purple-200 dark:border-purple-800">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-slate-900 dark:text-slate-100">
+                Delete Consult History
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-slate-600 dark:text-slate-400">
+                Are you sure you want to delete "{title}"? This action cannot be undone and your consultation history will be permanently lost.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="border-slate-200 dark:border-slate-700">
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => onDelete(id)}
+                className="bg-red-500 hover:bg-red-600 text-white"
+              >
+                Delete Consult
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </div>
   );
 };
