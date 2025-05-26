@@ -83,9 +83,7 @@ const ChatMessageList = ({
                 <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-full"></div>
               </div>
               <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">Frits is preparing your consultation...</h3>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">
-                {isProcessing ? "Frits is preparing your consultation..." : "Frits is getting a coffee and will soon begin your session."}
-              </p>
+              
             </div>
           </div> : <div className="py-4">
             <ChatMessages messages={messages} />
