@@ -1,5 +1,5 @@
 
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
@@ -14,27 +14,8 @@ const ChatLayout = ({ sidebar, content }: ChatLayoutProps) => {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
 
-  // Simple pull-to-refresh prevention for mobile
-  useEffect(() => {
-    if (isMobile) {
-      // Set CSS properties to prevent overscroll
-      document.body.style.overscrollBehavior = 'none';
-      document.documentElement.style.overscrollBehavior = 'none';
-
-      return () => {
-        document.body.style.overscrollBehavior = '';
-        document.documentElement.style.overscrollBehavior = '';
-      };
-    }
-  }, [isMobile]);
-
   return (
-    <div 
-      className="flex min-h-[100dvh] w-full bg-gradient-to-br from-gray-50 via-purple-50/30 to-indigo-50/30 dark:from-gray-900 dark:via-purple-900/20 dark:to-indigo-900/20 overflow-hidden"
-      style={isMobile ? {
-        overscrollBehavior: 'none'
-      } : undefined}
-    >
+    <div className="flex min-h-[100dvh] w-full bg-gradient-to-br from-gray-50 via-purple-50/30 to-indigo-50/30 dark:from-gray-900 dark:via-purple-900/20 dark:to-indigo-900/20 overflow-hidden">
       {isMobile ? (
         <>
           <Sheet open={isOpen} onOpenChange={setIsOpen}>

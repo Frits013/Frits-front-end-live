@@ -7,8 +7,8 @@ import { useIsMobile } from "@/hooks/use-mobile"
 
 const ScrollArea = React.forwardRef<
   React.ElementRef<typeof ScrollAreaPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root> & { onScroll?: React.UIEventHandler<HTMLDivElement> }
->(({ className, children, onScroll, ...props }, ref) => {
+  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root>
+>(({ className, children, ...props }, ref) => {
   const isMobile = useIsMobile();
   
   return (
@@ -19,16 +19,7 @@ const ScrollArea = React.forwardRef<
       type={isMobile ? "scroll" : "hover"}
     >
       <ScrollAreaPrimitive.Viewport 
-        className={cn(
-          "h-full w-full rounded-[inherit]",
-          isMobile ? "overflow-y-auto overscroll-y-contain" : "overflow-y-auto"
-        )}
-        style={isMobile ? {
-          WebkitOverflowScrolling: 'touch',
-          overscrollBehavior: 'contain',
-          overscrollBehaviorY: 'contain'
-        } : undefined}
-        onScroll={onScroll}
+        className="h-full w-full rounded-[inherit] overflow-auto"
       >
         {children}
       </ScrollAreaPrimitive.Viewport>
