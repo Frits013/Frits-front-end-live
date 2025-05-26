@@ -76,13 +76,31 @@ const ChatMessageList = ({ messages }: ChatMessageListProps) => {
 
   return (
     <ScrollArea 
-      className="flex-1 h-full w-full pt-4 overflow-y-auto"
+      className="flex-1 h-full w-full overflow-y-auto"
       onScroll={handleScroll}
       ref={scrollAreaRef}
     >
-      <div className="px-4 pb-6 pt-2">
-        <ChatMessages messages={messages} />
-        <div ref={messagesEndRef} />
+      <div className="min-h-full flex flex-col">
+        {messages.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center p-8">
+            <div className="text-center max-w-md">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/50 dark:to-indigo-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-full"></div>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                Welcome to your consultation
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                Start by typing a message below to begin your session.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="py-4">
+            <ChatMessages messages={messages} />
+            <div ref={messagesEndRef} />
+          </div>
+        )}
       </div>
     </ScrollArea>
   );

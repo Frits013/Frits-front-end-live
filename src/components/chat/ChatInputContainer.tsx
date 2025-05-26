@@ -63,14 +63,12 @@ const ChatInputContainer = ({
   };
 
   return (
-    <div className="p-4 mt-auto">
-      <ChatInput
-        inputMessage={inputMessage}
-        setInputMessage={setInputMessage}
-        handleSendMessage={handleSendMessage}
-        isProcessing={isProcessing || isSubmitting}
-      />
-    </div>
+    <ChatInput
+      inputMessage={inputMessage}
+      setInputMessage={setInputMessage}
+      handleSendMessage={handleSendMessage}
+      isProcessing={isProcessing || isSubmitting}
+    />
   );
 };
 

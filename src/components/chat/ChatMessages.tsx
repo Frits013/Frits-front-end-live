@@ -27,12 +27,12 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
         const content = contentParts.join('\n');
 
         return (
-          <div key={index} className="mb-6 last:mb-0">
-            <div className="font-bold text-lg mb-2 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+          <div key={index} className="mb-4 last:mb-0">
+            <div className="font-semibold text-base mb-2 text-purple-700 dark:text-purple-300">
               {header.trim()}
             </div>
             <div 
-              className="pl-6 border-l-2 border-purple-200 dark:border-purple-800"
+              className="pl-4 border-l-2 border-purple-200 dark:border-purple-700 text-gray-700 dark:text-gray-300"
               dangerouslySetInnerHTML={{ 
                 __html: formatText(content.trim())
               }}
@@ -45,7 +45,7 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
     // If there are no ###, treat the entire text as regular content
     return (
       <div 
-        className="whitespace-pre-wrap"
+        className="whitespace-pre-wrap text-gray-800 dark:text-gray-200"
         dangerouslySetInnerHTML={{ 
           __html: formatText(text)
         }}
@@ -54,7 +54,7 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
   };
 
   return (
-    <div className="flex flex-col gap-6 mt-2">
+    <div className="flex flex-col gap-4 p-4">
       {messages.map((message) => (
         <div
           key={message.id}
@@ -63,11 +63,11 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
           }`}
         >
           <div
-            className={`max-w-[85%] p-4 rounded-2xl shadow-sm ${
+            className={`max-w-[80%] lg:max-w-[70%] p-4 rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md ${
               message.role === 'user'
-                ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white'
-                : 'bg-gradient-to-r from-gray-100/80 to-purple-50/80 dark:from-gray-800/80 dark:to-purple-900/80 text-gray-800 dark:text-gray-200'
-            } transition-all duration-200 hover:shadow-md backdrop-blur-sm`}
+                ? 'bg-gradient-to-br from-purple-600 to-indigo-600 text-white rounded-br-md'
+                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-bl-md'
+            }`}
           >
             {formatMessage(message)}
           </div>

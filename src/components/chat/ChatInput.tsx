@@ -93,33 +93,36 @@ const ChatInput = ({ inputMessage, setInputMessage, handleSendMessage, isProcess
   };
 
   return (
-    <form onSubmit={handleFormSubmit} className="relative">
-      <div className="relative group">
-        <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg blur opacity-25 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
-        <div className="relative flex gap-3 items-center bg-white/10 dark:bg-gray-900/50 backdrop-blur-xl p-2 rounded-lg border border-purple-100/20 dark:border-purple-900/30">
-          <Textarea
-            ref={textareaRef}
-            value={inputMessage}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-            placeholder="Type your message..."
-            className="flex-1 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-purple-200 dark:border-purple-800 focus:ring-purple-500 dark:focus:ring-purple-400 transition-all duration-300 min-h-[40px] max-h-[200px] resize-none py-2"
-            disabled={isProcessing}
-            rows={1}
-          />
+    <div className="w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-t border-gray-200/50 dark:border-gray-700/50">
+      <form onSubmit={handleFormSubmit} className="p-4">
+        <div className="flex gap-3 items-end max-w-4xl mx-auto">
+          <div className="flex-1 relative">
+            <Textarea
+              ref={textareaRef}
+              value={inputMessage}
+              onChange={handleChange}
+              onKeyDown={handleKeyDown}
+              placeholder="Type your message here..."
+              className="resize-none border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-xl px-4 py-3 shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[52px] max-h-[200px] text-sm"
+              disabled={isProcessing}
+              rows={1}
+            />
+            <div className="absolute bottom-2 right-2 text-xs text-gray-400">
+              {isMobile ? "Tap" : "Press"} Enter to send, Shift+Enter for new line
+            </div>
+          </div>
           <Button 
             type="submit" 
-            className={`bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg hover:shadow-purple-500/50 transition-all duration-300 shrink-0 ${
-              isMobile ? 'px-3' : ''
-            }`}
+            size="lg"
+            className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl px-6 py-3 shadow-lg hover:shadow-purple-500/25 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={isProcessing || !inputMessage.trim()}
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-5 h-5" />
             {!isMobile && <span className="ml-2">{isProcessing ? "Sending..." : "Send"}</span>}
           </Button>
         </div>
-      </div>
-    </form>
+      </form>
+    </div>
   );
 };
 
