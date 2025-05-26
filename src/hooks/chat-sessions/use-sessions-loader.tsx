@@ -43,13 +43,35 @@ export const useSessionsLoader = (
         console.log('No existing sessions, creating new one...');
         await createNewChat();
       } else if (sessions && sessions.length > 0 && !currentSessionId) {
-        // Find the most recent ongoing session first
-        const ongoingSession = sessions.find(s => !s.finished);
+        // Check if there's feedback for each finished session to determine if it's truly completed
+        const sessionsWithFeedbackStatus = await Promise.all(
+          sessions.map(async (session) => {
+            if (!session.finished) {
+              return { ...session, hasUserFeedback: false };
+            }
+            
+            // Check if feedback exists for this session
+            const { data: feedback } = await supabase
+              .from('feedback')
+              .select('id')
+              .eq('session_id', session.id)
+              .maybeSingle();
+            
+            return { ...session, hasUserFeedback: !!feedback };
+          })
+        );
         
-        // If there's an ongoing session, set it as current
-        // Otherwise, fall back to the most recent session (which would be completed)
-        setCurrentSessionId(ongoingSession ? ongoingSession.id : sessions[0].id);
-        console.log("Setting current session ID:", ongoingSession ? ongoingSession.id : sessions[0].id);
+        // Find sessions that are either:
+        // 1. Not finished (ongoing)
+        // 2. Finished but without user feedback (needs completion)
+        const activeSession = sessionsWithFeedbackStatus.find(s => 
+          !s.finished || (s.finished && !s.hasUserFeedback)
+        );
+        
+        // If there's an active session, set it as current
+        // Otherwise, fall back to the most recent session (even if completed)
+        setCurrentSessionId(activeSession ? activeSession.id : sessions[0].id);
+        console.log("Setting current session ID:", activeSession ? activeSession.id : sessions[0].id);
       }
     } catch (error) {
       console.error('Error in loadSessions:', error);
