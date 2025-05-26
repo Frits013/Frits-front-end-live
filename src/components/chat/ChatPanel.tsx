@@ -39,26 +39,31 @@ const ChatPanel = ({
 
   return (
     <ResizablePanel defaultSize={defaultSize} minSize={minSize}>
-      <div className="flex-1 flex flex-col h-full relative overflow-hidden rounded-b-3xl bg-gradient-to-br from-white/95 via-white/85 to-purple-50/30 dark:from-gray-900/95 dark:via-gray-900/85 dark:to-purple-900/30 backdrop-blur-xl">
+      <div className="h-full flex flex-col overflow-hidden rounded-b-3xl bg-gradient-to-br from-white/95 via-white/85 to-purple-50/30 dark:from-gray-900/95 dark:via-gray-900/85 dark:to-purple-900/30 backdrop-blur-xl">
         
         {/* Subtle inner glow */}
         <div className="absolute inset-0 rounded-b-3xl shadow-inner pointer-events-none"></div>
         
-        <ChatMessagesContainer 
-          messages={messages} 
-          errorMessage={errorMessage}
-          currentSessionId={currentChatId}
-          showFinishButton={showCompleteButton}
-        />
+        {/* Messages area - takes up remaining space */}
+        <div className="flex-1 overflow-hidden relative z-10">
+          <ChatMessagesContainer 
+            messages={messages} 
+            errorMessage={errorMessage}
+            currentSessionId={currentChatId}
+            showFinishButton={showCompleteButton}
+          />
+        </div>
         
+        {/* Complete button */}
         <FinishInterviewButton 
           show={showCompleteButton}
           onFinish={onCompleteButtonClick}
         />
         
+        {/* Input area - fixed at bottom */}
         <div 
           ref={inputContainerRef} 
-          className="sticky bottom-0 z-10"
+          className="shrink-0 z-10"
         >
           <ChatInputContainer
             messages={messages}
