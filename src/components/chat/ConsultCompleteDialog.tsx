@@ -85,10 +85,11 @@ const ConsultCompleteDialog = ({
     setShowExitConfirm(true);
   };
 
-  const handleConfirmExit = () => {
-    console.log('User confirmed exit without feedback');
+  const handleConfirmExit = async () => {
+    console.log('User confirmed exit without feedback - using same action as submit feedback');
     setShowExitConfirm(false);
-    onFinish(); // End the session without feedback
+    // Use the same function as submit feedback to ensure consistent behavior
+    await handleSubmitFeedback();
   };
 
   const handleCancelExit = () => {
