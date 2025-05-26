@@ -46,12 +46,12 @@ export const useSessionCreation = (
       // Format current date and time in a readable format
       const formattedDateTime = format(new Date(), "MMM d, yyyy h:mm a");
 
-      // Create a new session in the chat_sessions table
+      // Create a new session in the chat_sessions table with just the date as the title
       const { data: newSession, error } = await supabase
         .from('chat_sessions')
         .insert([{
           user_id: session.user.id,
-          session_name: `Consult Session - ${formattedDateTime}`,
+          session_name: formattedDateTime,
           finished: false // Always start as not finished
         }])
         .select()
