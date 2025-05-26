@@ -9,6 +9,45 @@ export const useSessionSubscription = (
   setDialogDismissed: (dismissed: boolean) => void,
   setHasFeedback: (hasFeedback: boolean) => void
 ) => {
+  // Initial state check when session changes or page loads
+  useEffect(() => {
+    if (!sessionId) return;
+
+    const checkInitialState = async () => {
+      console.log('Checking initial session state for:', sessionId);
+      
+      try {
+        // Check session finished status
+        const { data: sessionData, error: sessionError } = await supabase
+          .from('chat_sessions')
+          .select('finished')
+          .eq('id', sessionId)
+          .single();
+
+        if (sessionError) {
+          console.error('Error checking session status:', sessionError);
+          return;
+        }
+
+        if (sessionData) {
+          console.log('Initial session finished status:', sessionData.finished);
+          setIsConsultComplete(sessionData.finished);
+          
+          // If session is finished, check for feedback and reset dialog state
+          if (sessionData.finished) {
+            console.log('Session is finished, checking feedback and resetting dialog state');
+            setDialogDismissed(false); // Reset dialog dismissed state
+            await checkFeedbackExists(sessionId);
+          }
+        }
+      } catch (error) {
+        console.error('Error in checkInitialState:', error);
+      }
+    };
+
+    checkInitialState();
+  }, [sessionId, setIsConsultComplete, setDialogDismissed, setHasFeedback]);
+
   // Set up a subscription to listen for changes to the chat_sessions table
   useEffect(() => {
     if (!sessionId) return;
