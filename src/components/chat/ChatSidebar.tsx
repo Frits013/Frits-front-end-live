@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import {
   Sidebar,
@@ -60,15 +61,16 @@ const ChatSidebar = ({
               
               hasUserFeedback = !!feedback;
             } else {
-              // For non-finished sessions, check if they have messages to determine if finishable
-              const { data: messages } = await supabase
+              // For non-finished sessions, check if they have both messages AND are not finished
+              // A session is finishable if it has messages, isn't finished, and has actual conversation
+              const { data: messages, count } = await supabase
                 .from('chat_messages')
-                .select('message_id')
+                .select('message_id', { count: 'exact' })
                 .eq('session_id', session.id)
-                .limit(1);
+                .eq('role', 'assistant'); // Only count assistant messages to determine if conversation started
               
-              // A session is finishable if it has messages but isn't finished yet
-              isFinishable = !!(messages && messages.length > 0);
+              // A session is finishable if it has assistant responses (meaning conversation has begun)
+              isFinishable = !!(count && count > 0);
             }
             
             return { ...session, hasUserFeedback, isFinishable };
@@ -88,7 +90,7 @@ const ChatSidebar = ({
   }, [chatSessions]);
 
   // Separate sessions into three categories
-  const readyConsults = sessionsWithFeedback.filter(chat => 
+  const ongoingConsults = sessionsWithFeedback.filter(chat => 
     !chat.finished && !chat.isFinishable
   );
   const finishableConsults = sessionsWithFeedback.filter(chat => 
@@ -154,16 +156,16 @@ const ChatSidebar = ({
       
       <SidebarContent className="flex-1 overflow-auto px-3 py-4">
         <div className="space-y-6">
-          {/* Ready consults section */}
+          {/* Ongoing consults section */}
           <SidebarGroup>
             <SidebarGroupLabel className="px-3 mb-3 text-xs font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider">
-              Ready Consults
+              Ongoing Consults
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              {readyConsults.length > 0 ? (
+              {ongoingConsults.length > 0 ? (
                 <div className="space-y-2">
                   <ChatHistoryComponent
-                    chatHistories={readyConsults}
+                    chatHistories={ongoingConsults}
                     currentChatId={currentSessionId}
                     setChatHistories={setChatSessions}
                     setCurrentChatId={setCurrentSessionId}
@@ -175,7 +177,7 @@ const ChatSidebar = ({
                     <Sparkles className="w-6 h-6 text-purple-400" />
                   </div>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    No ready consults
+                    No ongoing consults
                   </p>
                   <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                     Start a new consultation above

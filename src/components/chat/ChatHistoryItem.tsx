@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, Check, MessageCircle, Clock, Flag } from "lucide-react";
 import {
@@ -33,8 +34,8 @@ const ChatHistoryItem = ({
   onEdit,
   onDelete,
 }: ChatHistoryItemProps) => {
-  // Determine the display state priority: completed > finishable > active/ready
-  const displayState = isCompleted ? 'completed' : isFinishable ? 'finishable' : 'ready';
+  // Determine the display state priority: completed > finishable > active/ongoing
+  const displayState = isCompleted ? 'completed' : isFinishable ? 'finishable' : 'ongoing';
   
   return (
     <div className={`group relative rounded-xl border transition-all duration-200 ${
@@ -88,7 +89,7 @@ const ChatHistoryItem = ({
                 ? "text-amber-600 dark:text-amber-400"
                 : "text-purple-600 dark:text-purple-400"
             }`}>
-              {displayState === 'completed' ? "Completed" : displayState === 'finishable' ? "Ready to Finish" : isActive ? "Active" : "Ready"}
+              {displayState === 'completed' ? "Completed" : displayState === 'finishable' ? "Ready to Finish" : isActive ? "Active" : "Ongoing"}
             </p>
           </div>
         </div>
