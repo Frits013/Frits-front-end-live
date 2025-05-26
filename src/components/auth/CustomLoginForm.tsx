@@ -142,7 +142,7 @@ export const CustomLoginForm = ({
             <Sparkles className="h-4 w-4 text-emerald-600" />
             <span className="text-sm font-medium text-emerald-800">Get started in seconds</span>
           </div>
-          <p className="text-xs text-emerald-700">Join thousands of businesses with intelligent insights and personalized guidance</p>
+          <p className="text-xs text-emerald-700">Join thousands of businesses with intelligent insights and personalized guidance in AI readiness</p>
         </div>}
       
       <div className="space-y-4">
