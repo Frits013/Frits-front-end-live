@@ -37,58 +37,58 @@ const ChatSidebar = ({
   const [feedbackLoading, setFeedbackLoading] = useState(true);
 
   // Check feedback status and finishable status for all sessions
+  const checkSessionStatus = async (sessions: ChatSession[]) => {
+    if (sessions.length === 0) {
+      setSessionsWithFeedback([]);
+      setFeedbackLoading(false);
+      return;
+    }
+
+    try {
+      const sessionsWithStatus = await Promise.all(
+        sessions.map(async (session) => {
+          let hasUserFeedback = false;
+          let isFinishable = false;
+          
+          if (session.finished) {
+            // Check if feedback exists for finished sessions
+            const { data: feedback } = await supabase
+              .from('feedback')
+              .select('id')
+              .eq('session_id', session.id)
+              .maybeSingle();
+            
+            hasUserFeedback = !!feedback;
+            // If session is finished but no feedback, it's finishable
+            isFinishable = !hasUserFeedback;
+          } else {
+            // For non-finished sessions, check if they have assistant messages
+            const { data: messages, count } = await supabase
+              .from('chat_messages')
+              .select('message_id', { count: 'exact' })
+              .eq('session_id', session.id)
+              .eq('role', 'assistant');
+            
+            // Non-finished sessions with assistant messages are ongoing
+            // Non-finished sessions without assistant messages are also ongoing (just started)
+            isFinishable = false;
+          }
+          
+          return { ...session, hasUserFeedback, isFinishable };
+        })
+      );
+      
+      setSessionsWithFeedback(sessionsWithStatus);
+    } catch (error) {
+      console.error('Error checking session status:', error);
+      setSessionsWithFeedback(sessions.map(s => ({ ...s, hasUserFeedback: false, isFinishable: false })));
+    } finally {
+      setFeedbackLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const checkSessionStatus = async () => {
-      if (chatSessions.length === 0) {
-        setSessionsWithFeedback([]);
-        setFeedbackLoading(false);
-        return;
-      }
-
-      try {
-        const sessionsWithStatus = await Promise.all(
-          chatSessions.map(async (session) => {
-            let hasUserFeedback = false;
-            let isFinishable = false;
-            
-            if (session.finished) {
-              // Check if feedback exists for finished sessions
-              const { data: feedback } = await supabase
-                .from('feedback')
-                .select('id')
-                .eq('session_id', session.id)
-                .maybeSingle();
-              
-              hasUserFeedback = !!feedback;
-              // If session is finished but no feedback, it's finishable
-              isFinishable = !hasUserFeedback;
-            } else {
-              // For non-finished sessions, check if they have assistant messages
-              const { data: messages, count } = await supabase
-                .from('chat_messages')
-                .select('message_id', { count: 'exact' })
-                .eq('session_id', session.id)
-                .eq('role', 'assistant');
-              
-              // Non-finished sessions with assistant messages are ongoing
-              // Non-finished sessions without assistant messages are also ongoing (just started)
-              isFinishable = false;
-            }
-            
-            return { ...session, hasUserFeedback, isFinishable };
-          })
-        );
-        
-        setSessionsWithFeedback(sessionsWithStatus);
-      } catch (error) {
-        console.error('Error checking session status:', error);
-        setSessionsWithFeedback(chatSessions.map(s => ({ ...s, hasUserFeedback: false, isFinishable: false })));
-      } finally {
-        setFeedbackLoading(false);
-      }
-    };
-
-    checkSessionStatus();
+    checkSessionStatus(chatSessions);
   }, [chatSessions]);
 
   // Set up real-time subscription to listen for session updates
@@ -104,11 +104,15 @@ const ChatSidebar = ({
         },
         (payload) => {
           console.log('Session update received:', payload);
-          // Re-fetch sessions when any session is updated
+          // Update the session in the chatSessions array
           const updatedSession = payload.new as ChatSession;
-          setChatSessions(chatSessions.map(session => 
+          const updatedSessions = chatSessions.map(session => 
             session.id === updatedSession.id ? updatedSession : session
-          ));
+          );
+          setChatSessions(updatedSessions);
+          
+          // Immediately re-check session status with the updated sessions
+          checkSessionStatus(updatedSessions);
         }
       )
       .subscribe();
