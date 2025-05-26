@@ -1,3 +1,4 @@
+
 import { ChatMessage } from "@/types/chat";
 import ChatMessages from "./ChatMessages";
 import { useEffect, useRef, useState } from "react";
@@ -83,8 +84,22 @@ const ChatMessageList = ({
   };
 
   return (
-    <ScrollArea className="flex-1 h-full w-full overflow-y-auto" onScroll={handleScroll} ref={scrollAreaRef}>
-      <div className="min-h-full flex flex-col">
+    <ScrollArea 
+      className="flex-1 h-full w-full overflow-y-auto" 
+      onScroll={handleScroll} 
+      ref={scrollAreaRef}
+      style={isMobile ? {
+        touchAction: 'pan-y',
+        overscrollBehavior: 'none'
+      } : undefined}
+    >
+      <div 
+        className="min-h-full flex flex-col"
+        style={isMobile ? {
+          touchAction: 'pan-y',
+          overscrollBehavior: 'none'
+        } : undefined}
+      >
         {messages.length === 0 ? (
           <div className="flex-1 flex items-center justify-center p-8">
             <div className="text-center max-w-md">
