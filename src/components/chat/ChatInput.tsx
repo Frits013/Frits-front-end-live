@@ -103,11 +103,11 @@ const ChatInput = ({ inputMessage, setInputMessage, handleSendMessage, isProcess
               onChange={handleChange}
               onKeyDown={handleKeyDown}
               placeholder="Type your message here..."
-              className="resize-none border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-xl px-4 py-3 shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[52px] max-h-[200px] text-sm"
+              className="resize-none border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-xl px-4 py-3 pr-32 shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[64px] max-h-[200px] text-sm"
               disabled={isProcessing}
               rows={1}
             />
-            <div className="absolute bottom-2 right-2 text-xs text-gray-400">
+            <div className="absolute bottom-2 right-2 text-xs text-gray-400 pointer-events-none select-none bg-white/80 dark:bg-gray-800/80 px-2 py-1 rounded backdrop-blur-sm">
               {isMobile ? "Tap" : "Press"} Enter to send, Shift+Enter for new line
             </div>
           </div>
