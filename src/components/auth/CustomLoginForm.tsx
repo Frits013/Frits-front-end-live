@@ -1,11 +1,10 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthOperations } from "@/hooks/use-auth-operations";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Shield, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle } from "lucide-react";
@@ -23,6 +22,10 @@ export const CustomLoginForm = ({ authView }: CustomLoginFormProps) => {
   const { toast } = useToast();
   const { handleEmailSignIn, handleEmailSignUp, checkEmailConfirmation } = useAuthOperations();
   const navigate = useNavigate();
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,14 +131,10 @@ export const CustomLoginForm = ({ authView }: CustomLoginFormProps) => {
     }
   };
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       {emailConfirmed && (
-        <Alert className="bg-green-50 border-green-200">
+        <Alert className="bg-green-50/80 backdrop-blur-sm border-green-200 shadow-sm">
           <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
           <AlertDescription className="text-green-800">
             Email confirmed successfully! You're now logged in.
@@ -143,58 +142,127 @@ export const CustomLoginForm = ({ authView }: CustomLoginFormProps) => {
         </Alert>
       )}
       
-      <div className="space-y-2">
-        <Label htmlFor="email" className="sr-only">Email address</Label>
-        <div className="relative">
-          <Input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email address"
-            className="pl-10"
-            required
-          />
-          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+      {/* Mode-specific motivational message */}
+      {authView === 'sign_up' && (
+        <div className={`p-4 rounded-lg border ${authView === 'sign_in' ? 'bg-blue-50 border-blue-200' : 'bg-emerald-50 border-emerald-200'}`}>
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="h-4 w-4 text-emerald-600" />
+            <span className="text-sm font-medium text-emerald-800">Get started in seconds</span>
+          </div>
+          <p className="text-xs text-emerald-700">
+            Join thousands of businesses already using AI to transform their operations
+          </p>
+        </div>
+      )}
+      
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="email" className={`text-sm font-medium ${authView === 'sign_in' ? 'text-blue-900' : 'text-emerald-900'}`}>
+            Email address
+          </Label>
+          <div className="relative">
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              className={`pl-10 border-2 focus:ring-2 transition-all duration-200 ${
+                authView === 'sign_in' 
+                  ? 'border-blue-200 focus:border-blue-400 focus:ring-blue-100' 
+                  : 'border-emerald-200 focus:border-emerald-400 focus:ring-emerald-100'
+              }`}
+              required
+            />
+            <Mail className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${
+              authView === 'sign_in' ? 'text-blue-400' : 'text-emerald-400'
+            }`} />
+          </div>
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="password" className={`text-sm font-medium ${authView === 'sign_in' ? 'text-blue-900' : 'text-emerald-900'}`}>
+            Password
+          </Label>
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              className={`pl-10 pr-10 border-2 focus:ring-2 transition-all duration-200 ${
+                authView === 'sign_in' 
+                  ? 'border-blue-200 focus:border-blue-400 focus:ring-blue-100' 
+                  : 'border-emerald-200 focus:border-emerald-400 focus:ring-emerald-100'
+              }`}
+              required
+            />
+            <Lock className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${
+              authView === 'sign_in' ? 'text-blue-400' : 'text-emerald-400'
+            }`} />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 px-2"
+              onClick={togglePasswordVisibility}
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+          
+          {authView === 'sign_up' && (
+            <p className="text-xs text-gray-500 mt-1">
+              Use 8+ characters with a mix of letters, numbers & symbols
+            </p>
+          )}
         </div>
       </div>
       
-      <div className="space-y-2">
-        <Label htmlFor="password" className="sr-only">Password</Label>
-        <div className="relative">
-          <Input
-            id="password"
-            type={showPassword ? "text" : "password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            className="pl-10 pr-10"
-            required
-          />
-          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 px-2"
-            onClick={togglePasswordVisibility}
-          >
-            {showPassword ? (
-              <EyeOff className="h-4 w-4" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
-      </div>
-      
+      {/* Enhanced submit button */}
       <Button 
         type="submit" 
-        className="w-full bg-emerald-500 hover:bg-emerald-600 text-white"
+        className={`w-full py-3 font-medium text-white shadow-lg transition-all duration-200 transform hover:scale-[1.02] ${
+          authView === 'sign_in'
+            ? 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
+            : 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500'
+        }`}
         disabled={loading}
       >
-        {loading ? "Processing..." : authView === 'sign_in' ? "Sign in" : "Sign up"}
+        {loading ? (
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            Processing...
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            {authView === 'sign_in' ? (
+              <>
+                <LogIn className="h-4 w-4" />
+                Sign in to continue
+              </>
+            ) : (
+              <>
+                <Shield className="h-4 w-4" />
+                Create your account
+              </>
+            )}
+          </div>
+        )}
       </Button>
+      
+      {/* Security badge for sign up */}
+      {authView === 'sign_up' && (
+        <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mt-3">
+          <Shield className="h-3 w-3" />
+          <span>256-bit SSL encryption • GDPR compliant</span>
+        </div>
+      )}
     </form>
   );
 };
