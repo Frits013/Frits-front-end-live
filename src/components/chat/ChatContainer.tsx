@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback, useEffect } from "react";
 import { ChatMessage } from "@/types/chat";
 import ConsultCompleteDialog from "@/components/chat/ConsultCompleteDialog";
@@ -53,7 +52,7 @@ const ChatContainer = ({
     setDefaultVisualizerSize(isMobile ? 25 : 35);
   }, [isMobile]);
 
-  // Button visibility logic - show when session is complete and no feedback exists
+  // Button visibility logic - show when session is marked as finished in database but not yet completed by user
   useEffect(() => {
     console.log('Button visibility check:', {
       isConsultComplete,
@@ -62,25 +61,13 @@ const ChatContainer = ({
     });
     
     // Show the button when:
-    // 1. Session is marked as complete in database (isConsultComplete)
-    // 2. No feedback exists yet
-    // 3. Dialog hasn't been manually dismissed by closing without submitting
-    const shouldShowButton = isConsultComplete && 
-                            !hasFeedback && 
-                            !dialogDismissed;
+    // 1. Session is marked as finished in database (isConsultComplete)
+    // 2. User hasn't completed the process yet (no feedback exists)
+    const shouldShowButton = isConsultComplete && !hasFeedback;
     
     console.log('Should show complete button:', shouldShowButton);
     setShowCompleteButton(shouldShowButton);
-  }, [isConsultComplete, hasFeedback, dialogDismissed]);
-
-  // Show dialog when session is complete - but don't auto-trigger, just make it available
-  useEffect(() => {
-    if (isConsultComplete && !hasFeedback && !dialogDismissed) {
-      console.log('Session marked complete, dialog available but not auto-showing');
-      // Don't auto-show dialog, let user click button to show it
-      // setShowCompleteDialog(true);
-    }
-  }, [isConsultComplete, hasFeedback, dialogDismissed]);
+  }, [isConsultComplete, hasFeedback]);
 
   // Handle when user clicks the finish interview button
   const handleCompleteButtonClick = useCallback(() => {
@@ -92,9 +79,9 @@ const ChatContainer = ({
 
   // Handle when user confirms finishing the session via the dialog
   const handleFinishConsult = () => {
-    console.log('Finishing consult session - actually marking as finished in database');
+    console.log('User confirmed finishing consult session');
     if (currentChatId) {
-      // NOW we mark the session as finished in the database
+      // Mark the session as finished by the user (this will move it to completed section)
       onConsultFinish(currentChatId);
       toast({
         title: "Success",
@@ -102,14 +89,12 @@ const ChatContainer = ({
       });
     }
     setShowCompleteDialog(false);
-    setDialogDismissed(true);
   };
 
   // Handle when user chooses to continue chatting (closes dialog without ending)
   const handleContinueChat = () => {
     console.log('User closed dialog without ending session - session stays active');
     setShowCompleteDialog(false);
-    setDialogDismissed(true);
     // Note: We do NOT call onConsultFinish here - session stays active
   };
 

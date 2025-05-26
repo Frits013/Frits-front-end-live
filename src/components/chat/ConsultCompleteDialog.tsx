@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import {
   Dialog,
@@ -7,6 +8,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import Confetti from "@/components/ui/confetti";
 import FeedbackForm from "@/components/feedback/FeedbackForm";
@@ -35,21 +46,18 @@ const ConsultCompleteDialog = ({
   } = useFeedbackSubmission({ 
     sessionId, 
     onFinish: () => {
-      // This will be called after feedback is submitted successfully
-      // But we want onFinish to be called from handleFinish to ensure proper flow
       console.log('Feedback submitted successfully');
     }
   });
   
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   // Trigger confetti when dialog opens with a slight delay to ensure visibility
   useEffect(() => {
     if (open) {
-      // Immediate confetti
       setShowConfetti(true);
       
-      // Keep confetti for 6 seconds
       const confettiTimer = setTimeout(() => {
         setShowConfetti(false);
       }, 6000);
@@ -63,14 +71,29 @@ const ConsultCompleteDialog = ({
     }
   }, [open]);
 
-  const handleFinish = async () => {
-    console.log('End Session button clicked - submitting feedback and ending session');
-    // Submit feedback first
+  const handleSubmitFeedback = async () => {
+    console.log('Submit feedback button clicked');
     const success = await handleSubmit();
     if (success) {
       // After successful feedback submission, end the session
       onFinish();
     }
+  };
+
+  const handleCloseAttempt = () => {
+    console.log('Close button clicked - showing confirmation dialog');
+    setShowExitConfirm(true);
+  };
+
+  const handleConfirmExit = () => {
+    console.log('User confirmed exit without feedback');
+    setShowExitConfirm(false);
+    onFinish(); // End the session without feedback
+  };
+
+  const handleCancelExit = () => {
+    console.log('User cancelled exit - staying in dialog');
+    setShowExitConfirm(false);
   };
 
   return (
@@ -80,13 +103,11 @@ const ConsultCompleteDialog = ({
         open={open} 
         onOpenChange={(isOpen) => {
           if (!isOpen) {
-            // User closed dialog (X button or escape) - don't end session, just close
-            console.log('Dialog closed without ending session');
-            onClose();
+            handleCloseAttempt();
           }
         }}
       >
-        <DialogContent className="sm:max-w-[425px] z-50">
+        <DialogContent className="sm:max-w-[425px] z-50" hideCloseButton={true}>
           <DialogHeader>
             <DialogTitle>Consult Session Complete</DialogTitle>
             <DialogDescription>
@@ -102,17 +123,43 @@ const ConsultCompleteDialog = ({
             onReviewChange={handleReviewChange}
           />
 
-          <DialogFooter className="mt-6">
+          <DialogFooter className="mt-6 gap-2">
             <Button 
-              onClick={handleFinish} 
-              className="w-full bg-green-600 hover:bg-green-700"
+              variant="outline"
+              onClick={handleCloseAttempt}
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Submitting..." : "End Session"}
+              Close
+            </Button>
+            <Button 
+              onClick={handleSubmitFeedback} 
+              className="bg-green-600 hover:bg-green-700"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Submitting..." : "Submit Feedback"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>End Consult Without Feedback?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Do you want to end the consult without submitting feedback?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelExit}>
+              No, Go Back
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmExit}>
+              Yes, End Consult
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

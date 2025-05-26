@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -34,7 +33,7 @@ export const useFeedbackSubmission = ({ sessionId, onFinish }: UseFeedbackSubmis
     if (!selectedEmoji) {
       toast({
         title: "Please select an emoji",
-        description: "Select how you feel about this consultation before ending the session.",
+        description: "Select how you feel about this consultation before submitting feedback.",
         variant: "destructive",
       });
       return false;
@@ -105,9 +104,7 @@ export const useFeedbackSubmission = ({ sessionId, onFinish }: UseFeedbackSubmis
         description: "Thank you for your feedback!",
       });
       
-      // After saving the feedback successfully, call the onFinish callback
-      // This will trigger the markConsultFinished function in the parent component
-      onFinish();
+      setIsSubmitting(false);
       return true;
     } catch (error) {
       console.error("Error submitting feedback:", error);
