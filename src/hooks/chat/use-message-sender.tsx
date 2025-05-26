@@ -24,15 +24,30 @@ export const useMessageSender = ({
 }: UseMessageSenderProps) => {
   const { toast } = useToast();
   const { validateSession } = useSessionValidation();
+  const [currentRequestId, setCurrentRequestId] = useState<string | null>(null);
 
   const sendMessage = async (inputMessage: string) => {
     if (!inputMessage.trim() || !currentChatId) return;
+
+    // Generate a unique request ID to prevent duplicate requests
+    const requestId = crypto.randomUUID();
+    
+    // If there's already a request in progress, ignore this one
+    if (currentRequestId) {
+      console.log('Request already in progress, ignoring duplicate');
+      return;
+    }
+    
+    setCurrentRequestId(requestId);
   
     // Clear any previous error message
     setErrorMessage(null);
 
     const session = await validateSession();
-    if (!session) return;
+    if (!session) {
+      setCurrentRequestId(null);
+      return;
+    }
   
     // Generate a unique message_id using crypto.randomUUID()
     const message_id = crypto.randomUUID();
@@ -45,7 +60,7 @@ export const useMessageSender = ({
       created_at: new Date(),
     };
   
-    // Update UI with user message
+    // Update UI with user message immediately for better UX
     const updatedMessages = [...messages, newUserMessage];
     setMessages(updatedMessages);
     
@@ -80,6 +95,7 @@ export const useMessageSender = ({
       console.log('Making chat function call with:', {
         session_id: currentChatId,
         message_id: message_id,
+        request_id: requestId,
       });
       
       // Call the Supabase Edge Function with the JWT token
@@ -88,6 +104,7 @@ export const useMessageSender = ({
           session_id: currentChatId,
           message_id,
           message: inputMessage,
+          request_id: requestId, // Include request ID for duplicate detection
         },
         headers: {
           Authorization: `Bearer ${token}`,
@@ -161,6 +178,7 @@ export const useMessageSender = ({
       // Always make sure processing state is reset regardless of success/failure
       setIsProcessing(false);
       isThinkingRef.current = false;
+      setCurrentRequestId(null); // Clear the request ID
     }
   };
 

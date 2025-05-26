@@ -24,6 +24,7 @@ const ChatInputContainer = ({
   isThinkingRef,
 }: ChatInputContainerProps) => {
   const [inputMessage, setInputMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { sendMessage } = useMessageSender({
     messages,
@@ -36,8 +37,29 @@ const ChatInputContainer = ({
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    await sendMessage(inputMessage);
-    setInputMessage("");
+    
+    // Prevent empty messages or duplicate submissions
+    if (!inputMessage.trim() || isSubmitting || isProcessing) {
+      return;
+    }
+
+    // Set submitting state immediately to prevent duplicate submissions
+    setIsSubmitting(true);
+    
+    try {
+      // Clear input immediately for better UX
+      const messageToSend = inputMessage.trim();
+      setInputMessage("");
+      
+      await sendMessage(messageToSend);
+    } catch (error) {
+      // Restore message if sending failed
+      setInputMessage(inputMessage);
+      console.error('Failed to send message:', error);
+    } finally {
+      // Reset submitting state
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -46,7 +68,7 @@ const ChatInputContainer = ({
         inputMessage={inputMessage}
         setInputMessage={setInputMessage}
         handleSendMessage={handleSendMessage}
-        isProcessing={isProcessing}
+        isProcessing={isProcessing || isSubmitting}
       />
     </div>
   );
