@@ -1,5 +1,4 @@
 
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ResendConfirmationForm } from "@/components/auth/ResendConfirmationForm";
@@ -110,36 +109,16 @@ export const AuthContent = () => {
       
       <CustomLoginForm authView={authView} />
       
-      {/* Enhanced footer section */}
+      {/* Enhanced footer section - removed the alternative action prompts */}
       <div className="text-center space-y-3 text-sm">
         {authView === 'sign_in' && (
           <Button variant="link" className="text-sm text-blue-600 hover:text-blue-800 p-0 h-auto font-medium">
             Forgot your password?
           </Button>
         )}
-        
-        {/* Alternative action with better visual hierarchy */}
-        <div className={`p-3 rounded-lg ${authView === 'sign_in' ? 'bg-blue-50' : 'bg-emerald-50'}`}>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-600 text-sm">
-              {authView === 'sign_in' ? "New to Frits AI?" : "Already have an account?"}
-            </span>
-            <Button 
-              variant="ghost" 
-              className={`text-sm font-medium p-2 h-auto flex items-center gap-1 ${
-                authView === 'sign_in' ? 'text-blue-600 hover:text-blue-800 hover:bg-blue-100' : 'text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100'
-              }`}
-              onClick={toggleAuthView}
-            >
-              {authView === 'sign_in' ? 'Create account' : 'Sign in instead'}
-              <ArrowRight className="h-3 w-3" />
-            </Button>
-          </div>
-        </div>
       </div>
       
       <ResendConfirmationForm />
     </div>
   );
 };
-
