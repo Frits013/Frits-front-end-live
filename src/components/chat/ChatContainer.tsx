@@ -76,6 +76,15 @@ const ChatContainer = ({
     setShowCompleteButton(shouldShowButton);
   }, [isConsultComplete, showCompleteDialog, hasFeedback, dialogDismissed]);
 
+  // Show dialog immediately when session is marked complete
+  useEffect(() => {
+    if (isConsultComplete && !hasFeedback && !dialogDismissed) {
+      console.log('Session marked complete, showing dialog');
+      setShowCompleteDialog(true);
+      setShowCompleteButton(false);
+    }
+  }, [isConsultComplete, hasFeedback, dialogDismissed]);
+
   // Handle when user clicks the finish interview button
   const handleCompleteButtonClick = useCallback(() => {
     console.log('Complete button clicked');
@@ -87,9 +96,9 @@ const ChatContainer = ({
 
   // Handle when user confirms finishing the session via the dialog
   const handleFinishConsult = () => {
-    console.log('Finishing consult session');
+    console.log('Finishing consult session - actually marking as finished in database');
     if (currentChatId) {
-      // Mark the session as finished in the database
+      // NOW we mark the session as finished in the database
       onConsultFinish(currentChatId);
       toast({
         title: "Success",
@@ -100,11 +109,12 @@ const ChatContainer = ({
     setDialogDismissed(true);
   };
 
-  // Handle when user chooses to continue chatting
+  // Handle when user chooses to continue chatting (closes dialog without ending)
   const handleContinueChat = () => {
-    console.log('Continuing chat session');
+    console.log('User closed dialog without ending session - session stays active');
     setShowCompleteDialog(false);
     setDialogDismissed(true);
+    // Note: We do NOT call onConsultFinish here - session stays active
   };
 
   return (

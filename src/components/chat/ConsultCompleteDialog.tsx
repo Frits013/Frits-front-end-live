@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import {
   Dialog,
@@ -36,8 +35,9 @@ const ConsultCompleteDialog = ({
   } = useFeedbackSubmission({ 
     sessionId, 
     onFinish: () => {
-      // Only call onFinish after feedback is submitted
-      onFinish();
+      // This will be called after feedback is submitted successfully
+      // But we want onFinish to be called from handleFinish to ensure proper flow
+      console.log('Feedback submitted successfully');
     }
   });
   
@@ -64,19 +64,13 @@ const ConsultCompleteDialog = ({
   }, [open]);
 
   const handleFinish = async () => {
-    // Submit feedback and end the session
+    console.log('End Session button clicked - submitting feedback and ending session');
+    // Submit feedback first
     const success = await handleSubmit();
     if (success) {
-      // The onFinish callback is already called in the hook if submission is successful
-      console.log('Session ended via End Session button');
+      // After successful feedback submission, end the session
+      onFinish();
     }
-  };
-
-  const handleDialogClose = () => {
-    // When dialog is closed via X button or escape, also end the session
-    console.log('Session ended via dialog close');
-    onFinish();
-    onClose();
   };
 
   return (
@@ -86,8 +80,9 @@ const ConsultCompleteDialog = ({
         open={open} 
         onOpenChange={(isOpen) => {
           if (!isOpen) {
-            // Dialog is being closed - end the session
-            handleDialogClose();
+            // User closed dialog (X button or escape) - don't end session, just close
+            console.log('Dialog closed without ending session');
+            onClose();
           }
         }}
       >
