@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import Confetti from "@/components/ui/confetti";
 import FeedbackForm from "@/components/feedback/FeedbackForm";
 import { useFeedbackSubmission } from "@/hooks/use-feedback-submission";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ConsultCompleteDialogProps {
   open: boolean;
@@ -85,10 +86,36 @@ const ConsultCompleteDialog = ({
     setShowExitConfirm(true);
   };
 
-  const handleConfirmExit = () => {
-    console.log('User confirmed exit without feedback - ending session directly');
+  const handleConfirmExit = async () => {
+    console.log('User confirmed exit without feedback - submitting placeholder feedback');
     setShowExitConfirm(false);
-    // End the session directly - same as feedback submission
+    
+    try {
+      // Get current user session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session && sessionId) {
+        // Submit placeholder feedback to move session to completed section
+        const { error } = await supabase
+          .from('feedback')
+          .insert({
+            user_id: session.user.id,
+            session_id: sessionId,
+            emoji_rating: 'neutral', // Default emoji
+            review_text: null // No review text
+          });
+        
+        if (error) {
+          console.error("Error submitting placeholder feedback:", error);
+        } else {
+          console.log('Placeholder feedback submitted successfully');
+        }
+      }
+    } catch (error) {
+      console.error("Error in handleConfirmExit:", error);
+    }
+    
+    // End the session
     onFinish();
   };
 
