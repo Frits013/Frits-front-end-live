@@ -1,4 +1,3 @@
-
 import { ChatMessage } from "@/types/chat";
 
 interface ChatMessagesProps {
@@ -32,7 +31,7 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
               {header.trim()}
             </div>
             <div 
-              className="pl-4 border-l-2 border-purple-200 dark:border-purple-700 text-gray-700 dark:text-gray-300"
+              className="pl-4 border-l-2 border-purple-200 dark:border-purple-700 text-white"
               dangerouslySetInnerHTML={{ 
                 __html: formatText(content.trim())
               }}
@@ -45,7 +44,7 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
     // If there are no ###, treat the entire text as regular content
     return (
       <div 
-        className="whitespace-pre-wrap text-gray-800 dark:text-gray-200"
+        className="whitespace-pre-wrap text-white"
         dangerouslySetInnerHTML={{ 
           __html: formatText(text)
         }}
