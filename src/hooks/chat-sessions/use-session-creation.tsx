@@ -88,12 +88,6 @@ export const useSessionCreation = (
       // Send an automatic message to initiate the conversation
       await sendAutomaticHeyMessage(newSession.id, session.user.id);
       
-      // Only show success toast after everything is complete
-      toast({
-        title: "New session started",
-        description: "Your consultation is ready to begin",
-      });
-      
     } catch (error) {
       console.error('Error in createNewChat:', error);
       toast({

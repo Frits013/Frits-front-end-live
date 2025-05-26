@@ -8,11 +8,10 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import ChatHistoryComponent from "./ChatHistory";
 import { ChatSession } from "@/types/chat";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { useState } from "react";
 
 interface ChatSidebarProps {
   chatSessions: ChatSession[];
@@ -31,36 +30,20 @@ const ChatSidebar = ({
   onNewChat,
   isLoading = false,
 }: ChatSidebarProps) => {
-  const [isCreatingSession, setIsCreatingSession] = useState(false);
-  
   // Separate ongoing and completed consults
   const ongoingConsults = chatSessions.filter(chat => !chat.finished);
   const completedConsults = chatSessions.filter(chat => chat.finished);
-
-  const handleNewChat = async () => {
-    setIsCreatingSession(true);
-    try {
-      await onNewChat();
-    } finally {
-      setIsCreatingSession(false);
-    }
-  };
 
   return (
     <div className="h-full flex flex-col">
       <div className="p-4 border-b">
         <Button
-          onClick={handleNewChat}
-          disabled={isCreatingSession}
+          onClick={onNewChat}
           variant="default"
           className="w-full flex items-center gap-2"
         >
-          {isCreatingSession ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Plus className="w-4 h-4" />
-          )}
-          {isCreatingSession ? "Creating..." : "Start New Consult"}
+          <Plus className="w-4 h-4" />
+          Start New Consult
         </Button>
       </div>
       <div className="flex-1 overflow-auto py-2">

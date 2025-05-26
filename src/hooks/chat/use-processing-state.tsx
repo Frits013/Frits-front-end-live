@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export const useProcessingState = (sessionId: string | null, autoMessageSent: boolean) => {
+export const useProcessingState = (sessionId: string | null) => {
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Check for processing state on messages
@@ -23,25 +23,14 @@ export const useProcessingState = (sessionId: string | null, autoMessageSent: bo
         }
         
         if (data) {
-          // Look for a recent "hey" message to determine if we're in automatic processing state
-          const recentAutoMessage = data.find(msg => 
-            msg.role === 'user' && 
-            msg.content === "hey" && 
-            new Date(msg.created_at).getTime() > Date.now() - 60000 // Within the last minute
+          // Count user messages and assistant responses
+          const userMessages = data.filter(msg => msg.role === 'user');
+          const assistantMessages = data.filter(msg => 
+            msg.role === 'writer' || msg.role === 'assistant'
           );
           
-          // Check if we have a "hey" message but no corresponding assistant response yet
-          const hasAutoResponse = data.some(msg => 
-            (msg.role === 'writer' || msg.role === 'assistant') && 
-            data.some(userMsg => 
-              userMsg.role === 'user' && 
-              userMsg.content === "hey" &&
-              new Date(userMsg.created_at).getTime() < new Date(msg.created_at).getTime()
-            )
-          );
-          
-          // Set processing state based on whether we have a recent auto message without response
-          const shouldBeProcessing = recentAutoMessage && !hasAutoResponse;
+          // If we have more user messages than assistant messages, we're still processing
+          const shouldBeProcessing = userMessages.length > assistantMessages.length;
           setIsProcessing(shouldBeProcessing);
         }
       } catch (error) {
@@ -49,22 +38,23 @@ export const useProcessingState = (sessionId: string | null, autoMessageSent: bo
       }
     };
 
+    // Set initial processing state when session changes
+    setIsProcessing(true);
     checkProcessingState();
     
     // Check processing state periodically
     const interval = setInterval(checkProcessingState, 2000);
     
     return () => clearInterval(interval);
-  }, [sessionId, autoMessageSent]);
+  }, [sessionId]);
 
   // Track visibility changes to ensure animation continues when tab is backgrounded
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && sessionId && autoMessageSent) {
+      if (document.visibilityState === 'visible' && sessionId) {
         // When coming back to the tab, check if we should still be in processing state
         const checkProcessingStatus = async () => {
           try {
-            // Check if there's a "hey" message without a response
             const { data, error } = await supabase
               .from('chat_messages')
               .select('*')
@@ -83,7 +73,6 @@ export const useProcessingState = (sessionId: string | null, autoMessageSent: bo
               );
               
               // If we have more user messages than assistant messages, we're still processing
-              // This assumes each user message should get an assistant response
               setIsProcessing(userMessages.length > assistantMessages.length);
             }
           } catch (error) {
@@ -100,7 +89,7 @@ export const useProcessingState = (sessionId: string | null, autoMessageSent: bo
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [sessionId, autoMessageSent]);
+  }, [sessionId]);
 
   return {
     isProcessing,
