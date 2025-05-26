@@ -1,16 +1,13 @@
-
 import { ChatMessage } from "@/types/chat";
 import ChatMessages from "./ChatMessages";
 import { useEffect, useRef, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useProcessingState } from "@/hooks/chat/use-processing-state";
-
 interface ChatMessageListProps {
   messages: ChatMessage[];
   currentSessionId: string | null;
 }
-
 const ChatMessageList = ({
   messages,
   currentSessionId
@@ -21,7 +18,9 @@ const ChatMessageList = ({
   const prevMessagesLength = useRef(messages.length);
   const chatSessionId = useRef<string | null>(null);
   const isMobile = useIsMobile();
-  const { isProcessing } = useProcessingState(currentSessionId);
+  const {
+    isProcessing
+  } = useProcessingState(currentSessionId);
 
   // Only scroll to bottom when new messages arrive and user hasn't scrolled up
   useEffect(() => {
@@ -59,13 +58,11 @@ const ChatMessageList = ({
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [userScrolled]);
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({
       behavior: isMobile ? "auto" : "smooth"
     });
   };
-
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const element = event.currentTarget;
     const isScrolledUp = element.scrollHeight - element.scrollTop - element.clientHeight > 100;
@@ -78,33 +75,23 @@ const ChatMessageList = ({
       setUserScrolled(false);
     }
   };
-
-  return (
-    <ScrollArea className="flex-1 h-full w-full overflow-y-auto" onScroll={handleScroll} ref={scrollAreaRef}>
+  return <ScrollArea className="flex-1 h-full w-full overflow-y-auto" onScroll={handleScroll} ref={scrollAreaRef}>
       <div className="min-h-full flex flex-col">
-        {messages.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center p-8">
+        {messages.length === 0 ? <div className="flex-1 flex items-center justify-center p-8">
             <div className="text-center max-w-md">
               <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/50 dark:to-indigo-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-full"></div>
               </div>
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
-                Welcome to your consultation
-              </h3>
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">Frits is preparing your consultation...</h3>
               <p className="text-gray-600 dark:text-gray-400 text-sm">
                 {isProcessing ? "Frits is preparing your consultation..." : "Frits is getting a coffee and will soon begin your session."}
               </p>
             </div>
-          </div>
-        ) : (
-          <div className="py-4">
+          </div> : <div className="py-4">
             <ChatMessages messages={messages} />
             <div ref={messagesEndRef} />
-          </div>
-        )}
+          </div>}
       </div>
-    </ScrollArea>
-  );
+    </ScrollArea>;
 };
-
 export default ChatMessageList;
