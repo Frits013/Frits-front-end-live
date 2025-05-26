@@ -143,18 +143,29 @@ const ChatContainer = ({
               />
             </ResizablePanel>
             
-            {/* Enhanced Resizable Handle with Drag Indicator */}
-            <ResizableHandle className="relative group">
+            {/* Enhanced Resizable Handle with Prominent Drag Indicator */}
+            <ResizableHandle className="relative group h-3 cursor-row-resize">
+              {/* Background gradient */}
               <div className="absolute inset-0 bg-gradient-to-r from-purple-200/80 via-indigo-200/80 to-purple-200/80 dark:from-purple-700/60 dark:via-indigo-700/60 dark:to-purple-700/60 transition-all duration-300 group-hover:from-purple-300/90 group-hover:via-indigo-300/90 group-hover:to-purple-300/90 dark:group-hover:from-purple-600/70 dark:group-hover:via-indigo-600/70 dark:group-hover:to-purple-600/70"></div>
+              
+              {/* Drag indicator container */}
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-1 bg-white/60 dark:bg-gray-900/60 rounded-full shadow-sm"></div>
-                  <div className="p-1.5 bg-white/80 dark:bg-gray-800/80 rounded-full shadow-sm border border-white/40 dark:border-gray-700/40 opacity-60 group-hover:opacity-100 transition-all duration-300">
-                    <Grip className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+                  {/* Left line */}
+                  <div className="w-8 h-0.5 bg-white/60 dark:bg-gray-900/60 rounded-full shadow-sm group-hover:bg-white/80 dark:group-hover:bg-gray-900/80 transition-colors duration-300"></div>
+                  
+                  {/* Central grip button */}
+                  <div className="px-3 py-1.5 bg-white/90 dark:bg-gray-800/90 rounded-full shadow-lg border border-white/60 dark:border-gray-700/60 opacity-80 group-hover:opacity-100 transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl">
+                    <Grip className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                   </div>
-                  <div className="w-8 h-1 bg-white/60 dark:bg-gray-900/60 rounded-full shadow-sm"></div>
+                  
+                  {/* Right line */}
+                  <div className="w-8 h-0.5 bg-white/60 dark:bg-gray-900/60 rounded-full shadow-sm group-hover:bg-white/80 dark:group-hover:bg-gray-900/80 transition-colors duration-300"></div>
                 </div>
               </div>
+              
+              {/* Subtle glow effect on hover */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300 bg-gradient-to-r from-purple-400 via-indigo-400 to-purple-400 blur-md"></div>
             </ResizableHandle>
             
             {/* Chat Panel */}
