@@ -2,8 +2,6 @@
 import { ChatMessage } from "@/types/chat";
 import ChatMessages from "./ChatMessages";
 import { useEffect, useRef } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ChatMessageListProps {
   messages: ChatMessage[];
@@ -17,19 +15,24 @@ const ChatMessageList = ({
   showFinishButton = false
 }: ChatMessageListProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const isMobile = useIsMobile();
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Simple auto-scroll: scroll to bottom whenever messages change
+  // Simple auto-scroll to bottom when messages change
   useEffect(() => {
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({
-        behavior: isMobile ? "auto" : "smooth"
-      });
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages, isMobile]);
+  }, [messages]);
 
   return (
-    <ScrollArea className="flex-1 h-full w-full">
+    <div 
+      ref={containerRef}
+      className="flex-1 h-full w-full overflow-y-auto overscroll-contain"
+      style={{ 
+        WebkitOverflowScrolling: 'touch',
+        overscrollBehavior: 'contain'
+      }}
+    >
       <div className="min-h-full flex flex-col">
         {messages.length === 0 ? (
           <div className="flex-1 flex items-center justify-center p-8">
@@ -47,7 +50,7 @@ const ChatMessageList = ({
           </div>
         )}
       </div>
-    </ScrollArea>
+    </div>
   );
 };
 
