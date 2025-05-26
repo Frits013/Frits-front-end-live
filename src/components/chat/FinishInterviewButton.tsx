@@ -11,7 +11,7 @@ const FinishInterviewButton = ({ onFinish, show }: FinishInterviewButtonProps) =
   if (!show) return null;
 
   return (
-    <div className="mx-4 mb-4 mt-6 z-10">
+    <div className="sticky bottom-[120px] mx-4 mb-2 z-10">
       <div className="relative">
         {/* Button glow effect */}
         <div className="absolute -inset-1 bg-gradient-to-r from-green-400 to-emerald-400 rounded-xl blur-lg opacity-25 group-hover:opacity-40 transition duration-300"></div>
