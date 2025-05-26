@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -135,7 +134,7 @@ const ChatHistoryComponent = ({
     }
   };
 
-  const handleEditTitle = (chat: ChatSession) => {
+  const handleEditTitle = (chat: SessionWithFeedback) => {
     setEditingChatId(chat.id);
     setEditingTitle(chat.session_name);
   };
