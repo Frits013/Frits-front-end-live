@@ -16,7 +16,7 @@ Write the first visible message of an AI-readiness consultation.
 •	One crisp purpose line for the consult session (use the latest user and company data if possible to decide the purpose).  
 •	Briefly outline interview flow/steps you'll follow 
 •	You can ask a jargon-free discovery question tailored to the company's domain or pain points.
-•	Tell the user they can ask you anything anytime if there is something unclear.
+•	Tell the user they can ask me anything anytime if there is something unclear.
 •	Keep it ≤ 120 words.  
 •	End with an inviting hand-off.  
 •	Vary wording naturally feel free to rephrase or reorder elements each time.  
@@ -42,55 +42,66 @@ export const useSessionCreation = (
       return;
     }
 
-    // Show the success toast immediately when user clicks
-    toast({
-      title: "Success",
-      description: "New consult session created",
-    });
+    try {
+      // Format current date and time in a readable format
+      const formattedDateTime = format(new Date(), "MMM d, yyyy h:mm a");
 
-    // Format current date and time in a readable format
-    const formattedDateTime = format(new Date(), "MMM d, yyyy h:mm a");
+      // Create a new session in the chat_sessions table
+      const { data: newSession, error } = await supabase
+        .from('chat_sessions')
+        .insert([{
+          user_id: session.user.id,
+          session_name: `Consult Session - ${formattedDateTime}`,
+          finished: false // Always start as not finished
+        }])
+        .select()
+        .single();
 
-    // Create a new session in the chat_sessions table
-    const { data: newSession, error } = await supabase
-      .from('chat_sessions')
-      .insert([{
-        user_id: session.user.id,
-        session_name: `Consult Session - ${formattedDateTime}`,
-        finished: false // Always start as not finished
-      }])
-      .select()
-      .single();
+      if (error) {
+        console.error('Error creating new chat session:', error);
+        toast({
+          title: "Error",
+          description: "Failed to create new chat session",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    if (error) {
-      console.error('Error creating new chat session:', error);
+      // Immediately update the UI state before doing anything else
+      setCurrentSessionId(newSession.id);
+      setChatSessions([newSession, ...chatSessions]);
+
+      // Add a system message to identify the new chat session
+      const { error: messageError } = await supabase
+        .from('chat_messages')
+        .insert([{
+          content: "", // Empty initial message
+          role: 'system',
+          user_id: session.user.id,
+          session_id: newSession.id,
+        }]);
+
+      if (messageError) {
+        console.error('Error creating initial message:', messageError);
+      }
+
+      // Send an automatic message to initiate the conversation
+      await sendAutomaticHeyMessage(newSession.id, session.user.id);
+      
+      // Only show success toast after everything is complete
       toast({
-        title: "Error",
+        title: "New session started",
+        description: "Your consultation is ready to begin",
+      });
+      
+    } catch (error) {
+      console.error('Error in createNewChat:', error);
+      toast({
+        title: "Error", 
         description: "Failed to create new chat session",
         variant: "destructive",
       });
-      return;
     }
-
-    // Add a system message to identify the new chat session
-    const { error: messageError } = await supabase
-      .from('chat_messages')
-      .insert([{
-        content: "", // Empty initial message
-        role: 'system',
-        user_id: session.user.id,
-        session_id: newSession.id,
-      }]);
-
-    if (messageError) {
-      console.error('Error creating initial message:', messageError);
-    }
-
-    setCurrentSessionId(newSession.id);
-    setChatSessions([newSession, ...chatSessions]);
-    
-    // Send an automatic message to initiate the conversation
-    await sendAutomaticHeyMessage(newSession.id, session.user.id);
   };
 
   // Function to send an automatic initial message
