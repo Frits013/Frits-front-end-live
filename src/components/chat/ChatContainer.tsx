@@ -85,15 +85,15 @@ const ChatContainer = ({
     }
   }, [currentChatId]);
 
-  // Handle when user confirms finishing the session
+  // Handle when user confirms finishing the session via the dialog
   const handleFinishConsult = () => {
     console.log('Finishing consult session');
     if (currentChatId) {
-      // Call onConsultFinish only when the user confirms by clicking "End Session"
+      // Mark the session as finished in the database
       onConsultFinish(currentChatId);
       toast({
         title: "Success",
-        description: "Consult session marked as complete",
+        description: "Consult session completed successfully",
       });
     }
     setShowCompleteDialog(false);

@@ -33,7 +33,13 @@ const ConsultCompleteDialog = ({
     handleEmojiSelect,
     handleReviewChange,
     handleSubmit
-  } = useFeedbackSubmission({ sessionId, onFinish });
+  } = useFeedbackSubmission({ 
+    sessionId, 
+    onFinish: () => {
+      // Only call onFinish after feedback is submitted
+      onFinish();
+    }
+  });
   
   const [showConfetti, setShowConfetti] = useState(false);
 
@@ -58,25 +64,33 @@ const ConsultCompleteDialog = ({
   }, [open]);
 
   const handleFinish = async () => {
-    // This function will:
-    // 1. Submit the feedback
-    // 2. Trigger onFinish which will mark the session as complete in the database
-    // This ensures the session is only marked as complete after clicking "End Session"
+    // Submit feedback and end the session
     const success = await handleSubmit();
     if (success) {
       // The onFinish callback is already called in the hook if submission is successful
+      console.log('Session ended via End Session button');
     }
+  };
+
+  const handleDialogClose = () => {
+    // When dialog is closed via X button or escape, also end the session
+    console.log('Session ended via dialog close');
+    onFinish();
+    onClose();
   };
 
   return (
     <>
       <Confetti active={showConfetti} />
-      <Dialog open={open} onOpenChange={(isOpen) => {
-        // Only trigger onClose when dialog is being closed, not when opened
-        if (!isOpen) {
-          onClose();
-        }
-      }}>
+      <Dialog 
+        open={open} 
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            // Dialog is being closed - end the session
+            handleDialogClose();
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-[425px] z-50">
           <DialogHeader>
             <DialogTitle>Consult Session Complete</DialogTitle>
