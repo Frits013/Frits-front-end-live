@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { setupScene, setupLighting } from "./three/SceneSetup";
@@ -169,8 +170,8 @@ const ThreeScene = ({ isThinking, audioData }: ThreeSceneProps) => {
       >
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
         
-        {/* Profile button positioned further to the right */}
-        <div className="absolute top-4 right-6 z-50">
+        {/* Profile button positioned to align with send button */}
+        <div className="absolute top-4 right-8 z-50">
           <ChatHeader onSignOut={handleSignOut} isInCanvas={true} />
         </div>
         
