@@ -1,3 +1,4 @@
+
 import { ChatMessage } from "@/types/chat";
 
 interface ChatMessagesProps {
@@ -62,10 +63,10 @@ const ChatMessages = ({ messages }: ChatMessagesProps) => {
           }`}
         >
           <div
-            className={`max-w-[80%] lg:max-w-[70%] p-4 rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md ${
+            className={`max-w-[80%] lg:max-[70%] p-4 rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md ${
               message.role === 'user'
                 ? 'bg-gradient-to-br from-purple-600 to-indigo-600 text-white rounded-br-md'
-                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-bl-md'
+                : 'bg-gradient-to-br from-gray-700 to-gray-800 dark:from-gray-800 dark:to-gray-900 text-white rounded-bl-md border border-gray-600 dark:border-gray-700'
             }`}
           >
             {formatMessage(message)}
