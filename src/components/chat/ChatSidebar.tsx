@@ -60,17 +60,19 @@ const ChatSidebar = ({
                 .maybeSingle();
               
               hasUserFeedback = !!feedback;
+              // If session is finished but no feedback, it's finishable
+              isFinishable = !hasUserFeedback;
             } else {
-              // For non-finished sessions, check if they have both messages AND are not finished
-              // A session is finishable if it has messages, isn't finished, and has actual conversation
+              // For non-finished sessions, check if they have assistant messages
               const { data: messages, count } = await supabase
                 .from('chat_messages')
                 .select('message_id', { count: 'exact' })
                 .eq('session_id', session.id)
-                .eq('role', 'assistant'); // Only count assistant messages to determine if conversation started
+                .eq('role', 'assistant');
               
-              // A session is finishable if it has assistant responses (meaning conversation has begun)
-              isFinishable = !!(count && count > 0);
+              // Non-finished sessions with assistant messages are ongoing
+              // Non-finished sessions without assistant messages are also ongoing (just started)
+              isFinishable = false;
             }
             
             return { ...session, hasUserFeedback, isFinishable };
@@ -89,12 +91,39 @@ const ChatSidebar = ({
     checkSessionStatus();
   }, [chatSessions]);
 
+  // Set up real-time subscription to listen for session updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('session-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'chat_sessions'
+        },
+        (payload) => {
+          console.log('Session update received:', payload);
+          // Re-fetch sessions when any session is updated
+          const updatedSession = payload.new as ChatSession;
+          setChatSessions(chatSessions.map(session => 
+            session.id === updatedSession.id ? updatedSession : session
+          ));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [chatSessions, setChatSessions]);
+
   // Separate sessions into three categories
   const ongoingConsults = sessionsWithFeedback.filter(chat => 
-    !chat.finished && !chat.isFinishable
+    !chat.finished
   );
   const finishableConsults = sessionsWithFeedback.filter(chat => 
-    !chat.finished && chat.isFinishable
+    chat.finished && !chat.hasUserFeedback
   );
   const completedConsults = sessionsWithFeedback.filter(chat => 
     chat.finished && chat.hasUserFeedback
@@ -132,6 +161,13 @@ const ChatSidebar = ({
     );
   }
 
+  const updateSessionsAfterAction = (updatedSessions: SessionWithFeedback[]) => {
+    // Update the base chatSessions array
+    setChatSessions(updatedSessions);
+    // Update the local state with feedback info
+    setSessionsWithFeedback(updatedSessions);
+  };
+
   return (
     <div className="h-full flex flex-col bg-gradient-to-b from-slate-50 to-purple-50/30 dark:from-slate-900 dark:to-purple-950/30">
       <SidebarHeader className="p-6 border-b border-purple-100/50 dark:border-purple-800/30">
@@ -167,7 +203,7 @@ const ChatSidebar = ({
                   <ChatHistoryComponent
                     chatHistories={ongoingConsults}
                     currentChatId={currentSessionId}
-                    setChatHistories={setChatSessions}
+                    setChatHistories={updateSessionsAfterAction}
                     setCurrentChatId={setCurrentSessionId}
                   />
                 </div>
@@ -198,7 +234,7 @@ const ChatSidebar = ({
                   <ChatHistoryComponent
                     chatHistories={finishableConsults}
                     currentChatId={currentSessionId}
-                    setChatHistories={setChatSessions}
+                    setChatHistories={updateSessionsAfterAction}
                     setCurrentChatId={setCurrentSessionId}
                   />
                 </div>
@@ -217,7 +253,7 @@ const ChatSidebar = ({
                   <ChatHistoryComponent
                     chatHistories={completedConsults}
                     currentChatId={currentSessionId}
-                    setChatHistories={setChatSessions}
+                    setChatHistories={updateSessionsAfterAction}
                     setCurrentChatId={setCurrentSessionId}
                   />
                 </div>
