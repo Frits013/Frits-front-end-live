@@ -1,15 +1,14 @@
-
 import { ChatMessage } from "@/types/chat";
 import ChatMessages from "./ChatMessages";
 import { useEffect, useRef, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
-
 interface ChatMessageListProps {
   messages: ChatMessage[];
 }
-
-const ChatMessageList = ({ messages }: ChatMessageListProps) => {
+const ChatMessageList = ({
+  messages
+}: ChatMessageListProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [userScrolled, setUserScrolled] = useState(false);
@@ -21,10 +20,10 @@ const ChatMessageList = ({ messages }: ChatMessageListProps) => {
   useEffect(() => {
     // Check if new messages were added
     const newMessagesAdded = messages.length > prevMessagesLength.current;
-    
+
     // Get the current chat session ID from the first message
     const currentSessionId = messages.length > 0 ? messages[0].id.split('-')[0] : null;
-    
+
     // If we switched to a different chat, reset userScrolled state
     if (currentSessionId !== chatSessionId.current) {
       setUserScrolled(false);
@@ -35,7 +34,6 @@ const ChatMessageList = ({ messages }: ChatMessageListProps) => {
       // Only auto-scroll if there are new messages in the same chat and user hasn't manually scrolled up
       scrollToBottom();
     }
-    
     prevMessagesLength.current = messages.length;
   }, [messages]);
 
@@ -49,22 +47,20 @@ const ChatMessageList = ({ messages }: ChatMessageListProps) => {
         }
       }
     };
-    
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [userScrolled]);
-
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: isMobile ? "auto" : "smooth" });
+    messagesEndRef.current?.scrollIntoView({
+      behavior: isMobile ? "auto" : "smooth"
+    });
   };
-
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const element = event.currentTarget;
     const isScrolledUp = element.scrollHeight - element.scrollTop - element.clientHeight > 100;
-    
+
     // Update userScrolled state based on scroll position
     if (isScrolledUp) {
       setUserScrolled(true);
@@ -73,16 +69,9 @@ const ChatMessageList = ({ messages }: ChatMessageListProps) => {
       setUserScrolled(false);
     }
   };
-
-  return (
-    <ScrollArea 
-      className="flex-1 h-full w-full overflow-y-auto"
-      onScroll={handleScroll}
-      ref={scrollAreaRef}
-    >
+  return <ScrollArea className="flex-1 h-full w-full overflow-y-auto" onScroll={handleScroll} ref={scrollAreaRef}>
       <div className="min-h-full flex flex-col">
-        {messages.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center p-8">
+        {messages.length === 0 ? <div className="flex-1 flex items-center justify-center p-8">
             <div className="text-center max-w-md">
               <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/50 dark:to-indigo-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-full"></div>
@@ -90,20 +79,13 @@ const ChatMessageList = ({ messages }: ChatMessageListProps) => {
               <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
                 Welcome to your consultation
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">
-                Start by typing a message below to begin your session.
-              </p>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">Frits is getting a coffee and will soon begin your session.</p>
             </div>
-          </div>
-        ) : (
-          <div className="py-4">
+          </div> : <div className="py-4">
             <ChatMessages messages={messages} />
             <div ref={messagesEndRef} />
-          </div>
-        )}
+          </div>}
       </div>
-    </ScrollArea>
-  );
+    </ScrollArea>;
 };
-
 export default ChatMessageList;
