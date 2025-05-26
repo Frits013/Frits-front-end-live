@@ -16,53 +16,22 @@ const ScrollArea = React.forwardRef<
       ref={ref}
       className={cn("relative overflow-hidden", className)}
       {...props}
-      // Use "scroll" type on mobile for native scrolling, "hover" on desktop
       type={isMobile ? "scroll" : "hover"}
     >
       <ScrollAreaPrimitive.Viewport 
         className={cn(
-          "h-full w-full rounded-[inherit] overflow-y-auto",
-          // Enhanced mobile scroll handling
-          isMobile && "overscroll-none touch-pan-y"
+          "h-full w-full rounded-[inherit]",
+          isMobile ? "overflow-y-auto overscroll-y-contain" : "overflow-y-auto"
         )}
         style={isMobile ? {
-          overscrollBehavior: 'none',
           WebkitOverflowScrolling: 'touch',
-          // Additional properties to prevent pull-to-refresh
-          touchAction: 'pan-y',
-          overscrollBehaviorY: 'none'
+          overscrollBehavior: 'contain',
+          overscrollBehaviorY: 'contain'
         } : undefined}
         onScroll={onScroll}
-        onTouchStart={isMobile ? (e) => {
-          // Prevent pull-to-refresh if we're at the top and trying to scroll up
-          const element = e.currentTarget;
-          if (element.scrollTop === 0) {
-            const touch = e.touches[0];
-            const startY = touch.clientY;
-            
-            const handleTouchMove = (moveEvent: TouchEvent) => {
-              const moveTouch = moveEvent.touches[0];
-              const deltaY = moveTouch.clientY - startY;
-              
-              // If scrolling down from the top, prevent the default behavior
-              if (deltaY > 0 && element.scrollTop === 0) {
-                moveEvent.preventDefault();
-              }
-            };
-            
-            const handleTouchEnd = () => {
-              document.removeEventListener('touchmove', handleTouchMove, { passive: false } as any);
-              document.removeEventListener('touchend', handleTouchEnd);
-            };
-            
-            document.addEventListener('touchmove', handleTouchMove, { passive: false });
-            document.addEventListener('touchend', handleTouchEnd);
-          }
-        } : undefined}
       >
         {children}
       </ScrollAreaPrimitive.Viewport>
-      {/* Only show scrollbar on desktop */}
       {!isMobile && <ScrollBar />}
       <ScrollAreaPrimitive.Corner />
     </ScrollAreaPrimitive.Root>

@@ -88,18 +88,8 @@ const ChatMessageList = ({
       className="flex-1 h-full w-full overflow-y-auto" 
       onScroll={handleScroll} 
       ref={scrollAreaRef}
-      style={isMobile ? {
-        touchAction: 'pan-y',
-        overscrollBehavior: 'none'
-      } : undefined}
     >
-      <div 
-        className="min-h-full flex flex-col"
-        style={isMobile ? {
-          touchAction: 'pan-y',
-          overscrollBehavior: 'none'
-        } : undefined}
-      >
+      <div className="min-h-full flex flex-col">
         {messages.length === 0 ? (
           <div className="flex-1 flex items-center justify-center p-8">
             <div className="text-center max-w-md">
