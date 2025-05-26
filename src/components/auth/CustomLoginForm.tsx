@@ -1,10 +1,11 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthOperations } from "@/hooks/use-auth-operations";
-import { Eye, EyeOff, Mail, Lock, Shield, Sparkles } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Shield, Sparkles, LogIn } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle } from "lucide-react";
@@ -144,7 +145,7 @@ export const CustomLoginForm = ({ authView }: CustomLoginFormProps) => {
       
       {/* Mode-specific motivational message */}
       {authView === 'sign_up' && (
-        <div className={`p-4 rounded-lg border ${authView === 'sign_in' ? 'bg-blue-50 border-blue-200' : 'bg-emerald-50 border-emerald-200'}`}>
+        <div className="p-4 rounded-lg border bg-emerald-50 border-emerald-200">
           <div className="flex items-center gap-2 mb-2">
             <Sparkles className="h-4 w-4 text-emerald-600" />
             <span className="text-sm font-medium text-emerald-800">Get started in seconds</span>
