@@ -1,6 +1,6 @@
 
 import { ReactNode } from "react";
-import { ResizablePanelGroup, ResizableHandle } from "@/components/ui/resizable";
+import { ResizablePanelGroup } from "@/components/ui/resizable";
 
 interface ChatPanelLayoutProps {
   children: ReactNode;
@@ -20,12 +20,6 @@ const ChatPanelLayout = ({ children }: ChatPanelLayoutProps) => {
             className="relative min-h-[calc(100dvh-4rem)] bg-white/90 dark:bg-gray-900/90 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/30 dark:border-gray-700/30 overflow-hidden transform transition-all duration-300 hover:shadow-purple-500/10 hover:scale-[1.002]"
           >
             {children}
-            
-            {/* Enhanced Resizable Handle with Prominent Drag Indicator */}
-            <ResizableHandle 
-              withHandle={true}
-              className="relative group h-4 cursor-row-resize bg-gradient-to-r from-purple-200/80 via-indigo-200/80 to-purple-200/80 dark:from-purple-700/60 dark:via-indigo-700/60 dark:to-purple-700/60 hover:from-purple-300/90 hover:via-indigo-300/90 hover:to-purple-300/90 dark:hover:from-purple-600/70 dark:hover:via-indigo-600/70 dark:hover:to-purple-600/70 transition-all duration-300"
-            />
           </ResizablePanelGroup>
         </div>
       </div>
