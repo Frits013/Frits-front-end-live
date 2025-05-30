@@ -14,6 +14,10 @@ interface ChatSidebarProps {
   setCurrentSessionId: (id: string | null) => void;
   onNewChat: () => void;
   isLoading?: boolean;
+  animationState?: {
+    shouldAnimate: boolean;
+    sessionId?: string;
+  };
 }
 
 const ChatSidebar = ({
@@ -23,6 +27,7 @@ const ChatSidebar = ({
   setCurrentSessionId,
   onNewChat,
   isLoading = false,
+  animationState,
 }: ChatSidebarProps) => {
   const [sessionsWithFeedback, setSessionsWithFeedback] = useState<SessionWithFeedback[]>([]);
   const [feedbackLoading, setFeedbackLoading] = useState(true);
@@ -183,6 +188,7 @@ const ChatSidebar = ({
         currentSessionId={currentSessionId}
         onSessionsUpdate={updateSessionsAfterAction}
         onSessionSelect={setCurrentSessionId}
+        animationState={animationState}
       />
     </div>
   );

@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -40,6 +41,10 @@ const Chat = () => {
   const { showOnboarding, setShowOnboarding } = useOnboarding();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const checkingRef = useRef(false);
+  const [sessionAnimationState, setSessionAnimationState] = useState<{
+    shouldAnimate: boolean;
+    sessionId?: string;
+  }>({ shouldAnimate: false });
 
   // Check if user is authenticated
   useEffect(() => {
@@ -98,6 +103,10 @@ const Chat = () => {
     markConsultFinished(sessionId);
   };
 
+  const handleSessionAnimation = (shouldAnimate: boolean, sessionId?: string) => {
+    setSessionAnimationState({ shouldAnimate, sessionId });
+  };
+
   // Show loading state while checking auth or loading sessions
   if (isCheckingAuth || isLoading) {
     return (
@@ -119,6 +128,7 @@ const Chat = () => {
             setCurrentSessionId={setCurrentSessionId}
             onNewChat={createNewChat}
             isLoading={isLoading}
+            animationState={sessionAnimationState}
           />
         }
         content={
@@ -134,6 +144,7 @@ const Chat = () => {
               dialogDismissed={dialogDismissed}
               setDialogDismissed={setDialogDismissed}
               hasFeedback={hasFeedback}
+              onSessionAnimation={handleSessionAnimation}
             />
             <OnboardingWizard
               open={showOnboarding}

@@ -14,6 +14,10 @@ interface ChatSessionsSectionProps {
   titleColor?: string;
   emptyMessage?: string;
   emptySubMessage?: string;
+  animationState?: {
+    shouldAnimate: boolean;
+    sessionId?: string;
+  };
 }
 
 const ChatSessionsSection = ({
@@ -24,7 +28,8 @@ const ChatSessionsSection = ({
   onSessionSelect,
   titleColor = "text-purple-700 dark:text-purple-300",
   emptyMessage = "No sessions",
-  emptySubMessage = "Start a new consultation above"
+  emptySubMessage = "Start a new consultation above",
+  animationState
 }: ChatSessionsSectionProps) => {
   return (
     <SidebarGroup>
@@ -39,6 +44,7 @@ const ChatSessionsSection = ({
               currentChatId={currentSessionId}
               setChatHistories={onSessionsUpdate}
               setCurrentChatId={onSessionSelect}
+              animationState={animationState}
             />
           </div>
         ) : (

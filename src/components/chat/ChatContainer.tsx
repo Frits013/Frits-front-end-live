@@ -8,6 +8,7 @@ import ChatVisualizerPanel from "./ChatVisualizerPanel";
 import ChatPanel from "./ChatPanel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ResizableHandle } from "@/components/ui/resizable";
+import { useSessionAnimations } from "@/hooks/chat/use-session-animations";
 
 interface ChatContainerProps {
   messages: ChatMessage[];
@@ -20,6 +21,7 @@ interface ChatContainerProps {
   dialogDismissed: boolean;
   setDialogDismissed: (dismissed: boolean) => void;
   hasFeedback?: boolean;
+  onSessionAnimation?: (shouldAnimate: boolean, sessionId?: string) => void;
 }
 
 const ChatContainer = ({
@@ -33,6 +35,7 @@ const ChatContainer = ({
   dialogDismissed,
   setDialogDismissed,
   hasFeedback = false,
+  onSessionAnimation,
 }: ChatContainerProps) => {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -47,6 +50,9 @@ const ChatContainer = ({
   
   // Track the default size of the visualizer panel - smaller on mobile
   const [defaultVisualizerSize, setDefaultVisualizerSize] = useState(isMobile ? 25 : 35);
+
+  // Use the session animations hook
+  const { shouldTriggerAnimation, startSessionAnimation } = useSessionAnimations(showCompleteButton);
 
   // Update default size when mobile status changes
   useEffect(() => {
@@ -69,6 +75,15 @@ const ChatContainer = ({
     console.log('Should show complete button:', shouldShowButton);
     setShowCompleteButton(shouldShowButton);
   }, [isConsultComplete, hasFeedback]);
+
+  // Trigger session animation when button appears
+  useEffect(() => {
+    if (shouldTriggerAnimation && currentChatId && onSessionAnimation) {
+      console.log('Triggering session animation for:', currentChatId);
+      onSessionAnimation(true, currentChatId);
+      startSessionAnimation(currentChatId);
+    }
+  }, [shouldTriggerAnimation, currentChatId, onSessionAnimation, startSessionAnimation]);
 
   // Handle when user clicks the finish interview button
   const handleCompleteButtonClick = useCallback(() => {

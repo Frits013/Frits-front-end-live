@@ -11,6 +11,10 @@ interface ChatSidebarContentProps {
   currentSessionId: string | null;
   onSessionsUpdate: (sessions: SessionWithFeedback[]) => void;
   onSessionSelect: (id: string | null) => void;
+  animationState?: {
+    shouldAnimate: boolean;
+    sessionId?: string;
+  };
 }
 
 const ChatSidebarContent = ({
@@ -19,7 +23,8 @@ const ChatSidebarContent = ({
   completedConsults,
   currentSessionId,
   onSessionsUpdate,
-  onSessionSelect
+  onSessionSelect,
+  animationState
 }: ChatSidebarContentProps) => {
   return (
     <SidebarContent className="flex-1 overflow-auto px-3 py-4">
@@ -33,6 +38,7 @@ const ChatSidebarContent = ({
           onSessionSelect={onSessionSelect}
           emptyMessage="No ongoing consults"
           emptySubMessage="Start a new consultation above"
+          animationState={animationState}
         />
 
         {/* Finishable consults section */}
@@ -43,6 +49,7 @@ const ChatSidebarContent = ({
           onSessionsUpdate={onSessionsUpdate}
           onSessionSelect={onSessionSelect}
           titleColor="text-amber-700 dark:text-amber-300"
+          animationState={animationState}
         />
 
         {/* Completed consults section */}
@@ -53,6 +60,7 @@ const ChatSidebarContent = ({
           onSessionsUpdate={onSessionsUpdate}
           onSessionSelect={onSessionSelect}
           titleColor="text-slate-600 dark:text-slate-400"
+          animationState={animationState}
         />
       </div>
     </SidebarContent>
