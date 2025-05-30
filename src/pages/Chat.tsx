@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +7,7 @@ import ChatSidebar from "@/components/chat/ChatSidebar";
 import ChatContainer from "@/components/chat/ChatContainer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
-import { useChatMessages } from "@/hooks/chat/use-chat-messages";
+import { useChatMessages } from "@/hooks/use-chat-messages";
 import { useSessionSubscription } from "@/hooks/chat/use-session-subscription";
 
 const Chat = () => {
