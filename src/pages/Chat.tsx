@@ -86,7 +86,7 @@ const Chat = () => {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
-        <Sidebar variant="sidebar" className="w-80">
+        <Sidebar variant="sidebar" className="w-80 flex-shrink-0">
           <ChatSidebar
             key={refreshTrigger}
             chatSessions={chatSessions}
@@ -98,7 +98,7 @@ const Chat = () => {
           />
         </Sidebar>
         
-        <SidebarInset className="flex-1 min-w-0 ml-0">
+        <SidebarInset className="flex-1 min-w-0">
           <div className="h-screen relative w-full">
             {/* Mobile sidebar trigger - positioned fixed for mobile */}
             {isMobile && (
