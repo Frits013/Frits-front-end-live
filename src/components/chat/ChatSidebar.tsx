@@ -95,7 +95,7 @@ const ChatSidebar = ({
           schema: 'public',
           table: 'chat_sessions'
         },
-        (payload) => {
+        async (payload) => {
           console.log('Real-time session update received:', payload);
           
           // Update the session in the chatSessions array
@@ -109,9 +109,9 @@ const ChatSidebar = ({
           console.log('Setting updated sessions:', updatedSessions);
           setChatSessions(updatedSessions);
           
-          // Immediately re-check session status with the updated sessions for smooth animation
-          console.log('Re-checking session status for animations');
-          checkSessionStatus(updatedSessions);
+          // Force a fresh status check for all sessions to ensure proper categorization
+          console.log('Force re-checking session status for real-time updates');
+          await checkSessionStatus(updatedSessions);
         }
       )
       .on(
@@ -121,10 +121,23 @@ const ChatSidebar = ({
           schema: 'public',
           table: 'feedback'
         },
-        (payload) => {
+        async (payload) => {
           console.log('Feedback insertion detected:', payload);
-          // When feedback is added, re-check session status for smooth transitions
-          checkSessionStatus(chatSessions);
+          // When feedback is added, force re-check session status for smooth transitions
+          await checkSessionStatus(chatSessions);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages'
+        },
+        async (payload) => {
+          console.log('Message insertion detected:', payload);
+          // When new messages are added, re-check session status in case it affects categorization
+          await checkSessionStatus(chatSessions);
         }
       )
       .subscribe((status) => {

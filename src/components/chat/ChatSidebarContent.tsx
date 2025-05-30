@@ -2,6 +2,7 @@
 import { SidebarContent } from "@/components/ui/sidebar";
 import ChatSessionsSection from "./ChatSessionsSection";
 import { SessionWithFeedback } from "@/types/chat";
+import { AnimatePresence } from "framer-motion";
 
 interface ChatSidebarContentProps {
   ongoingConsults: SessionWithFeedback[];
@@ -35,28 +36,24 @@ const ChatSidebarContent = ({
         />
 
         {/* Finishable consults section */}
-        {finishableConsults.length > 0 && (
-          <ChatSessionsSection
-            title="Finishable Consults"
-            sessions={finishableConsults}
-            currentSessionId={currentSessionId}
-            onSessionsUpdate={onSessionsUpdate}
-            onSessionSelect={onSessionSelect}
-            titleColor="text-amber-700 dark:text-amber-300"
-          />
-        )}
+        <ChatSessionsSection
+          title="Finishable Consults"
+          sessions={finishableConsults}
+          currentSessionId={currentSessionId}
+          onSessionsUpdate={onSessionsUpdate}
+          onSessionSelect={onSessionSelect}
+          titleColor="text-amber-700 dark:text-amber-300"
+        />
 
         {/* Completed consults section */}
-        {completedConsults.length > 0 && (
-          <ChatSessionsSection
-            title="Completed Consults"
-            sessions={completedConsults}
-            currentSessionId={currentSessionId}
-            onSessionsUpdate={onSessionsUpdate}
-            onSessionSelect={onSessionSelect}
-            titleColor="text-slate-600 dark:text-slate-400"
-          />
-        )}
+        <ChatSessionsSection
+          title="Completed Consults"
+          sessions={completedConsults}
+          currentSessionId={currentSessionId}
+          onSessionsUpdate={onSessionsUpdate}
+          onSessionSelect={onSessionSelect}
+          titleColor="text-slate-600 dark:text-slate-400"
+        />
       </div>
     </SidebarContent>
   );
