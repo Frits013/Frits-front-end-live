@@ -29,9 +29,9 @@ const Chat = () => {
     isLoading: sessionsLoading,
     setChatSessions,
     setCurrentSessionId,
-    createNewSession,
-    updateChatTitle
-  } = useChatSessions(id);
+    createNewChat, // This is the correct property name
+    updateSessionTitle // This is the correct property name
+  } = useChatSessions(); // Remove the id parameter as it's not expected
 
   const {
     messages,
@@ -73,7 +73,7 @@ const Chat = () => {
   };
 
   const handleNewChat = () => {
-    createNewSession();
+    createNewChat(); // Call without parameters as expected
   };
 
   if (sessionsLoading) {
@@ -105,7 +105,7 @@ const Chat = () => {
               messages={messages}
               setMessages={setMessages}
               currentChatId={currentSessionId}
-              updateChatTitle={updateChatTitle}
+              updateChatTitle={updateSessionTitle} // Use the correct property name
               isConsultComplete={isConsultComplete}
               setIsConsultComplete={setIsConsultComplete}
               onConsultFinish={handleConsultFinish}
