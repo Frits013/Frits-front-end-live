@@ -1,3 +1,4 @@
+
 import { useState, useRef, useCallback, useEffect } from "react";
 import { ChatMessage } from "@/types/chat";
 import ConsultCompleteDialog from "@/components/chat/ConsultCompleteDialog";
@@ -104,7 +105,7 @@ const ChatContainer = ({
         <ChatVisualizerPanel
           defaultSize={defaultVisualizerSize}
           minSize={isMobile ? 15 : 20}
-          isThinking={isThinkingRef.current}
+          isThinking={isProcessing && isThinkingRef.current}
           audioData={audioData}
           currentSessionId={currentChatId}
         />

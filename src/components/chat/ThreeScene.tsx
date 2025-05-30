@@ -175,6 +175,7 @@ const ThreeScene = ({ isThinking, audioData }: ThreeSceneProps) => {
           <ChatHeader onSignOut={handleSignOut} isInCanvas={true} />
         </div>
         
+        {/* Only show thinking indicator when actually processing */}
         {isThinking && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="bg-white/80 dark:bg-black/80 backdrop-blur-sm px-4 py-2 rounded-full">
