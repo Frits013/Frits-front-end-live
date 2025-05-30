@@ -8,6 +8,7 @@ import ChatVisualizerPanel from "./ChatVisualizerPanel";
 import ChatPanel from "./ChatPanel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ResizableHandle } from "@/components/ui/resizable";
+import { useSessionSubscription } from "@/hooks/chat/use-session-subscription";
 
 interface ChatContainerProps {
   messages: ChatMessage[];
@@ -20,6 +21,7 @@ interface ChatContainerProps {
   dialogDismissed: boolean;
   setDialogDismissed: (dismissed: boolean) => void;
   hasFeedback?: boolean;
+  onSessionStatusChange?: () => void; // Add callback for session status changes
 }
 
 const ChatContainer = ({
@@ -33,6 +35,7 @@ const ChatContainer = ({
   dialogDismissed,
   setDialogDismissed,
   hasFeedback = false,
+  onSessionStatusChange,
 }: ChatContainerProps) => {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -41,12 +44,23 @@ const ChatContainer = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const isMobile = useIsMobile();
+  const [localHasFeedback, setLocalHasFeedback] = useState(hasFeedback);
   
   // Add a new state to track whether the complete button is showing
   const [showCompleteButton, setShowCompleteButton] = useState(false);
   
   // Track the default size of the visualizer panel - smaller on mobile
   const [defaultVisualizerSize, setDefaultVisualizerSize] = useState(isMobile ? 25 : 35);
+
+  // Set up session subscription with callback to trigger sidebar updates
+  useSessionSubscription(
+    currentChatId,
+    isConsultComplete,
+    setIsConsultComplete,
+    setDialogDismissed,
+    setLocalHasFeedback,
+    onSessionStatusChange // Pass the callback to trigger immediate sidebar updates
+  );
 
   // Update default size when mobile status changes
   useEffect(() => {
@@ -57,18 +71,18 @@ const ChatContainer = ({
   useEffect(() => {
     console.log('Button visibility check:', {
       isConsultComplete,
-      hasFeedback,
+      localHasFeedback,
       dialogDismissed
     });
     
     // Show the button when:
     // 1. Session is marked as finished in database (isConsultComplete)
     // 2. User hasn't completed the process yet (no feedback exists)
-    const shouldShowButton = isConsultComplete && !hasFeedback;
+    const shouldShowButton = isConsultComplete && !localHasFeedback;
     
     console.log('Should show complete button:', shouldShowButton);
     setShowCompleteButton(shouldShowButton);
-  }, [isConsultComplete, hasFeedback]);
+  }, [isConsultComplete, localHasFeedback]);
 
   // Handle when user clicks the finish interview button
   const handleCompleteButtonClick = useCallback(() => {

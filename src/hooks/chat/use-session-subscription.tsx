@@ -7,7 +7,8 @@ export const useSessionSubscription = (
   isConsultComplete: boolean, 
   setIsConsultComplete: (isComplete: boolean) => void,
   setDialogDismissed: (dismissed: boolean) => void,
-  setHasFeedback: (hasFeedback: boolean) => void
+  setHasFeedback: (hasFeedback: boolean) => void,
+  onSessionStatusChange?: () => void // Add callback to trigger sidebar updates
 ) => {
   // Initial state check when session changes or page loads
   useEffect(() => {
@@ -65,7 +66,7 @@ export const useSessionSubscription = (
           table: 'chat_sessions',
           filter: `id=eq.${sessionId}`
         },
-        (payload) => {
+        async (payload) => {
           console.log('Session update received:', payload);
           
           // Check if the finished status has changed
@@ -84,7 +85,13 @@ export const useSessionSubscription = (
               console.log('Resetting dialog dismissed state and checking feedback');
               setDialogDismissed(false);
               // Check if feedback exists separately
-              checkFeedbackExists(sessionId);
+              await checkFeedbackExists(sessionId);
+              
+              // Trigger immediate sidebar update for animation
+              console.log('Triggering sidebar update for animation');
+              if (onSessionStatusChange) {
+                onSessionStatusChange();
+              }
             }
           }
         }
@@ -97,7 +104,7 @@ export const useSessionSubscription = (
       console.log('Cleaning up session subscription for:', sessionId);
       supabase.removeChannel(channel);
     };
-  }, [sessionId, setIsConsultComplete, setDialogDismissed, setHasFeedback]);
+  }, [sessionId, setIsConsultComplete, setDialogDismissed, setHasFeedback, onSessionStatusChange]);
 
   // Helper function to check if feedback exists for a session
   const checkFeedbackExists = async (sessionId: string) => {
