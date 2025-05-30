@@ -1,17 +1,7 @@
 
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Check, MessageCircle, Clock, Flag } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { Pencil, Check, MessageCircle, Clock, Flag } from "lucide-react";
+import ChatHistoryDeleteDialog from "./ChatHistoryDeleteDialog";
 
 interface ChatHistoryItemProps {
   id: string;
@@ -115,43 +105,12 @@ const ChatHistoryItem = ({
           <Pencil className="h-3 w-3" />
         </Button>
         
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => e.stopPropagation()}
-              className={`h-7 w-7 ${
-                isActive 
-                  ? "hover:bg-red-500/20 text-white/80 hover:text-red-200" 
-                  : "hover:bg-red-50 dark:hover:bg-red-900/30 text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
-              }`}
-            >
-              <Trash2 className="h-3 w-3" />
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent className="border-purple-200 dark:border-purple-800">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-slate-900 dark:text-slate-100">
-                Delete Consult History
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-slate-600 dark:text-slate-400">
-                Are you sure you want to delete "{title}"? This action cannot be undone and your consultation history will be permanently lost.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel className="border-slate-200 dark:border-slate-700">
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => onDelete(id)}
-                className="bg-red-500 hover:bg-red-600 text-white"
-              >
-                Delete Consult
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <ChatHistoryDeleteDialog
+          chatId={id}
+          chatTitle={title}
+          isActive={isActive}
+          onDelete={onDelete}
+        />
       </div>
     </div>
   );
