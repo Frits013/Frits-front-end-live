@@ -82,10 +82,12 @@ const ChatSidebar = ({
     checkSessionStatus(chatSessions);
   }, [chatSessions]);
 
-  // Set up real-time subscription to listen for session updates
+  // Set up real-time subscription to listen for session updates with enhanced logging
   useEffect(() => {
+    console.log('Setting up real-time subscription for session updates');
+    
     const channel = supabase
-      .channel('session-updates')
+      .channel('session-updates-enhanced')
       .on(
         'postgres_changes',
         {
@@ -94,21 +96,43 @@ const ChatSidebar = ({
           table: 'chat_sessions'
         },
         (payload) => {
-          console.log('Session update received:', payload);
+          console.log('Real-time session update received:', payload);
+          
           // Update the session in the chatSessions array
           const updatedSession = payload.new as ChatSession;
+          console.log('Updated session data:', updatedSession);
+          
           const updatedSessions = chatSessions.map(session => 
             session.id === updatedSession.id ? updatedSession : session
           );
+          
+          console.log('Setting updated sessions:', updatedSessions);
           setChatSessions(updatedSessions);
           
-          // Immediately re-check session status with the updated sessions
+          // Immediately re-check session status with the updated sessions for smooth animation
+          console.log('Re-checking session status for animations');
           checkSessionStatus(updatedSessions);
         }
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'feedback'
+        },
+        (payload) => {
+          console.log('Feedback insertion detected:', payload);
+          // When feedback is added, re-check session status for smooth transitions
+          checkSessionStatus(chatSessions);
+        }
+      )
+      .subscribe((status) => {
+        console.log('Real-time subscription status:', status);
+      });
 
     return () => {
+      console.log('Cleaning up real-time subscription');
       supabase.removeChannel(channel);
     };
   }, [chatSessions, setChatSessions]);

@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ChatHistoryItem from "./ChatHistoryItem";
 import ChatHistoryEditItem from "./ChatHistoryEditItem";
 import { SessionWithFeedback } from "@/types/chat";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface ChatHistoryProps {
   chatHistories: SessionWithFeedback[];
@@ -164,29 +164,50 @@ const ChatHistoryComponent = ({
 
   return (
     <div className="space-y-3">
-      {chatHistories.map((chat) => (
-        <div key={chat.id}>
-          {editingChatId === chat.id ? (
-            <ChatHistoryEditItem
-              editingTitle={editingTitle}
-              onTitleChange={setEditingTitle}
-              onSave={() => handleSaveTitle(chat.id)}
-              onCancel={handleCancelEdit}
-            />
-          ) : (
-            <ChatHistoryItem
-              id={chat.id}
-              title={chat.session_name}
-              isActive={currentChatId === chat.id}
-              isCompleted={chat.finished && chat.hasUserFeedback}
-              isFinishable={chat.isFinishable || false}
-              onSelect={() => setCurrentChatId(chat.id)}
-              onEdit={() => handleEditTitle(chat)}
-              onDelete={handleDeleteChat}
-            />
-          )}
-        </div>
-      ))}
+      <AnimatePresence mode="popLayout">
+        {chatHistories.map((chat) => (
+          <motion.div
+            key={chat.id}
+            layout
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ 
+              opacity: 0, 
+              x: 20,
+              scale: 0.95,
+              transition: { duration: 0.2 }
+            }}
+            transition={{ 
+              duration: 0.3,
+              type: "spring",
+              stiffness: 120,
+              damping: 20
+            }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            {editingChatId === chat.id ? (
+              <ChatHistoryEditItem
+                editingTitle={editingTitle}
+                onTitleChange={setEditingTitle}
+                onSave={() => handleSaveTitle(chat.id)}
+                onCancel={handleCancelEdit}
+              />
+            ) : (
+              <ChatHistoryItem
+                id={chat.id}
+                title={chat.session_name}
+                isActive={currentChatId === chat.id}
+                isCompleted={chat.finished && chat.hasUserFeedback}
+                isFinishable={chat.isFinishable || false}
+                onSelect={() => setCurrentChatId(chat.id)}
+                onEdit={() => handleEditTitle(chat)}
+                onDelete={handleDeleteChat}
+              />
+            )}
+          </motion.div>
+        ))}
+      </AnimatePresence>
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel } from "@/componen
 import { Sparkles } from "lucide-react";
 import ChatHistoryComponent from "./ChatHistory";
 import { SessionWithFeedback } from "@/types/chat";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface ChatSessionsSectionProps {
   title: string;
@@ -31,28 +32,47 @@ const ChatSessionsSection = ({
         {title}
       </SidebarGroupLabel>
       <SidebarGroupContent>
-        {sessions.length > 0 ? (
-          <div className="space-y-2">
-            <ChatHistoryComponent
-              chatHistories={sessions}
-              currentChatId={currentSessionId}
-              setChatHistories={onSessionsUpdate}
-              setCurrentChatId={onSessionSelect}
-            />
-          </div>
-        ) : (
-          <div className="px-3 py-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mx-auto mb-3">
-              <Sparkles className="w-6 h-6 text-purple-400" />
-            </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              {emptyMessage}
-            </p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-              {emptySubMessage}
-            </p>
-          </div>
-        )}
+        <AnimatePresence mode="wait">
+          {sessions.length > 0 ? (
+            <motion.div
+              key={`sessions-${sessions.length}`}
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -5 }}
+              transition={{ 
+                duration: 0.2,
+                staggerChildren: 0.05
+              }}
+              className="space-y-2"
+            >
+              <ChatHistoryComponent
+                chatHistories={sessions}
+                currentChatId={currentSessionId}
+                setChatHistories={onSessionsUpdate}
+                setCurrentChatId={onSessionSelect}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="empty-state"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.3 }}
+              className="px-3 py-6 text-center"
+            >
+              <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mx-auto mb-3">
+                <Sparkles className="w-6 h-6 text-purple-400" />
+              </div>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {emptyMessage}
+              </p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                {emptySubMessage}
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </SidebarGroupContent>
     </SidebarGroup>
   );
