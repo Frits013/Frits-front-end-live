@@ -1,112 +1,128 @@
-
-import { useState, useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { Sidebar, SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import ChatLayout from "@/components/chat/ChatLayout";
 import ChatSidebar from "@/components/chat/ChatSidebar";
 import ChatContainer from "@/components/chat/ChatContainer";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
 import { useChatMessages } from "@/hooks/use-chat-messages";
-import { useSessionSubscription } from "@/hooks/chat/use-session-subscription";
+import { useAuthOperations } from "@/hooks/use-auth-operations";
+import { useOnboarding } from "@/hooks/use-onboarding";
+import OnboardingWizard from "@/components/onboarding/OnboardingWizard";
+import { supabase } from "@/integrations/supabase/client";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import WelcomeAnimation from "@/components/chat/WelcomeAnimation";
 
 const Chat = () => {
-  const { id } = useParams<{ id?: string }>();
-  const { toast } = useToast();
-  const isMobile = useIsMobile();
-  
-  const [isConsultComplete, setIsConsultComplete] = useState(false);
-  const [dialogDismissed, setDialogDismissed] = useState(false);
-  const [hasFeedback, setHasFeedback] = useState(false);
-  
-  // Force refresh trigger for sidebar
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  
+  const navigate = useNavigate();
   const {
     chatSessions,
-    currentSessionId,
-    isLoading: sessionsLoading,
     setChatSessions,
+    currentSessionId,
     setCurrentSessionId,
     createNewChat,
-    updateSessionTitle
+    updateSessionTitle,
+    markConsultFinished,
+    isLoading,
   } = useChatSessions();
 
-  const {
-    messages,
-    setMessages
+  const { 
+    messages, 
+    setMessages, 
+    isConsultComplete, 
+    setIsConsultComplete, 
+    dialogDismissed, 
+    setDialogDismissed,
+    hasFeedback
   } = useChatMessages(currentSessionId);
+  
+  const { handleSignOut } = useAuthOperations();
+  const { showOnboarding, setShowOnboarding } = useOnboarding();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const checkingRef = useRef(false);
 
-  // Callback to force sidebar refresh when session status changes
-  const handleSessionStatusChange = () => {
-    console.log('Session status changed - forcing sidebar refresh');
-    setRefreshTrigger(prev => prev + 1);
+  // Check if user is authenticated
+  useEffect(() => {
+    // Only perform the check if not already checking
+    if (checkingRef.current) return;
+    
+    const checkAuth = async () => {
+      checkingRef.current = true;
+      setIsCheckingAuth(true);
+      
+      try {
+        // Get the current session
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          console.log("No active session, navigating to login");
+          navigate('/');
+          return;
+        }
+        
+        // Check if email is confirmed
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user || !user.email_confirmed_at) {
+          console.log("Email not confirmed, navigating to login");
+          await supabase.auth.signOut();
+          navigate('/');
+          return;
+        }
+        
+        console.log("User authenticated and email confirmed");
+      } catch (error) {
+        console.error("Error checking authentication:", error);
+        navigate('/');
+      } finally {
+        setIsCheckingAuth(false);
+        checkingRef.current = false;
+      }
+    };
+    
+    checkAuth();
+    
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        navigate('/');
+      }
+    });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
+
+  const handleConsultFinish = (sessionId: string) => {
+    markConsultFinished(sessionId);
   };
 
-  const handleConsultFinish = async (sessionId: string) => {
-    try {
-      console.log('Submitting feedback and finishing session:', sessionId);
-      
-      // Mark as finished in the local state first for immediate UI update
-      setIsConsultComplete(true);
-      setHasFeedback(true);
-      
-      // Update the session list to reflect the change
-      setChatSessions(prevSessions => 
-        prevSessions.map(session => 
-          session.id === sessionId 
-            ? { ...session, finished: true }
-            : session
-        )
-      );
-      
-    } catch (error) {
-      console.error('Error finishing consult:', error);
-      toast({
-        title: "Error",
-        description: "Failed to finish consult session",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleNewChat = () => {
-    createNewChat();
-  };
-
-  if (sessionsLoading) {
+  // Show loading state while checking auth or loading sessions
+  if (isCheckingAuth || isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+      <div className="h-screen w-full flex items-center justify-center">
+        <LoadingSpinner size="lg" text="Loading your consult sessions..." />
       </div>
     );
   }
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <Sidebar variant="sidebar" className="w-80 flex-shrink-0">
+      <WelcomeAnimation currentSessionId={currentSessionId} />
+      <ChatLayout
+        sidebar={
           <ChatSidebar
-            key={refreshTrigger}
             chatSessions={chatSessions}
             currentSessionId={currentSessionId}
             setChatSessions={setChatSessions}
             setCurrentSessionId={setCurrentSessionId}
-            onNewChat={handleNewChat}
-            isLoading={sessionsLoading}
+            onNewChat={createNewChat}
+            isLoading={isLoading}
           />
-        </Sidebar>
-        
-        <SidebarInset className="flex-1 min-w-0">
-          <div className="h-screen relative w-full">
-            {/* Mobile sidebar trigger - positioned fixed for mobile */}
-            {isMobile && (
-              <div className="fixed top-4 left-4 z-50">
-                <SidebarTrigger className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-800" />
-              </div>
-            )}
-            
+        }
+        content={
+          <>
             <ChatContainer
               messages={messages}
               setMessages={setMessages}
@@ -118,11 +134,14 @@ const Chat = () => {
               dialogDismissed={dialogDismissed}
               setDialogDismissed={setDialogDismissed}
               hasFeedback={hasFeedback}
-              onSessionStatusChange={handleSessionStatusChange}
             />
-          </div>
-        </SidebarInset>
-      </div>
+            <OnboardingWizard
+              open={showOnboarding}
+              onComplete={() => setShowOnboarding(false)}
+            />
+          </>
+        }
+      />
     </SidebarProvider>
   );
 };

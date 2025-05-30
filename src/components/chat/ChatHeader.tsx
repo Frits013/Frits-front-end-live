@@ -10,7 +10,6 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import ProfileDialog from "./ProfileDialog";
 import { useState } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ChatHeaderProps {
   onSignOut: () => void;
@@ -19,10 +18,9 @@ interface ChatHeaderProps {
 
 const ChatHeader = ({ onSignOut, isInCanvas = false }: ChatHeaderProps) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const isMobile = useIsMobile();
 
   return (
-    <div className={isInCanvas ? "" : isMobile ? "fixed top-4 right-4 z-50" : "absolute top-4 right-4 z-50"}>
+    <div className={isInCanvas ? "" : "absolute top-4 right-4 z-50"}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button 
@@ -31,8 +29,6 @@ const ChatHeader = ({ onSignOut, isInCanvas = false }: ChatHeaderProps) => {
             className={`rounded-full ${
               isInCanvas 
                 ? "bg-gradient-to-br from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white shadow-lg backdrop-blur-sm border border-purple-400/30 w-12 h-12" 
-                : isMobile 
-                ? "bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-800"
                 : ""
             }`}
           >
