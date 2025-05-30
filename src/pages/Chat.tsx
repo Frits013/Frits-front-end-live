@@ -98,8 +98,8 @@ const Chat = () => {
           />
         </Sidebar>
         
-        <SidebarInset className="flex-1 min-w-0">
-          <div className="h-screen relative">
+        <SidebarInset className="flex-1 min-w-0 ml-0">
+          <div className="h-screen relative w-full">
             {/* Mobile sidebar trigger - positioned fixed for mobile */}
             {isMobile && (
               <div className="fixed top-4 left-4 z-50">
