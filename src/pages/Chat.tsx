@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -97,7 +98,7 @@ const Chat = () => {
           />
         </Sidebar>
         
-        <SidebarInset className="flex-1">
+        <SidebarInset className="flex-1 min-w-0">
           <div className="h-screen relative">
             {/* Mobile sidebar trigger - positioned fixed for mobile */}
             {isMobile && (
