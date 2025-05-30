@@ -1,6 +1,7 @@
 
+import { useState } from "react";
+import { Trash2, Edit2, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Check, MessageCircle, Clock, Flag } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,6 +13,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 interface ChatHistoryItemProps {
   id: string;
@@ -34,124 +36,98 @@ const ChatHistoryItem = ({
   onEdit,
   onDelete,
 }: ChatHistoryItemProps) => {
-  // Determine the display state priority: completed > finishable > active/ongoing
-  const displayState = isCompleted ? 'completed' : isFinishable ? 'finishable' : 'ongoing';
-  
+  const [isHovered, setIsHovered] = useState(false);
+
+  const getStatusIcon = () => {
+    if (isCompleted) {
+      return <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />;
+    }
+    if (isFinishable) {
+      return <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />;
+    }
+    return <Clock className="w-4 h-4 text-blue-500 flex-shrink-0" />;
+  };
+
+  const getItemClasses = () => {
+    if (isCompleted) {
+      return "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700";
+    }
+    if (isFinishable) {
+      return "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700/50";
+    }
+    if (isActive) {
+      return "bg-purple-100 dark:bg-purple-900/30 border-purple-300 dark:border-purple-600";
+    }
+    return "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50";
+  };
+
   return (
-    <div className={`group relative rounded-xl border transition-all duration-200 ${
-      isActive 
-        ? "bg-gradient-to-r from-purple-500 to-indigo-600 border-purple-400 shadow-lg shadow-purple-500/25" 
-        : displayState === 'completed'
-        ? "bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
-        : displayState === 'finishable'
-        ? "bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 border-amber-200 dark:border-amber-800/40 hover:border-amber-300 dark:hover:border-amber-700/60 hover:shadow-md"
-        : "bg-white hover:bg-purple-50 dark:bg-slate-800/30 dark:hover:bg-purple-900/20 border-purple-100 dark:border-purple-800/30 hover:border-purple-200 dark:hover:border-purple-700/50 hover:shadow-md"
-    }`}>
-      <button
-        onClick={onSelect}
-        className="w-full p-4 text-left focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 rounded-xl"
-      >
-        <div className="flex items-start gap-3">
-          <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
-            isActive 
-              ? "bg-white/20 text-white" 
-              : displayState === 'completed'
-              ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400"
-              : displayState === 'finishable'
-              ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
-              : "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
-          }`}>
-            {displayState === 'completed' ? (
-              <Check className="w-4 h-4" />
-            ) : displayState === 'finishable' ? (
-              <Flag className="w-4 h-4" />
-            ) : isActive ? (
-              <MessageCircle className="w-4 h-4" />
-            ) : (
-              <Clock className="w-4 h-4" />
-            )}
-          </div>
-          
-          <div className="flex-1 min-w-0">
-            <h3 className={`font-medium text-sm truncate ${
-              isActive 
-                ? "text-white" 
-                : "text-slate-900 dark:text-slate-100"
-            }`}>
-              {title}
-            </h3>
-            <p className={`text-xs mt-1 ${
-              isActive 
-                ? "text-purple-100" 
-                : displayState === 'completed'
-                ? "text-slate-500 dark:text-slate-400"
-                : displayState === 'finishable'
-                ? "text-amber-600 dark:text-amber-400"
-                : "text-purple-600 dark:text-purple-400"
-            }`}>
-              {displayState === 'completed' ? "Completed" : displayState === 'finishable' ? "Ready to Finish" : isActive ? "Active" : "Ongoing"}
-            </p>
-          </div>
-        </div>
-      </button>
-      
-      {/* Action buttons */}
-      <div className={`absolute top-2 right-2 flex gap-1 transition-opacity duration-200 ${
-        isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-      }`}>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit();
-          }}
-          className={`h-7 w-7 ${
-            isActive 
-              ? "hover:bg-white/20 text-white/80 hover:text-white" 
-              : "hover:bg-purple-100 dark:hover:bg-purple-900/50 text-slate-500 hover:text-purple-600 dark:text-slate-400 dark:hover:text-purple-400"
-          }`}
-        >
-          <Pencil className="h-3 w-3" />
-        </Button>
+    <div
+      className={cn(
+        "group relative p-3 rounded-xl border transition-all duration-200 cursor-pointer",
+        getItemClasses()
+      )}
+      onClick={onSelect}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className="flex items-start gap-3 min-w-0">
+        {getStatusIcon()}
         
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
+        <div className="flex-1 min-w-0">
+          <h3 className={cn(
+            "text-sm font-medium truncate",
+            isCompleted ? "text-slate-600 dark:text-slate-400" : "text-gray-900 dark:text-gray-100"
+          )}>
+            {title}
+          </h3>
+        </div>
+
+        {(isHovered || isActive) && (
+          <div className="flex items-center gap-1 flex-shrink-0">
             <Button
               variant="ghost"
-              size="icon"
-              onClick={(e) => e.stopPropagation()}
-              className={`h-7 w-7 ${
-                isActive 
-                  ? "hover:bg-red-500/20 text-white/80 hover:text-red-200" 
-                  : "hover:bg-red-50 dark:hover:bg-red-900/30 text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
-              }`}
+              size="sm"
+              className="h-6 w-6 p-0 hover:bg-gray-200 dark:hover:bg-gray-600"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
             >
-              <Trash2 className="h-3 w-3" />
+              <Edit2 className="w-3 h-3" />
             </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent className="border-purple-200 dark:border-purple-800">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-slate-900 dark:text-slate-100">
-                Delete Consult History
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-slate-600 dark:text-slate-400">
-                Are you sure you want to delete "{title}"? This action cannot be undone and your consultation history will be permanently lost.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel className="border-slate-200 dark:border-slate-700">
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => onDelete(id)}
-                className="bg-red-500 hover:bg-red-600 text-white"
-              >
-                Delete Consult
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+            
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Chat Session</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete "{title}"? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => onDelete(id)}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        )}
       </div>
     </div>
   );

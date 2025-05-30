@@ -1,13 +1,14 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Sidebar, SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { Sidebar, SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import ChatSidebar from "@/components/chat/ChatSidebar";
 import ChatContainer from "@/components/chat/ChatContainer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
-import { useChatMessages } from "@/hooks/use-chat-messages";
+import { useChatMessages } from "@/hooks/chat/use-chat-messages";
 import { useSessionSubscription } from "@/hooks/chat/use-session-subscription";
 
 const Chat = () => {
@@ -28,9 +29,9 @@ const Chat = () => {
     isLoading: sessionsLoading,
     setChatSessions,
     setCurrentSessionId,
-    createNewChat, // This is the correct property name
-    updateSessionTitle // This is the correct property name
-  } = useChatSessions(); // Remove the id parameter as it's not expected
+    createNewChat,
+    updateSessionTitle
+  } = useChatSessions();
 
   const {
     messages,
@@ -71,7 +72,7 @@ const Chat = () => {
   };
 
   const handleNewChat = () => {
-    createNewChat(); // Call without parameters as expected
+    createNewChat();
   };
 
   if (sessionsLoading) {
@@ -85,9 +86,9 @@ const Chat = () => {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
-        <Sidebar>
+        <Sidebar variant="sidebar" className="w-80">
           <ChatSidebar
-            key={refreshTrigger} // Force re-render when refresh trigger changes
+            key={refreshTrigger}
             chatSessions={chatSessions}
             currentSessionId={currentSessionId}
             setChatSessions={setChatSessions}
@@ -98,19 +99,26 @@ const Chat = () => {
         </Sidebar>
         
         <SidebarInset className="flex-1">
-          <div className="h-screen">
+          <div className="h-screen relative">
+            {/* Mobile sidebar trigger - positioned fixed for mobile */}
+            {isMobile && (
+              <div className="fixed top-4 left-4 z-50">
+                <SidebarTrigger className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-800" />
+              </div>
+            )}
+            
             <ChatContainer
               messages={messages}
               setMessages={setMessages}
               currentChatId={currentSessionId}
-              updateChatTitle={updateSessionTitle} // Use the correct property name
+              updateChatTitle={updateSessionTitle}
               isConsultComplete={isConsultComplete}
               setIsConsultComplete={setIsConsultComplete}
               onConsultFinish={handleConsultFinish}
               dialogDismissed={dialogDismissed}
               setDialogDismissed={setDialogDismissed}
               hasFeedback={hasFeedback}
-              onSessionStatusChange={handleSessionStatusChange} // Pass the callback
+              onSessionStatusChange={handleSessionStatusChange}
             />
           </div>
         </SidebarInset>
