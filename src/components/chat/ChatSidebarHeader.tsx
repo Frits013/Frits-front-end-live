@@ -1,38 +1,32 @@
 
-import { Plus, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Plus, Sparkles } from "lucide-react";
 import { SidebarHeader } from "@/components/ui/sidebar";
-import { useNavigate } from "react-router-dom";
 
 interface ChatSidebarHeaderProps {
   onNewChat: () => void;
 }
 
 const ChatSidebarHeader = ({ onNewChat }: ChatSidebarHeaderProps) => {
-  const navigate = useNavigate();
-
   return (
-    <SidebarHeader className="border-b border-purple-200/50 dark:border-purple-800/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
-      <div className="flex flex-col gap-3 p-4">
-        <Button
-          onClick={onNewChat}
-          className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg transition-all duration-200 hover:shadow-xl"
-          size="lg"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          New Consult
-        </Button>
-        
-        <Button
-          onClick={() => navigate('/company-export')}
-          variant="outline"
-          className="w-full border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-300 dark:hover:bg-purple-950/50"
-          size="sm"
-        >
-          <Download className="mr-2 h-4 w-4" />
-          Export Data
-        </Button>
+    <SidebarHeader className="p-6 border-b border-purple-100/50 dark:border-purple-800/30">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+          <Sparkles className="w-4 h-4 text-white" />
+        </div>
+        <div>
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100">Frits AI</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Your AI Consultant</p>
+        </div>
       </div>
+      <Button
+        onClick={onNewChat}
+        className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg shadow-purple-500/25 border-0"
+        size="lg"
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Start New Consult
+      </Button>
     </SidebarHeader>
   );
 };
