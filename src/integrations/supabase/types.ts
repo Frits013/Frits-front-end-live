@@ -146,6 +146,7 @@ export type Database = {
           created_at: string
           info_id: string
           message_id: string | null
+          user_id: string | null
         }
         Insert: {
           category: string
@@ -154,6 +155,7 @@ export type Database = {
           created_at?: string
           info_id?: string
           message_id?: string | null
+          user_id?: string | null
         }
         Update: {
           category?: string
@@ -162,8 +164,16 @@ export type Database = {
           created_at?: string
           info_id?: string
           message_id?: string | null
+          user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_info_messages_user_id"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "info_message_id_fkey"
             columns: ["message_id"]
