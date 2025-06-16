@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ChatInput from "./ChatInput";
 import { ChatMessage } from "@/types/chat";
 import { useMessageSender } from "@/hooks/chat/use-message-sender";
@@ -35,6 +35,24 @@ const ChatInputContainer = ({
     isThinkingRef,
   });
 
+  // Load saved input message from localStorage on component mount
+  useEffect(() => {
+    const savedMessage = localStorage.getItem('chat-input-draft');
+    if (savedMessage) {
+      setInputMessage(savedMessage);
+    }
+  }, []);
+
+  // Save input message to localStorage whenever it changes
+  const handleInputChange = (message: string) => {
+    setInputMessage(message);
+    if (message.trim()) {
+      localStorage.setItem('chat-input-draft', message);
+    } else {
+      localStorage.removeItem('chat-input-draft');
+    }
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -50,11 +68,14 @@ const ChatInputContainer = ({
       // Clear input immediately for better UX
       const messageToSend = inputMessage.trim();
       setInputMessage("");
+      // Clear the saved draft since message is being sent
+      localStorage.removeItem('chat-input-draft');
       
       await sendMessage(messageToSend);
     } catch (error) {
       // Restore message if sending failed
       setInputMessage(inputMessage);
+      localStorage.setItem('chat-input-draft', inputMessage);
       console.error('Failed to send message:', error);
     } finally {
       // Reset submitting state
@@ -65,7 +86,7 @@ const ChatInputContainer = ({
   return (
     <ChatInput
       inputMessage={inputMessage}
-      setInputMessage={setInputMessage}
+      setInputMessage={handleInputChange}
       handleSendMessage={handleSendMessage}
       isProcessing={isProcessing || isSubmitting}
     />
