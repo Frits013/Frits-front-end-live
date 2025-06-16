@@ -12,10 +12,11 @@ export const useProfile = () => {
   const { toast } = useToast();
 
   const validateCompanyCode = async (code: string) => {
-    if (!code) return true;
+    if (!code) return true; // Empty code is allowed
     
-    if (!/^\d{1,8}$/.test(code)) {
-      setCodeError("Company code must be an 8-digit number");
+    // Check if code is exactly 8 digits
+    if (!/^\d{8}$/.test(code)) {
+      setCodeError("Company code must be exactly 8 digits");
       return false;
     }
     
@@ -65,7 +66,7 @@ export const useProfile = () => {
             .maybeSingle();
             
           if (companyCode) {
-            setCompanyCode(companyCode.code.toString());
+            setCompanyCode(companyCode.code.toString().padStart(8, '0'));
           } else {
             setCompanyCode("");
           }
@@ -93,15 +94,19 @@ export const useProfile = () => {
           description: "You must be logged in to update your profile",
           variant: "destructive",
         });
-        return;
+        setIsLoading(false);
+        return false;
       }
 
+      // If editing company code, validate it first
       if (isEditingCode) {
-        if (companyCode && !(await validateCompanyCode(companyCode))) {
+        const isValid = await validateCompanyCode(companyCode);
+        if (!isValid) {
           setIsLoading(false);
-          return;
+          return false;
         }
 
+        // Update company code
         if (companyCode) {
           const { data: success, error: functionError } = await supabase
             .rpc('set_user_company', {
@@ -109,13 +114,18 @@ export const useProfile = () => {
               company_code: companyCode
             });
 
-          if (functionError) throw functionError;
+          if (functionError) {
+            console.error("Function error:", functionError);
+            throw functionError;
+          }
+          
           if (!success) {
             setCodeError("Failed to link company code");
             setIsLoading(false);
-            return;
+            return false;
           }
         } else {
+          // Clear company code
           const { error: updateError } = await supabase
             .from("users")
             .update({ company_id: null })
@@ -125,6 +135,7 @@ export const useProfile = () => {
         }
       }
 
+      // Update other profile fields
       const { error } = await supabase
         .from("users")
         .update({
