@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -39,34 +38,50 @@ export const useChatOperations = (
     console.log('Attempting to delete chat:', chatId);
     
     try {
-      // Check for info_messages referencing the chat messages
-      const { data: infoMessages, error: infoError } = await supabase
-        .from('info_messages')
+      // First, get all message IDs for this session
+      const { data: chatMessages, error: messagesQueryError } = await supabase
+        .from('chat_messages')
         .select('message_id')
-        .filter('message_id', 'in', (query) => {
-          query
-            .select('message_id')
-            .from('chat_messages')
-            .eq('session_id', chatId);
-        });
+        .eq('session_id', chatId);
 
-      if (infoError) {
-        console.error('Error checking info messages:', infoError);
-      } else if (infoMessages && infoMessages.length > 0) {
-        console.log('Deleting associated info messages');
-        const { error: deleteInfoError } = await supabase
+      if (messagesQueryError) {
+        console.error('Error querying chat messages:', messagesQueryError);
+        toast({
+          title: "Error",
+          description: "Failed to query chat messages",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // If there are messages, check for and delete related info_messages
+      if (chatMessages && chatMessages.length > 0) {
+        const messageIds = chatMessages.map(m => m.message_id);
+        
+        console.log('Checking for info messages linked to message IDs:', messageIds);
+        const { data: infoMessages, error: infoQueryError } = await supabase
           .from('info_messages')
-          .delete()
-          .filter('message_id', 'in', infoMessages.map(m => m.message_id));
-          
-        if (deleteInfoError) {
-          console.error('Error deleting info messages:', deleteInfoError);
-          toast({
-            title: "Error",
-            description: "Failed to delete associated info messages",
-            variant: "destructive",
-          });
-          return;
+          .select('info_id')
+          .in('message_id', messageIds);
+
+        if (infoQueryError) {
+          console.error('Error checking info messages:', infoQueryError);
+        } else if (infoMessages && infoMessages.length > 0) {
+          console.log('Deleting associated info messages');
+          const { error: deleteInfoError } = await supabase
+            .from('info_messages')
+            .delete()
+            .in('message_id', messageIds);
+            
+          if (deleteInfoError) {
+            console.error('Error deleting info messages:', deleteInfoError);
+            toast({
+              title: "Error",
+              description: "Failed to delete associated info messages",
+              variant: "destructive",
+            });
+            return;
+          }
         }
       }
       
