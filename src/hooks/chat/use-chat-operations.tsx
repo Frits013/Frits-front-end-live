@@ -38,43 +38,36 @@ export const useChatOperations = (
     console.log('Attempting to delete chat:', chatId);
     
     try {
-      // First, get all message IDs for this session
-      const { data: chatMessages, error: messagesQueryError } = await supabase
-        .from('chat_messages')
-        .select('message_id')
-        .eq('session_id', chatId);
-
-      if (messagesQueryError) {
-        console.error('Error querying chat messages:', messagesQueryError);
-        toast({
-          title: "Error",
-          description: "Failed to query chat messages",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // If there are messages, check for and delete related info_messages
-      if (chatMessages && chatMessages.length > 0) {
-        const messageIds = chatMessages.map(m => m.message_id);
+      // First, delete all info_messages that reference messages in this session
+      // We need to do this in a way that handles the foreign key constraints properly
+      console.log('Deleting info messages for session:', chatId);
+      const { error: deleteInfoError } = await supabase
+        .from('info_messages')
+        .delete()
+        .in('message_id', 
+          supabase
+            .from('chat_messages')
+            .select('message_id')
+            .eq('session_id', chatId)
+        );
         
-        console.log('Checking for info messages linked to message IDs:', messageIds);
-        const { data: infoMessages, error: infoQueryError } = await supabase
-          .from('info_messages')
-          .select('info_id')
-          .in('message_id', messageIds);
-
-        if (infoQueryError) {
-          console.error('Error checking info messages:', infoQueryError);
-        } else if (infoMessages && infoMessages.length > 0) {
-          console.log('Deleting associated info messages');
-          const { error: deleteInfoError } = await supabase
+      if (deleteInfoError) {
+        console.error('Error deleting info messages:', deleteInfoError);
+        // Try alternative approach - get message IDs first, then delete info messages
+        const { data: chatMessages } = await supabase
+          .from('chat_messages')
+          .select('message_id')
+          .eq('session_id', chatId);
+          
+        if (chatMessages && chatMessages.length > 0) {
+          const messageIds = chatMessages.map(m => m.message_id);
+          const { error: altDeleteInfoError } = await supabase
             .from('info_messages')
             .delete()
             .in('message_id', messageIds);
             
-          if (deleteInfoError) {
-            console.error('Error deleting info messages:', deleteInfoError);
+          if (altDeleteInfoError) {
+            console.error('Alternative info message deletion failed:', altDeleteInfoError);
             toast({
               title: "Error",
               description: "Failed to delete associated info messages",
