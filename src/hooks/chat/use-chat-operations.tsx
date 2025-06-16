@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -39,58 +38,72 @@ export const useChatOperations = (
     console.log('Attempting to delete chat:', chatId);
     
     try {
-      // Step 1: Delete ALL info_messages for this session using a direct subquery
-      console.log('Step 1: Deleting info_messages using direct subquery');
-      const { error: deleteInfoError } = await supabase
-        .from('info_messages')
-        .delete()
-        .in('message_id', 
-          supabase
-            .from('chat_messages')
-            .select('message_id')
-            .eq('session_id', chatId)
-        );
-          
-      if (deleteInfoError) {
-        console.error('Error deleting info messages:', deleteInfoError);
+      // Step 1: Get all message IDs for this session
+      console.log('Step 1: Fetching message IDs for session:', chatId);
+      const { data: messageIds, error: fetchError } = await supabase
+        .from('chat_messages')
+        .select('message_id')
+        .eq('session_id', chatId);
+        
+      if (fetchError) {
+        console.error('Error fetching message IDs:', fetchError);
         toast({
           title: "Error",
-          description: `Failed to delete info messages: ${deleteInfoError.message}`,
+          description: `Failed to fetch message IDs: ${fetchError.message}`,
           variant: "destructive",
         });
         return;
       }
       
-      console.log('Successfully deleted info messages');
+      const messageIdArray = messageIds?.map(m => m.message_id) || [];
+      console.log('Found message IDs:', messageIdArray);
 
-      // Step 2: Verify no info_messages remain that reference this session's messages
-      console.log('Step 2: Verifying info_messages deletion');
-      const { data: remainingInfoMessages, error: verifyError } = await supabase
-        .from('info_messages')
-        .select('info_id, message_id')
-        .in('message_id', 
-          supabase
-            .from('chat_messages')
-            .select('message_id')
-            .eq('session_id', chatId)
-        );
+      // Step 2: Delete ALL info_messages for these message IDs
+      if (messageIdArray.length > 0) {
+        console.log('Step 2: Deleting info_messages for message IDs:', messageIdArray);
+        const { error: deleteInfoError } = await supabase
+          .from('info_messages')
+          .delete()
+          .in('message_id', messageIdArray);
+            
+        if (deleteInfoError) {
+          console.error('Error deleting info messages:', deleteInfoError);
+          toast({
+            title: "Error",
+            description: `Failed to delete info messages: ${deleteInfoError.message}`,
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        console.log('Successfully deleted info messages');
 
-      if (verifyError) {
-        console.error('Error verifying info_messages deletion:', verifyError);
-      } else if (remainingInfoMessages && remainingInfoMessages.length > 0) {
-        console.error('Still have remaining info_messages:', remainingInfoMessages);
-        toast({
-          title: "Error",
-          description: `Failed to completely delete info messages. ${remainingInfoMessages.length} records remain.`,
-          variant: "destructive",
-        });
-        return;
+        // Step 3: Verify no info_messages remain for these message IDs
+        console.log('Step 3: Verifying info_messages deletion');
+        const { data: remainingInfoMessages, error: verifyError } = await supabase
+          .from('info_messages')
+          .select('info_id, message_id')
+          .in('message_id', messageIdArray);
+
+        if (verifyError) {
+          console.error('Error verifying info_messages deletion:', verifyError);
+        } else if (remainingInfoMessages && remainingInfoMessages.length > 0) {
+          console.error('Still have remaining info_messages:', remainingInfoMessages);
+          toast({
+            title: "Error",
+            description: `Failed to completely delete info messages. ${remainingInfoMessages.length} records remain.`,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        console.log('Verification passed: No info_messages remain');
+      } else {
+        console.log('No message IDs found, skipping info_messages deletion');
       }
 
-      console.log('Verification passed: No info_messages remain');
-
-      // Step 3: Now delete chat messages
-      console.log('Step 3: Deleting chat messages for session:', chatId);
+      // Step 4: Now delete chat messages
+      console.log('Step 4: Deleting chat messages for session:', chatId);
       const { error: messagesError } = await supabase
         .from('chat_messages')
         .delete()
@@ -107,8 +120,8 @@ export const useChatOperations = (
       }
       console.log('Successfully deleted chat messages');
 
-      // Step 4: Finally delete the session
-      console.log('Step 4: Deleting chat session:', chatId);
+      // Step 5: Finally delete the session
+      console.log('Step 5: Deleting chat session:', chatId);
       const { error: sessionError } = await supabase
         .from('chat_sessions')
         .delete()
