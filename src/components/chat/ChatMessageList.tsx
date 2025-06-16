@@ -22,7 +22,10 @@ const ChatMessageList = ({
     if (containerRef.current && messages.length > 0) {
       // Only scroll if we have more messages than before (new message added)
       if (messages.length > previousMessageCount) {
-        containerRef.current.scrollTop = containerRef.current.scrollHeight;
+        containerRef.current.scrollTo({
+          top: containerRef.current.scrollHeight,
+          behavior: 'smooth'
+        });
       }
       setPreviousMessageCount(messages.length);
     }
