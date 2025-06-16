@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -38,48 +39,47 @@ export const useChatOperations = (
     console.log('Attempting to delete chat:', chatId);
     
     try {
-      // First, delete all info_messages that reference messages in this session
-      // We need to do this in a way that handles the foreign key constraints properly
-      console.log('Deleting info messages for session:', chatId);
-      const { error: deleteInfoError } = await supabase
-        .from('info_messages')
-        .delete()
-        .in('message_id', 
-          supabase
-            .from('chat_messages')
-            .select('message_id')
-            .eq('session_id', chatId)
-        );
+      // Step 1: Get all message IDs for this session
+      console.log('Getting all message IDs for session:', chatId);
+      const { data: chatMessages, error: messagesQueryError } = await supabase
+        .from('chat_messages')
+        .select('message_id')
+        .eq('session_id', chatId);
+
+      if (messagesQueryError) {
+        console.error('Error querying chat messages:', messagesQueryError);
+        toast({
+          title: "Error",
+          description: "Failed to query chat messages",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Step 2: Delete info_messages that reference these messages (if any exist)
+      if (chatMessages && chatMessages.length > 0) {
+        const messageIds = chatMessages.map(m => m.message_id);
+        console.log('Deleting info messages for message IDs:', messageIds);
         
-      if (deleteInfoError) {
-        console.error('Error deleting info messages:', deleteInfoError);
-        // Try alternative approach - get message IDs first, then delete info messages
-        const { data: chatMessages } = await supabase
-          .from('chat_messages')
-          .select('message_id')
-          .eq('session_id', chatId);
+        const { error: deleteInfoError } = await supabase
+          .from('info_messages')
+          .delete()
+          .in('message_id', messageIds);
           
-        if (chatMessages && chatMessages.length > 0) {
-          const messageIds = chatMessages.map(m => m.message_id);
-          const { error: altDeleteInfoError } = await supabase
-            .from('info_messages')
-            .delete()
-            .in('message_id', messageIds);
-            
-          if (altDeleteInfoError) {
-            console.error('Alternative info message deletion failed:', altDeleteInfoError);
-            toast({
-              title: "Error",
-              description: "Failed to delete associated info messages",
-              variant: "destructive",
-            });
-            return;
-          }
+        if (deleteInfoError) {
+          console.error('Error deleting info messages:', deleteInfoError);
+          toast({
+            title: "Error",
+            description: "Failed to delete associated info messages",
+            variant: "destructive",
+          });
+          return;
         }
+        console.log('Successfully deleted info messages');
       }
       
-      // Delete chat messages
-      console.log('Deleting chat messages');
+      // Step 3: Delete chat messages
+      console.log('Deleting chat messages for session:', chatId);
       const { error: messagesError } = await supabase
         .from('chat_messages')
         .delete()
@@ -94,9 +94,10 @@ export const useChatOperations = (
         });
         return;
       }
+      console.log('Successfully deleted chat messages');
 
-      // Delete the session
-      console.log('Deleting chat session');
+      // Step 4: Delete the session
+      console.log('Deleting chat session:', chatId);
       const { error: sessionError } = await supabase
         .from('chat_sessions')
         .delete()
