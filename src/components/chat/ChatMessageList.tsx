@@ -1,7 +1,7 @@
 
 import { ChatMessage } from "@/types/chat";
 import ChatMessages from "./ChatMessages";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 
 interface ChatMessageListProps {
   messages: ChatMessage[];
@@ -15,6 +15,13 @@ const ChatMessageList = ({
   showFinishButton = false
 }: ChatMessageListProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when new messages are added
+  useEffect(() => {
+    if (containerRef.current && messages.length > 0) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   return (
     <div 
