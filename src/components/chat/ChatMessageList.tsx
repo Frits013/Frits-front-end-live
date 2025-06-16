@@ -1,7 +1,7 @@
 
 import { ChatMessage } from "@/types/chat";
 import ChatMessages from "./ChatMessages";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 
 interface ChatMessageListProps {
   messages: ChatMessage[];
@@ -15,13 +15,23 @@ const ChatMessageList = ({
   showFinishButton = false
 }: ChatMessageListProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [previousMessageCount, setPreviousMessageCount] = useState(0);
 
-  // Auto-scroll to bottom when new messages are added
+  // Auto-scroll to bottom only when new messages are added
   useEffect(() => {
     if (containerRef.current && messages.length > 0) {
-      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+      // Only scroll if we have more messages than before (new message added)
+      if (messages.length > previousMessageCount) {
+        containerRef.current.scrollTop = containerRef.current.scrollHeight;
+      }
+      setPreviousMessageCount(messages.length);
     }
-  }, [messages]);
+  }, [messages, previousMessageCount]);
+
+  // Reset message count when session changes
+  useEffect(() => {
+    setPreviousMessageCount(0);
+  }, [currentSessionId]);
 
   return (
     <div 
