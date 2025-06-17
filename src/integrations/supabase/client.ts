@@ -30,7 +30,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
   global: {
     headers: {
-      apikey: supabaseAnonKey,
+      'apikey': supabaseAnonKey,
+      'Authorization': `Bearer ${supabaseAnonKey}`,
     },
     // Use the custom fetch function with retry logic
     fetch: customFetch,
