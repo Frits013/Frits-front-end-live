@@ -98,16 +98,18 @@ export const useMessageSender = ({
         request_id: requestId,
       });
       
-      // Call the Supabase Edge Function with the JWT token
+      // Call the Supabase Edge Function with proper headers
       const functionResponse = await supabase.functions.invoke('chat', {
         body: {
           session_id: currentChatId,
           message_id,
           message: inputMessage,
-          request_id: requestId, // Include request ID for duplicate detection
+          request_id: requestId,
         },
         headers: {
-          Authorization: `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`,
+          'apikey': supabase.supabaseKey,
+          'Content-Type': 'application/json',
         },
       });
       
