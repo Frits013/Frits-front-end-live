@@ -1,11 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from '../_shared/cors.ts';
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -14,40 +10,73 @@ serve(async (req) => {
   }
 
   try {
-    // Log all headers for debugging purposes.
-    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
-    
-    // Validate the authorization header.
+    // Get the authorization header and validate it
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
       console.error('No authorization header');
       return new Response(
-        JSON.stringify({ code: 401, message: "Missing authorization header" }),
+        JSON.stringify({ error: "Missing authorization header" }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    if (!authHeader.startsWith('Bearer ')) {
-      console.error('Invalid authorization header format');
+    // Create Supabase client with service role for server operations
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Create client with user token for user-specific operations
+    const supabaseUser = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: {
+            authorization: authHeader,
+          },
+        },
+      }
+    );
+
+    // Verify the user's session
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    if (userError || !user) {
+      console.error('Invalid user session:', userError);
       return new Response(
-        JSON.stringify({
-          code: 401,
-          message: "Invalid authorization header format. Expected Bearer token"
-        }),
+        JSON.stringify({ error: "Invalid user session" }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const { message, session_id, message_id } = await req.json();
-    console.log('Received request:', { session_id, message_id });
-    console.log('Message content:', message);
+    console.log('Received request:', { session_id, message_id, user_id: user.id });
 
-    // Extract the token for debugging.
-    const supabaseToken = authHeader.split(' ')[1];
-    console.log('Supabase token length:', supabaseToken.length);
-    console.log('Supabase token prefix:', supabaseToken.substring(0, 20) + '...');
+    // Validate that the session belongs to the user
+    const { data: session, error: sessionError } = await supabaseUser
+      .from('chat_sessions')
+      .select('id, user_id, finished')
+      .eq('id', session_id)
+      .eq('user_id', user.id)
+      .single();
 
-    // Get the FastAPI URL from environment variables.
+    if (sessionError || !session) {
+      console.error('Session not found or access denied:', sessionError);
+      return new Response(
+        JSON.stringify({ error: "Session not found or access denied" }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (session.finished) {
+      console.log('Session is already finished');
+      return new Response(
+        JSON.stringify({ error: "Session is already finished" }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get the FastAPI URL from environment variables
     const fastApiUrl = Deno.env.get('DEVELOPMENT_FASTAPI_URL');
     if (!fastApiUrl) {
       console.log('DEVELOPMENT_FASTAPI_URL not found, using direct response instead');
@@ -62,9 +91,8 @@ serve(async (req) => {
       );
     }
     
-    // Exchange the Supabase token for a FastAPI token.
+    // Exchange the Supabase token for a FastAPI token
     console.log(`Exchanging Supabase token at: ${fastApiUrl}/auth/token`);
-    console.log('Making token exchange request...');
     const tokenResponse = await fetch(`${fastApiUrl}/auth/token`, {
       method: 'POST',
       headers: {
@@ -76,7 +104,6 @@ serve(async (req) => {
 
     console.log('Token exchange response status:', tokenResponse.status);
     const tokenResponseText = await tokenResponse.text();
-    console.log('Token exchange raw response text:', tokenResponseText.substring(0, 200) + (tokenResponseText.length > 200 ? '...' : ''));
 
     let tokenData;
     try {
@@ -86,7 +113,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           error: 'Failed to parse authentication response',
-          raw_response: tokenResponseText.substring(0, 500)
+          details: tokenResponseText.substring(0, 500)
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -116,7 +143,7 @@ serve(async (req) => {
     
     console.log('Token exchange successful, received FastAPI token');
     
-    // Call the FastAPI chat endpoint using the new token.
+    // Call the FastAPI chat endpoint using the new token
     console.log(`Calling FastAPI chat endpoint at: ${fastApiUrl}/chat/send_message`);
     
     const requestBody = JSON.stringify({ session_id, message_id, message });
@@ -132,9 +159,8 @@ serve(async (req) => {
     });
 
     console.log('FastAPI response status:', response.status);
-    console.log('FastAPI response headers:', Object.fromEntries(response.headers.entries()));
     
-    // Read the raw response text for debugging purposes.
+    // Read the raw response text for debugging purposes
     const responseText = await response.text();
     console.log('FastAPI raw response text (first 200 chars):',
       responseText.substring(0, 200) + (responseText.length > 200 ? '...' : '')
@@ -166,8 +192,7 @@ serve(async (req) => {
       );
     }
     
-    // Option B: Use the error field from the backend.
-    // If the backend indicates an error, log it and pass the original message through.
+    // If the backend indicates an error, log it and pass the message through
     if (data.error) {
       console.warn('Backend reported an error:', data.response);
       return new Response(
@@ -180,7 +205,7 @@ serve(async (req) => {
       );
     }
     
-    // For successful responses, return the backend data directly.
+    // For successful responses, return the backend data directly
     return new Response(
       JSON.stringify({
         response: data.response,
