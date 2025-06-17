@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -17,22 +16,10 @@ export const useChatOperations = (
   const updateChatTitle = async (chatId: string, newTitle: string) => {
     console.log('Updating chat title:', { chatId, newTitle });
     
-    // Check if user is authenticated
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to update chat titles",
-        variant: "destructive",
-      });
-      return false;
-    }
-    
     const { error } = await supabase
       .from('chat_sessions')
       .update({ session_name: newTitle.trim() })
-      .eq('id', chatId)
-      .eq('user_id', session.user.id); // Ensure user owns the session
+      .eq('id', chatId);
     
     if (error) {
       console.error('Error updating chat title:', error);
@@ -51,24 +38,12 @@ export const useChatOperations = (
     console.log('Attempting to delete chat:', chatId);
     
     try {
-      // Check if user is authenticated
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to delete chats",
-          variant: "destructive",
-        });
-        return;
-      }
-
       // Step 1: Get all message IDs for this session first
       console.log('Step 1: Fetching message IDs for session:', chatId);
       const { data: messages, error: fetchError } = await supabase
         .from('chat_messages')
         .select('message_id')
-        .eq('session_id', chatId)
-        .eq('user_id', session.user.id); // Ensure user owns the messages
+        .eq('session_id', chatId);
         
       if (fetchError) {
         console.error('Error fetching message IDs:', fetchError);
@@ -109,8 +84,7 @@ export const useChatOperations = (
       const { error: messagesError } = await supabase
         .from('chat_messages')
         .delete()
-        .eq('session_id', chatId)
-        .eq('user_id', session.user.id); // Ensure user owns the messages
+        .eq('session_id', chatId);
         
       if (messagesError) {
         console.error('Error deleting chat messages:', messagesError);
@@ -128,8 +102,7 @@ export const useChatOperations = (
       const { error: sessionError } = await supabase
         .from('chat_sessions')
         .delete()
-        .eq('id', chatId)
-        .eq('user_id', session.user.id); // Ensure user owns the session
+        .eq('id', chatId);
 
       if (sessionError) {
         console.error('Error deleting chat session:', sessionError);
