@@ -38,49 +38,55 @@ export const useChatOperations = (
     console.log('Attempting to delete chat:', chatId);
     
     try {
-      // Step 1: Get all message IDs for this session first
-      console.log('Step 1: Fetching message IDs for session:', chatId);
-      const { data: messages, error: fetchError } = await supabase
+      // First, get all message IDs for this session
+      const { data: chatMessages, error: messagesQueryError } = await supabase
         .from('chat_messages')
         .select('message_id')
         .eq('session_id', chatId);
-        
-      if (fetchError) {
-        console.error('Error fetching message IDs:', fetchError);
+
+      if (messagesQueryError) {
+        console.error('Error querying chat messages:', messagesQueryError);
         toast({
           title: "Error",
-          description: `Failed to fetch message IDs: ${fetchError.message}`,
+          description: "Failed to query chat messages",
           variant: "destructive",
         });
         return;
       }
-      
-      const messageIds = messages?.map(m => m.message_id) || [];
-      console.log('Found message IDs:', messageIds);
 
-      // Step 2: Delete all info_messages for these message IDs
-      if (messageIds.length > 0) {
-        console.log('Step 2: Deleting info_messages for message IDs:', messageIds);
-        const { error: deleteInfoError } = await supabase
-          .from('info_messages')
-          .delete()
-          .in('message_id', messageIds);
-            
-        if (deleteInfoError) {
-          console.error('Error deleting info messages:', deleteInfoError);
-          toast({
-            title: "Error",
-            description: `Failed to delete info messages: ${deleteInfoError.message}`,
-            variant: "destructive",
-          });
-          return;
-        }
+      // If there are messages, check for and delete related info_messages
+      if (chatMessages && chatMessages.length > 0) {
+        const messageIds = chatMessages.map(m => m.message_id);
         
-        console.log('Successfully deleted all info messages for session');
-      }
+        console.log('Checking for info messages linked to message IDs:', messageIds);
+        const { data: infoMessages, error: infoQueryError } = await supabase
+          .from('info_messages')
+          .select('info_id')
+          .in('message_id', messageIds);
 
-      // Step 3: Delete all chat messages for this session
-      console.log('Step 3: Deleting chat messages for session:', chatId);
+        if (infoQueryError) {
+          console.error('Error checking info messages:', infoQueryError);
+        } else if (infoMessages && infoMessages.length > 0) {
+          console.log('Deleting associated info messages');
+          const { error: deleteInfoError } = await supabase
+            .from('info_messages')
+            .delete()
+            .in('message_id', messageIds);
+            
+          if (deleteInfoError) {
+            console.error('Error deleting info messages:', deleteInfoError);
+            toast({
+              title: "Error",
+              description: "Failed to delete associated info messages",
+              variant: "destructive",
+            });
+            return;
+          }
+        }
+      }
+      
+      // Delete chat messages
+      console.log('Deleting chat messages');
       const { error: messagesError } = await supabase
         .from('chat_messages')
         .delete()
@@ -90,15 +96,14 @@ export const useChatOperations = (
         console.error('Error deleting chat messages:', messagesError);
         toast({
           title: "Error",
-          description: `Failed to delete chat messages: ${messagesError.message}`,
+          description: "Failed to delete chat messages",
           variant: "destructive",
         });
         return;
       }
-      console.log('Successfully deleted chat messages');
 
-      // Step 4: Delete the session
-      console.log('Step 4: Deleting chat session:', chatId);
+      // Delete the session
+      console.log('Deleting chat session');
       const { error: sessionError } = await supabase
         .from('chat_sessions')
         .delete()

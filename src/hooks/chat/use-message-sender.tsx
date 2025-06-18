@@ -85,19 +85,29 @@ export const useMessageSender = ({
         throw new Error('Failed to save message');
       }
 
+      // Log token details for debugging
+      const token = session.access_token;
+      console.log('Session object available:', !!session);
+      console.log('Access token type:', typeof token);
+      console.log('Access token length:', token.length);
+      console.log('Access token prefix:', token.substring(0, 15) + '...');
+      
       console.log('Making chat function call with:', {
         session_id: currentChatId,
         message_id: message_id,
         request_id: requestId,
       });
       
-      // Call the Supabase Edge Function
+      // Call the Supabase Edge Function with the JWT token
       const functionResponse = await supabase.functions.invoke('chat', {
         body: {
           session_id: currentChatId,
           message_id,
           message: inputMessage,
-          request_id: requestId,
+          request_id: requestId, // Include request ID for duplicate detection
+        },
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
       });
       
