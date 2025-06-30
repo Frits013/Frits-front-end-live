@@ -72,10 +72,16 @@ Structure your summary with clear section headings and keep it under 500 words.`
     }
   }, [open]);
 
-  const handleSave = async () => {
-    const success = await saveProfile(isEditingCode);
+  const handleSaveCompanyCode = async () => {
+    const success = await saveProfile(true); // Pass true to indicate we're editing company code
     if (success) {
       setIsEditingCode(false);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    const success = await saveProfile(false); // Pass false for regular profile save
+    if (success) {
       onOpenChange(false);
     }
   };
@@ -97,7 +103,7 @@ Structure your summary with clear section headings and keep it under 500 words.`
             }}
             onEditClick={() => setIsEditingCode(true)}
             onCancelEdit={() => setIsEditingCode(false)}
-            onConfirmEdit={() => setIsEditingCode(false)}
+            onSaveEdit={handleSaveCompanyCode}
           />
           
           <div className="grid gap-2">
@@ -141,7 +147,7 @@ Structure your summary with clear section headings and keep it under 500 words.`
             Cancel
           </Button>
           <Button
-            onClick={handleSave}
+            onClick={handleSaveProfile}
             disabled={isLoading}
             type="button"
           >

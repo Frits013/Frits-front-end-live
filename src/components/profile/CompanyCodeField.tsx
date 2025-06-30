@@ -10,7 +10,7 @@ interface CompanyCodeFieldProps {
   onCodeChange: (code: string) => void;
   onEditClick: () => void;
   onCancelEdit: () => void;
-  onConfirmEdit: () => void;
+  onSaveEdit: () => void;
 }
 
 const CompanyCodeField = ({
@@ -20,7 +20,7 @@ const CompanyCodeField = ({
   onCodeChange,
   onEditClick,
   onCancelEdit,
-  onConfirmEdit,
+  onSaveEdit,
 }: CompanyCodeFieldProps) => {
   return (
     <div className="grid gap-2">
@@ -52,9 +52,9 @@ const CompanyCodeField = ({
             </Button>
             <Button 
               size="sm" 
-              onClick={onConfirmEdit}
+              onClick={onSaveEdit}
             >
-              Confirm
+              Save
             </Button>
           </div>
         </div>
