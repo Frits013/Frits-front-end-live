@@ -1,7 +1,10 @@
+
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef } from "react";
+
+const isDev = process.env.NODE_ENV !== 'production';
 
 export const useAuthOperations = () => {
   const navigate = useNavigate();
@@ -10,24 +13,34 @@ export const useAuthOperations = () => {
   const isCheckingRef = useRef<boolean>(false);
   const emailConfirmationCache = useRef<Record<string, boolean>>({});
   const signInInProgressRef = useRef<boolean>(false);
+  const authStateProcessingRef = useRef<boolean>(false);
 
   // Check email confirmation status on mount and when auth state changes
   useEffect(() => {
     // Set up auth state listener FIRST (best practice)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state changed:", event);
+      // Prevent processing the same auth state multiple times
+      if (authStateProcessingRef.current) {
+        return;
+      }
+      
+      if (isDev) console.log("Auth state changed:", event);
       
       if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && !isCheckingRef.current) {
+        authStateProcessingRef.current = true;
         // Don't run other Supabase functions directly inside the callback
         // Use setTimeout to avoid Supabase deadlocks
         setTimeout(() => {
-          checkEmailConfirmation();
-        }, 0);
+          checkEmailConfirmation().finally(() => {
+            authStateProcessingRef.current = false;
+          });
+        }, 100); // Increased delay to prevent rapid succession calls
       }
       
       // Reset sign in progress when signed out
       if (event === 'SIGNED_OUT') {
         signInInProgressRef.current = false;
+        authStateProcessingRef.current = false;
         // Clear email confirmation cache on sign out
         emailConfirmationCache.current = {};
       }
@@ -65,8 +78,10 @@ export const useAuthOperations = () => {
         return emailConfirmationCache.current[userEmail];
       }
       
-      console.log("Checking email confirmation for user:", user.email);
-      console.log("Email confirmed at:", user.email_confirmed_at);
+      if (isDev) {
+        console.log("Checking email confirmation for user:", user.email);
+        console.log("Email confirmed at:", user.email_confirmed_at);
+      }
       
       const isConfirmed = user.email_confirmed_at !== null;
       setIsEmailConfirmed(isConfirmed);
@@ -79,7 +94,7 @@ export const useAuthOperations = () => {
       isCheckingRef.current = false;
       return isConfirmed;
     } catch (error) {
-      console.error("Error checking email confirmation:", error);
+      if (isDev) console.error("Error checking email confirmation:", error);
       setIsEmailConfirmed(false);
       isCheckingRef.current = false;
       return false;
@@ -102,7 +117,7 @@ export const useAuthOperations = () => {
       await supabase.auth.signOut();
       navigate('/');
     } catch (error) {
-      console.error('Sign out error:', error);
+      if (isDev) console.error('Sign out error:', error);
       toast({
         title: "Sign Out Failed",
         description: "An error occurred while signing out. Please try again.",
@@ -121,7 +136,7 @@ export const useAuthOperations = () => {
       });
 
       if (error) {
-        console.error('GitHub sign in error:', error);
+        if (isDev) console.error('GitHub sign in error:', error);
         toast({
           title: "Sign In Failed",
           description: error.message,
@@ -129,7 +144,7 @@ export const useAuthOperations = () => {
         });
       }
     } catch (error) {
-      console.error('GitHub sign in exception:', error);
+      if (isDev) console.error('GitHub sign in exception:', error);
       toast({
         title: "Sign In Failed",
         description: "An unexpected error occurred during GitHub sign in.",
@@ -148,7 +163,7 @@ export const useAuthOperations = () => {
       });
 
       if (error) {
-        console.error('Google sign in error:', error);
+        if (isDev) console.error('Google sign in error:', error);
         toast({
           title: "Sign In Failed",
           description: error.message,
@@ -156,7 +171,7 @@ export const useAuthOperations = () => {
         });
       }
     } catch (error) {
-      console.error('Google sign in exception:', error);
+      if (isDev) console.error('Google sign in exception:', error);
       toast({
         title: "Sign In Failed",
         description: "An unexpected error occurred during Google sign in.",
@@ -167,7 +182,7 @@ export const useAuthOperations = () => {
 
   const handleEmailSignUp = async (email: string, password: string) => {
     try {
-      console.log("Attempting to sign up with email:", email);
+      if (isDev) console.log("Attempting to sign up with email:", email);
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -178,11 +193,11 @@ export const useAuthOperations = () => {
       });
 
       if (error) {
-        console.error('Email sign up error:', error);
+        if (isDev) console.error('Email sign up error:', error);
         return { error };
       }
       
-      console.log("Sign up successful:", data);
+      if (isDev) console.log("Sign up successful:", data);
       
       // Check if we received a confirmation flow
       if (data?.user && !data.user.email_confirmed_at) {
@@ -201,7 +216,7 @@ export const useAuthOperations = () => {
       
       return { data };
     } catch (error: any) {
-      console.error('Email sign up exception:', error);
+      if (isDev) console.error('Email sign up exception:', error);
       // Don't show toast here, let the calling component handle it
       return { error };
     }
@@ -211,12 +226,12 @@ export const useAuthOperations = () => {
     try {
       // Prevent multiple sign-in attempts in progress
       if (signInInProgressRef.current) {
-        console.log("Sign in already in progress, ignoring duplicate request");
+        if (isDev) console.log("Sign in already in progress, ignoring duplicate request");
         return { error: { message: "Sign in already in progress" } };
       }
       
       signInInProgressRef.current = true;
-      console.log("Attempting to sign in with email:", email);
+      if (isDev) console.log("Attempting to sign in with email:", email);
       
       // Clear any cached confirmation status for this user
       clearEmailConfirmationCache(email);
@@ -227,7 +242,7 @@ export const useAuthOperations = () => {
       });
 
       if (error) {
-        console.error('Email sign in error:', error);
+        if (isDev) console.error('Email sign in error:', error);
         signInInProgressRef.current = false;
         
         // Enhanced error reporting
@@ -243,7 +258,7 @@ export const useAuthOperations = () => {
         return { error };
       }
 
-      console.log("Sign in successful:", data);
+      if (isDev) console.log("Sign in successful:", data);
 
       // Check if email is confirmed using a direct user fetch
       const { data: userData } = await supabase.auth.getUser();
@@ -255,7 +270,7 @@ export const useAuthOperations = () => {
       }
       
       if (!isConfirmed) {
-        console.log("Email not confirmed, signing out user");
+        if (isDev) console.log("Email not confirmed, signing out user");
         toast({
           title: "Email Not Confirmed",
           description: "Please check your email and confirm your account before signing in.",
@@ -278,7 +293,7 @@ export const useAuthOperations = () => {
       return { data };
       
     } catch (error: any) {
-      console.error('Email sign in exception:', error);
+      if (isDev) console.error('Email sign in exception:', error);
       signInInProgressRef.current = false;
       
       // Better error handling for specific cases
@@ -303,7 +318,7 @@ export const useAuthOperations = () => {
 
   const resendConfirmationEmail = async (email: string) => {
     try {
-      console.log("Attempting to resend confirmation email to:", email);
+      if (isDev) console.log("Attempting to resend confirmation email to:", email);
       
       const { error } = await supabase.auth.resend({
         type: 'signup',
@@ -314,7 +329,7 @@ export const useAuthOperations = () => {
       });
 
       if (error) {
-        console.error("Failed to resend confirmation email:", error);
+        if (isDev) console.error("Failed to resend confirmation email:", error);
         toast({
           title: "Failed to Resend",
           description: error.message,
@@ -323,7 +338,7 @@ export const useAuthOperations = () => {
         return { error };
       }
 
-      console.log("Confirmation email resent successfully");
+      if (isDev) console.log("Confirmation email resent successfully");
       toast({
         title: "Email Sent",
         description: "Confirmation email has been resent. Please check your inbox.",
@@ -332,7 +347,7 @@ export const useAuthOperations = () => {
       
       return { success: true };
     } catch (error) {
-      console.error('Resend confirmation exception:', error);
+      if (isDev) console.error('Resend confirmation exception:', error);
       toast({
         title: "Failed to Resend",
         description: "An unexpected error occurred when resending the confirmation email.",

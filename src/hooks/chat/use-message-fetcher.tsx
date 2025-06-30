@@ -1,7 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { ChatMessage } from "@/types/chat";
 import { supabase } from "@/integrations/supabase/client";
 import { INITIAL_MESSAGE } from "@/hooks/chat-sessions/use-session-creation";
+
+const isDev = process.env.NODE_ENV !== 'production';
 
 export const useMessageFetcher = (sessionId: string | null) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -13,7 +16,7 @@ export const useMessageFetcher = (sessionId: string | null) => {
     const fetchMessages = async () => {
       if (!sessionId) return;
 
-      console.log('Loading messages for session:', sessionId);
+      if (isDev) console.log('Loading messages for session:', sessionId);
 
       try {
         // First, check if the session is marked as finished
@@ -24,7 +27,7 @@ export const useMessageFetcher = (sessionId: string | null) => {
           .single();
 
         if (sessionError) {
-          console.error('Error fetching session status:', sessionError);
+          if (isDev) console.error('Error fetching session status:', sessionError);
         } else if (sessionData) {
           // Update the consult complete state based on the finished column
           setIsConsultComplete(sessionData.finished);
@@ -38,7 +41,7 @@ export const useMessageFetcher = (sessionId: string | null) => {
               .maybeSingle();
             
             if (feedbackError) {
-              console.error('Error checking feedback existence:', feedbackError);
+              if (isDev) console.error('Error checking feedback existence:', feedbackError);
             } else {
               // Set whether this session has feedback or not
               setHasFeedback(!!feedbackData);
@@ -57,14 +60,13 @@ export const useMessageFetcher = (sessionId: string | null) => {
           .order('created_at', { ascending: true });
 
         if (error) {
-          console.error('Error loading messages:', error);
+          if (isDev) console.error('Error loading messages:', error);
           return;
         }
 
         if (data) {
           // Process the messages - filter out automatic initialization messages and keep only user messages and writer (assistant) responses
           const validMessages = processMessages(data);
-          console.log('Processed messages:', validMessages);
           setMessages(validMessages);
           
           // Check if an automatic message was sent in this session
@@ -84,7 +86,7 @@ export const useMessageFetcher = (sessionId: string | null) => {
           setAutoMessageSent(hasAutoMessage && isNewSession);
         }
       } catch (error) {
-        console.error('Error in fetchMessages:', error);
+        if (isDev) console.error('Error in fetchMessages:', error);
       }
     };
 
@@ -96,7 +98,11 @@ export const useMessageFetcher = (sessionId: string | null) => {
     fetchMessages();
     
     // Set up a polling mechanism to check for new messages regularly
-    const pollInterval = setInterval(fetchMessages, 3000); // Poll every 3 seconds
+    const pollInterval = setInterval(() => {
+      if (sessionId) {
+        fetchMessages();
+      }
+    }, 5000); // Increased to 5 seconds to reduce log spam
     
     return () => {
       clearInterval(pollInterval);
@@ -104,7 +110,7 @@ export const useMessageFetcher = (sessionId: string | null) => {
   }, [sessionId]);
 
   const processMessages = (data: any[]): ChatMessage[] => {
-    return data
+    const processed = data
       .filter(msg => {
         // Keep user messages that aren't the automatic initialization message
         if (msg.role === 'user') {
@@ -125,6 +131,8 @@ export const useMessageFetcher = (sessionId: string | null) => {
         role: msg.role === 'writer' ? 'assistant' : msg.role, // Map 'writer' role to 'assistant' for UI consistency
         created_at: new Date(msg.content ? msg.created_at : null),
       }));
+
+    return processed;
   };
 
   return {

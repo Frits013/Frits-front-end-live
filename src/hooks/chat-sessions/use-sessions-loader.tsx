@@ -2,6 +2,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ChatSession } from "@/types/chat";
 
+const isDev = process.env.NODE_ENV !== 'production';
+
 export const useSessionsLoader = (
   currentSessionId: string | null,
   setCurrentSessionId: (id: string | null) => void,
@@ -20,7 +22,7 @@ export const useSessionsLoader = (
       return;
     }
     
-    console.log("Loading chat sessions for user:", session.user.id);
+    if (isDev) console.log("Loading chat sessions for user:", session.user.id);
     
     try {
       // Query sessions from the chat_sessions table
@@ -31,16 +33,16 @@ export const useSessionsLoader = (
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching sessions:', error);
+        if (isDev) console.error('Error fetching sessions:', error);
         setIsLoading(false);
         return;
       }
 
-      console.log("Retrieved sessions:", sessions?.length || 0);
+      if (isDev) console.log("Retrieved sessions:", sessions?.length || 0);
       setChatSessions(sessions || []);
 
       if (sessions && sessions.length === 0) {
-        console.log('No existing sessions, creating new one...');
+        if (isDev) console.log('No existing sessions, creating new one...');
         await createNewChat();
       } else if (sessions && sessions.length > 0 && !currentSessionId) {
         // Check if there's feedback for each finished session to determine if it's truly completed
@@ -70,11 +72,12 @@ export const useSessionsLoader = (
         
         // If there's an active session, set it as current
         // Otherwise, fall back to the most recent session (even if completed)
-        setCurrentSessionId(activeSession ? activeSession.id : sessions[0].id);
-        console.log("Setting current session ID:", activeSession ? activeSession.id : sessions[0].id);
+        const targetSessionId = activeSession ? activeSession.id : sessions[0].id;
+        setCurrentSessionId(targetSessionId);
+        if (isDev) console.log("Setting current session ID:", targetSessionId);
       }
     } catch (error) {
-      console.error('Error in loadSessions:', error);
+      if (isDev) console.error('Error in loadSessions:', error);
     } finally {
       setIsLoading(false);
     }
