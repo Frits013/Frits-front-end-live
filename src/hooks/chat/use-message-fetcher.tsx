@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ChatMessage } from "@/types/chat";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +13,14 @@ export const useMessageFetcher = (sessionId: string | null) => {
 
   useEffect(() => {
     const fetchMessages = async () => {
-      if (!sessionId) return;
+      if (!sessionId) {
+        // Reset all state when no session is selected
+        setMessages([]);
+        setIsConsultComplete(false);
+        setHasFeedback(false);
+        setAutoMessageSent(false);
+        return;
+      }
 
       if (isDev) console.log('Loading messages for session:', sessionId);
 
@@ -28,7 +34,15 @@ export const useMessageFetcher = (sessionId: string | null) => {
 
         if (sessionError) {
           if (isDev) console.error('Error fetching session status:', sessionError);
-        } else if (sessionData) {
+          // Reset state on error
+          setMessages([]);
+          setIsConsultComplete(false);
+          setHasFeedback(false);
+          setAutoMessageSent(false);
+          return;
+        }
+
+        if (sessionData) {
           // Update the consult complete state based on the finished column
           setIsConsultComplete(sessionData.finished);
           
@@ -42,6 +56,7 @@ export const useMessageFetcher = (sessionId: string | null) => {
             
             if (feedbackError) {
               if (isDev) console.error('Error checking feedback existence:', feedbackError);
+              setHasFeedback(false);
             } else {
               // Set whether this session has feedback or not
               setHasFeedback(!!feedbackData);
@@ -61,6 +76,7 @@ export const useMessageFetcher = (sessionId: string | null) => {
 
         if (error) {
           if (isDev) console.error('Error loading messages:', error);
+          setMessages([]);
           return;
         }
 
@@ -87,27 +103,38 @@ export const useMessageFetcher = (sessionId: string | null) => {
         }
       } catch (error) {
         if (isDev) console.error('Error in fetchMessages:', error);
+        // Reset state on error
+        setMessages([]);
+        setIsConsultComplete(false);
+        setHasFeedback(false);
+        setAutoMessageSent(false);
       }
     };
 
-    // Reset messages when session changes
-    setMessages([]);
-    // Reset the autoMessageSent flag when switching sessions
-    setAutoMessageSent(false);
-    
-    fetchMessages();
+    // Always reset state first when session changes, then fetch new data
+    if (sessionId) {
+      // Only reset messages initially, keep other state until we fetch new data
+      setMessages([]);
+      fetchMessages();
+    } else {
+      // Reset all state when no session
+      setMessages([]);
+      setIsConsultComplete(false);
+      setHasFeedback(false);
+      setAutoMessageSent(false);
+    }
     
     // Set up a polling mechanism to check for new messages regularly
     const pollInterval = setInterval(() => {
       if (sessionId) {
         fetchMessages();
       }
-    }, 5000); // Increased to 5 seconds to reduce log spam
+    }, 5000);
     
     return () => {
       clearInterval(pollInterval);
     };
-  }, [sessionId]);
+  }, [sessionId]); // Only depend on sessionId
 
   const processMessages = (data: any[]): ChatMessage[] => {
     const processed = data
