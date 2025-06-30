@@ -47,24 +47,30 @@ export const useChatOperations = (
 
   const handleDeleteChat = async (chatId: string) => {
     try {
-      // Check for info_messages referencing the chat messages
-      const { data: infoMessages, error: infoError } = await supabase
-        .from('info_messages')
+      // First, get all message IDs for this session
+      const { data: messages, error: messagesError } = await supabase
+        .from('chat_messages')
         .select('message_id')
-        .filter('message_id', 'in', (query) => {
-          query
-            .select('message_id')
-            .from('chat_messages')
-            .eq('session_id', chatId);
-        });
+        .eq('session_id', chatId);
 
-      if (infoError) {
-        if (isDev) console.error('Error checking info messages:', infoError);
-      } else if (infoMessages && infoMessages.length > 0) {
+      if (messagesError) {
+        if (isDev) console.error('Error fetching messages:', messagesError);
+        toast({
+          title: "Error",
+          description: "Failed to fetch chat messages",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Delete info messages that reference these message IDs
+      if (messages && messages.length > 0) {
+        const messageIds = messages.map(m => m.message_id);
+        
         const { error: deleteInfoError } = await supabase
           .from('info_messages')
           .delete()
-          .filter('message_id', 'in', infoMessages.map(m => m.message_id));
+          .in('message_id', messageIds);
           
         if (deleteInfoError) {
           if (isDev) console.error('Error deleting info messages:', deleteInfoError);
@@ -78,13 +84,13 @@ export const useChatOperations = (
       }
       
       // Delete chat messages
-      const { error: messagesError } = await supabase
+      const { error: deleteChatMessagesError } = await supabase
         .from('chat_messages')
         .delete()
         .eq('session_id', chatId);
         
-      if (messagesError) {
-        if (isDev) console.error('Error deleting chat messages:', messagesError);
+      if (deleteChatMessagesError) {
+        if (isDev) console.error('Error deleting chat messages:', deleteChatMessagesError);
         toast({
           title: "Error",
           description: "Failed to delete chat messages",
