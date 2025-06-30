@@ -21,19 +21,6 @@ export const useProfile = () => {
     }
     
     setCodeError("");
-    
-    const numericCode = parseInt(code);
-    const { data: validCode } = await supabase
-      .from('company_codes')
-      .select('code')
-      .eq('code', numericCode)
-      .maybeSingle();
-
-    if (!validCode) {
-      setCodeError("Company code not found");
-      return false;
-    }
-    
     return true;
   };
 
@@ -59,14 +46,15 @@ export const useProfile = () => {
         setTtsEnabled(profile.TTS_flag || false);
         
         if (profile.company_id) {
-          const { data: companyCode } = await supabase
-            .from('company_codes')
+          // Get the company code from companies table
+          const { data: company } = await supabase
+            .from('companies')
             .select('code')
-            .eq('code', profile.company_id)
+            .eq('company_id', profile.company_id)
             .maybeSingle();
             
-          if (companyCode) {
-            setCompanyCode(companyCode.code.toString().padStart(8, '0'));
+          if (company) {
+            setCompanyCode(company.code.toString().padStart(8, '0'));
           } else {
             setCompanyCode("");
           }
@@ -98,7 +86,7 @@ export const useProfile = () => {
         return false;
       }
 
-      // If editing company code, validate it first
+      // If editing company code, handle it specially
       if (isEditingCode) {
         const isValid = await validateCompanyCode(companyCode);
         if (!isValid) {
@@ -106,8 +94,21 @@ export const useProfile = () => {
           return false;
         }
 
-        // Update company code
         if (companyCode) {
+          // First check if the company code exists in company_codes table
+          const { data: validCode } = await supabase
+            .from('company_codes')
+            .select('code')
+            .eq('code', parseInt(companyCode))
+            .maybeSingle();
+
+          if (!validCode) {
+            setCodeError("Company code not found");
+            setIsLoading(false);
+            return false;
+          }
+
+          // Use the RPC function to set the company
           const { data: success, error: functionError } = await supabase
             .rpc('set_user_company', {
               user_uuid: session.user.id,
@@ -116,7 +117,13 @@ export const useProfile = () => {
 
           if (functionError) {
             console.error("Function error:", functionError);
-            throw functionError;
+            toast({
+              title: "Error",
+              description: "Failed to update company code",
+              variant: "destructive",
+            });
+            setIsLoading(false);
+            return false;
           }
           
           if (!success) {
@@ -124,18 +131,40 @@ export const useProfile = () => {
             setIsLoading(false);
             return false;
           }
+
+          toast({
+            title: "Success",
+            description: "Company code updated successfully",
+          });
         } else {
-          // Clear company code
+          // Clear company code by setting company_id to null
           const { error: updateError } = await supabase
             .from("users")
             .update({ company_id: null })
             .eq("user_id", session.user.id);
 
-          if (updateError) throw updateError;
+          if (updateError) {
+            console.error("Error clearing company:", updateError);
+            toast({
+              title: "Error",
+              description: "Failed to clear company code",
+              variant: "destructive",
+            });
+            setIsLoading(false);
+            return false;
+          }
+
+          toast({
+            title: "Success",
+            description: "Company code cleared successfully",
+          });
         }
+        
+        setIsLoading(false);
+        return true;
       }
 
-      // Update other profile fields
+      // Update other profile fields (user description and TTS flag)
       const { error } = await supabase
         .from("users")
         .update({
