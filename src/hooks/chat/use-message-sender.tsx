@@ -5,6 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 import { ChatMessage } from "@/types/chat";
 import { useSessionValidation } from "./use-session-validation";
 
+const isDev = process.env.NODE_ENV !== 'production';
+
 interface UseMessageSenderProps {
   messages: ChatMessage[];
   setMessages: (messages: ChatMessage[]) => void;
@@ -34,13 +36,11 @@ export const useMessageSender = ({
     
     // If there's already a request in progress, ignore this one
     if (currentRequestId) {
-      console.log('Request already in progress, ignoring duplicate');
+      if (isDev) console.log('Request already in progress, ignoring duplicate');
       return;
     }
     
     setCurrentRequestId(requestId);
-  
-    // Clear any previous error message
     setErrorMessage(null);
 
     const session = await validateSession();
@@ -81,41 +81,23 @@ export const useMessageSender = ({
         });
 
       if (saveError) {
-        console.error('Error saving message:', saveError);
+        if (isDev) console.error('Error saving message:', saveError);
         throw new Error('Failed to save message');
       }
 
-      // Log token details for debugging
-      const token = session.access_token;
-      console.log('Session object available:', !!session);
-      console.log('Access token type:', typeof token);
-      console.log('Access token length:', token.length);
-      console.log('Access token prefix:', token.substring(0, 15) + '...');
-      
-      console.log('Making chat function call with:', {
-        session_id: currentChatId,
-        message_id: message_id,
-        request_id: requestId,
-      });
-      
-      // Call the Supabase Edge Function with the JWT token
+      // Call the Supabase Edge Function
       const functionResponse = await supabase.functions.invoke('chat', {
         body: {
           session_id: currentChatId,
           message_id,
           message: inputMessage,
-          request_id: requestId, // Include request ID for duplicate detection
-        },
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+          request_id: requestId,
+        }
       });
-      
-      console.log('Function response received:', functionResponse);
       
       // Check for errors in the response
       if (functionResponse.error) {
-        console.error('Error from edge function:', functionResponse.error);
+        if (isDev) console.error('Error from edge function:', functionResponse.error);
         throw new Error(`Edge function error: ${functionResponse.error.message || 'Unknown error'}`);
       }
       
@@ -127,11 +109,11 @@ export const useMessageSender = ({
       
       // Handle errors in the data response
       if (data.error) {
-        console.error('Error in response data:', data.error);
+        if (isDev) console.error('Error in response data:', data.error);
         setErrorMessage(data.message || data.details || data.error || 'Error from backend');
       }
       
-      // After receiving response, check the session status again
+      // After receiving response, check the session status
       const { data: sessionData, error: sessionCheckError } = await supabase
         .from('chat_sessions')
         .select('finished')
@@ -139,10 +121,10 @@ export const useMessageSender = ({
         .single();
         
       if (!sessionCheckError && sessionData && sessionData.finished) {
-        console.log('Session is marked as completed in the database');
+        if (isDev) console.log('Session marked as completed');
       }
       
-      // Get response content, prioritizing the 'response' field
+      // Get response content
       const responseContent = data.response || "No response generated";
       
       // Create the assistant response message
@@ -159,14 +141,12 @@ export const useMessageSender = ({
       );
       
       if (!existingMessage) {
-        // Update messages including both user message and assistant response
         setMessages([...updatedMessages, agentResponse]);
       }
   
     } catch (error) {
-      console.error('Error getting response:', error);
+      if (isDev) console.error('Error getting response:', error);
       
-      // Set detailed error message for UI display
       setErrorMessage(error instanceof Error ? error.message : "Failed to get response from AI");
       
       toast({
@@ -175,10 +155,9 @@ export const useMessageSender = ({
         variant: "destructive",
       });
     } finally {
-      // Always make sure processing state is reset regardless of success/failure
       setIsProcessing(false);
       isThinkingRef.current = false;
-      setCurrentRequestId(null); // Clear the request ID
+      setCurrentRequestId(null);
     }
   };
 

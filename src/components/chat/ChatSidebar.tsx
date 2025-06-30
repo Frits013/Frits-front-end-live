@@ -7,6 +7,8 @@ import ChatSidebarHeader from "./ChatSidebarHeader";
 import ChatSidebarLoader from "./ChatSidebarLoader";
 import ChatSidebarContent from "./ChatSidebarContent";
 
+const isDev = process.env.NODE_ENV !== 'production';
+
 interface ChatSidebarProps {
   chatSessions: ChatSession[];
   currentSessionId: string | null;
@@ -55,7 +57,6 @@ const ChatSidebar = ({
               .maybeSingle();
             
             hasUserFeedback = !!feedback;
-            // If session is finished but no feedback, it's finishable
             isFinishable = !hasUserFeedback;
           } else {
             // For non-finished sessions, check if they have assistant messages
@@ -65,8 +66,6 @@ const ChatSidebar = ({
               .eq('session_id', session.id)
               .eq('role', 'assistant');
             
-            // Non-finished sessions with assistant messages are ongoing
-            // Non-finished sessions without assistant messages are also ongoing (just started)
             isFinishable = false;
           }
           
@@ -76,7 +75,7 @@ const ChatSidebar = ({
       
       setSessionsWithFeedback(sessionsWithStatus);
     } catch (error) {
-      console.error('Error checking session status:', error);
+      if (isDev) console.error('Error checking session status:', error);
       setSessionsWithFeedback(sessions.map(s => ({ ...s, hasUserFeedback: false, isFinishable: false })));
     } finally {
       setFeedbackLoading(false);
@@ -87,10 +86,8 @@ const ChatSidebar = ({
     checkSessionStatus(chatSessions);
   }, [chatSessions]);
 
-  // Set up real-time subscription to listen for session updates with enhanced logging
+  // Set up real-time subscription with reduced logging
   useEffect(() => {
-    console.log('Setting up real-time subscription for session updates');
-    
     const channel = supabase
       .channel('session-updates-enhanced')
       .on(
@@ -101,21 +98,13 @@ const ChatSidebar = ({
           table: 'chat_sessions'
         },
         async (payload) => {
-          console.log('Real-time session update received:', payload);
-          
-          // Update the session in the chatSessions array
           const updatedSession = payload.new as ChatSession;
-          console.log('Updated session data:', updatedSession);
           
           const updatedSessions = chatSessions.map(session => 
             session.id === updatedSession.id ? updatedSession : session
           );
           
-          console.log('Setting updated sessions:', updatedSessions);
           setChatSessions(updatedSessions);
-          
-          // Force a fresh status check for all sessions to ensure proper categorization
-          console.log('Force re-checking session status for real-time updates');
           await checkSessionStatus(updatedSessions);
         }
       )
@@ -127,8 +116,7 @@ const ChatSidebar = ({
           table: 'feedback'
         },
         async (payload) => {
-          console.log('Feedback insertion detected:', payload);
-          // When feedback is added, force re-check session status for smooth transitions
+          // When feedback is added, re-check session status
           await checkSessionStatus(chatSessions);
         }
       )
@@ -140,17 +128,17 @@ const ChatSidebar = ({
           table: 'chat_messages'
         },
         async (payload) => {
-          console.log('Message insertion detected:', payload);
-          // When new messages are added, re-check session status in case it affects categorization
+          // When new messages are added, re-check session status
           await checkSessionStatus(chatSessions);
         }
       )
       .subscribe((status) => {
-        console.log('Real-time subscription status:', status);
+        if (isDev && status !== 'SUBSCRIBED') {
+          console.log('Sidebar subscription status:', status);
+        }
       });
 
     return () => {
-      console.log('Cleaning up real-time subscription');
       supabase.removeChannel(channel);
     };
   }, [chatSessions, setChatSessions]);
@@ -171,9 +159,7 @@ const ChatSidebar = ({
   }
 
   const updateSessionsAfterAction = (updatedSessions: SessionWithFeedback[]) => {
-    // Update the base chatSessions array
     setChatSessions(updatedSessions);
-    // Update the local state with feedback info
     setSessionsWithFeedback(updatedSessions);
   };
 

@@ -1,7 +1,10 @@
-import { useEffect } from "react";
+
+import { useEffect, useRef } from "react";
 import { ChatMessage } from "@/types/chat";
 import { supabase } from "@/integrations/supabase/client";
 import { INITIAL_MESSAGE } from "@/hooks/chat-sessions/use-session-creation";
+
+const isDev = process.env.NODE_ENV !== 'production';
 
 export const useMessageSubscription = (
   sessionId: string | null, 
@@ -9,71 +12,124 @@ export const useMessageSubscription = (
   setMessages: (messages: ChatMessage[]) => void,
   setIsProcessing: (isProcessing: boolean) => void
 ) => {
-  // Set up a subscription to listen for new messages
-  useEffect(() => {
+  const subscriptionRef = useRef<any>(null);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const retryCountRef = useRef(0);
+  const maxRetries = 3;
+  const baseRetryDelay = 2000;
+
+  // Clean up function
+  const cleanup = () => {
+    if (subscriptionRef.current) {
+      supabase.removeChannel(subscriptionRef.current);
+      subscriptionRef.current = null;
+    }
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+    retryCountRef.current = 0;
+  };
+
+  // Fetch latest messages function
+  const fetchLatestMessages = async () => {
     if (!sessionId) return;
-    
-    // Subscribe to new messages for this session
-    const messagesChannel = supabase
+
+    try {
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('session_id', sessionId)
+        .order('created_at', { ascending: true });
+        
+      if (error) {
+        if (isDev) console.error('Error loading latest messages:', error);
+        return;
+      }
+      
+      if (data) {
+        const validMessages = processMessages(data);
+        setMessages(validMessages);
+      }
+    } catch (error) {
+      if (isDev) console.error('Error in fetchLatestMessages:', error);
+    }
+  };
+
+  // Set up subscription with proper error handling
+  const setupSubscription = () => {
+    if (!sessionId || subscriptionRef.current) return;
+
+    if (isDev) console.log('Setting up message subscription for session:', sessionId);
+
+    const channel = supabase
       .channel(`messages-${sessionId}`)
       .on(
         'postgres_changes',
         {
-          event: '*', // Listen for all events (INSERT, UPDATE, DELETE)
+          event: '*',
           schema: 'public',
           table: 'chat_messages',
           filter: `session_id=eq.${sessionId}`
         },
         (payload) => {
-          console.log('Message change detected:', payload);
+          if (isDev) console.log('Message change detected:', payload.eventType);
           
-          // Refresh messages when a new message is detected
-          // This ensures we always have the latest messages without a page refresh
-          const fetchLatestMessages = async () => {
-            const { data, error } = await supabase
-              .from('chat_messages')
-              .select('*')
-              .eq('session_id', sessionId)
-              .order('created_at', { ascending: true });
-              
-            if (error) {
-              console.error('Error loading latest messages:', error);
-              return;
-            }
+          // Check if payload indicates assistant message completion
+          const hasNewAssistantMessage = payload.new && 
+            typeof payload.new === 'object' && 
+            'role' in payload.new &&
+            (payload.new.role === 'writer' || payload.new.role === 'assistant');
             
-            if (data) {
-              const validMessages = processMessages(data);
-              console.log('Updated messages from subscription:', validMessages);
-              
-              // Check if payload.new exists and if so, access its properties
-              const hasNewAssistantMessage = payload.new && 
-                typeof payload.new === 'object' && 
-                'role' in payload.new &&
-                (payload.new.role === 'writer' || payload.new.role === 'assistant');
-                
-              if (hasNewAssistantMessage) {
-                setIsProcessing(false);
-              }
-              
-              setMessages(validMessages);
-            }
-          };
+          if (hasNewAssistantMessage) {
+            setIsProcessing(false);
+          }
           
+          // Fetch latest messages without excessive logging
           fetchLatestMessages();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (isDev) console.log('Subscription status:', status);
+        
+        if (status === 'SUBSCRIBED') {
+          retryCountRef.current = 0; // Reset retry counter on success
+        } else if (status === 'TIMED_OUT' || status === 'CLOSED') {
+          // Implement exponential backoff retry
+          if (retryCountRef.current < maxRetries) {
+            const delay = baseRetryDelay * Math.pow(2, retryCountRef.current);
+            retryCountRef.current++;
+            
+            if (isDev) console.log(`Subscription failed, retrying in ${delay}ms (attempt ${retryCountRef.current})`);
+            
+            retryTimeoutRef.current = setTimeout(() => {
+              cleanup();
+              setupSubscription();
+            }, delay);
+          } else {
+            if (isDev) console.warn('Max subscription retries reached, giving up');
+          }
+        }
+      });
 
-    return () => {
-      supabase.removeChannel(messagesChannel);
-    };
-  }, [sessionId, setMessages, setIsProcessing]);
+    subscriptionRef.current = channel;
+  };
+
+  // Set up subscription when sessionId changes
+  useEffect(() => {
+    cleanup(); // Clean up previous subscription
+    
+    if (sessionId) {
+      setupSubscription();
+    }
+
+    return cleanup;
+  }, [sessionId]);
 
   const processMessages = (data: any[]): ChatMessage[] => {
     return data
       .filter(msg => {
         if (msg.role === 'user') {
-          // Only filter out the specific initial message, but keep "hey" messages
           return msg.content !== INITIAL_MESSAGE;
         }
         
