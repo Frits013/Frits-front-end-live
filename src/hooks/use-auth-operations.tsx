@@ -153,33 +153,6 @@ export const useAuthOperations = () => {
     }
   };
 
-  const handleSignInWithGoogle = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin,
-        },
-      });
-
-      if (error) {
-        if (isDev) console.error('Google sign in error:', error);
-        toast({
-          title: "Sign In Failed",
-          description: error.message,
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      if (isDev) console.error('Google sign in exception:', error);
-      toast({
-        title: "Sign In Failed",
-        description: "An unexpected error occurred during Google sign in.",
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleEmailSignUp = async (email: string, password: string) => {
     try {
       if (isDev) console.log("Attempting to sign up with email:", email);
@@ -360,7 +333,6 @@ export const useAuthOperations = () => {
   return {
     handleSignOut,
     handleSignInWithGithub,
-    handleSignInWithGoogle,
     handleEmailSignUp,
     handleEmailSignIn,
     resendConfirmationEmail,
