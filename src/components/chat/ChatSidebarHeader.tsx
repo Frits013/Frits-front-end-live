@@ -10,12 +10,12 @@ interface ChatSidebarHeaderProps {
 const ChatSidebarHeader = ({ onNewChat }: ChatSidebarHeaderProps) => {
   return (
     <SidebarHeader className="p-6 border-b border-purple-100/50 dark:border-purple-800/30">
-      <div className="flex items-center gap-5 mb-6">
-        <div className="w-16 h-16 rounded-lg bg-white flex items-center justify-center shadow-md">
+      <div className="flex items-center gap-6 mb-6">
+        <div className="w-16 h-16 rounded-xl bg-white flex items-center justify-center shadow-md">
           <img 
             src="/lovable-uploads/ce7d4647-07c6-43a0-8521-b08cda6a3711.png" 
             alt="FIDDS Logo" 
-            className="w-14 h-14 object-contain"
+            className="w-14 h-14 object-contain rounded-lg"
           />
         </div>
         <div>
