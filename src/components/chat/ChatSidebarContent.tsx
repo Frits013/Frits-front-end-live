@@ -27,8 +27,8 @@ const ChatSidebarContent = ({
   animationState
 }: ChatSidebarContentProps) => {
   return (
-    <SidebarContent className="flex-1 overflow-auto px-3 py-4">
-      <div className="space-y-6">
+    <SidebarContent className="flex-1 min-h-0 overflow-hidden">
+      <div className="h-full flex flex-col px-3 py-4 space-y-6 overflow-hidden">
         {/* Ongoing consults section */}
         <ChatSessionsSection
           title="Ongoing Consults"

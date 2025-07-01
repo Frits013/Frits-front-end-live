@@ -55,8 +55,8 @@ const ChatHistoryComponent = ({
   }
 
   return (
-    <ScrollArea className="flex-1 px-3">
-      <div className="space-y-3 pb-4">
+    <ScrollArea className="h-full">
+      <div className="space-y-3 px-3 pb-4">
         <AnimatePresence mode="popLayout">
           {chatHistories.map((chat) => (
             <motion.div

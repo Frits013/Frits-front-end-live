@@ -32,13 +32,13 @@ const ChatSessionsSection = ({
   animationState
 }: ChatSessionsSectionProps) => {
   return (
-    <SidebarGroup>
-      <SidebarGroupLabel className={`px-3 mb-3 text-xs font-semibold ${titleColor} uppercase tracking-wider`}>
+    <SidebarGroup className="flex-1 min-h-0 flex flex-col">
+      <SidebarGroupLabel className={`px-3 mb-3 text-xs font-semibold ${titleColor} uppercase tracking-wider flex-shrink-0`}>
         {title}
       </SidebarGroupLabel>
-      <SidebarGroupContent>
+      <SidebarGroupContent className="flex-1 min-h-0">
         {sessions.length > 0 ? (
-          <div className="space-y-2">
+          <div className="h-full">
             <ChatHistoryComponent
               chatHistories={sessions}
               currentChatId={currentSessionId}

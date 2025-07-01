@@ -164,7 +164,7 @@ const ChatSidebar = ({
   };
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-b from-slate-50 to-purple-50/30 dark:from-slate-900 dark:to-purple-950/30">
+    <div className="h-full max-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-purple-50/30 dark:from-slate-900 dark:to-purple-950/30 overflow-hidden">
       <ChatSidebarHeader onNewChat={onNewChat} />
       
       <ChatSidebarContent
