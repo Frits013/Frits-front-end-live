@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import ChatInput from "./ChatInput";
+import InterviewInput from "./InterviewInput";
 import { ChatMessage } from "@/types/chat";
 import { useMessageSender } from "@/hooks/chat/use-message-sender";
 
@@ -83,12 +83,23 @@ const ChatInputContainer = ({
     }
   };
 
+  // Calculate current phase based on message count
+  const getPhase = (messageCount: number) => {
+    if (messageCount < 4) return 'Introduction';
+    if (messageCount < 12) return 'Core Questions';
+    if (messageCount < 16) return 'Summary';
+    return 'Conclusion';
+  };
+
+  const currentPhase = getPhase(messages.length);
+
   return (
-    <ChatInput
+    <InterviewInput
       inputMessage={inputMessage}
       setInputMessage={handleInputChange}
       handleSendMessage={handleSendMessage}
       isProcessing={isProcessing || isSubmitting}
+      currentPhase={currentPhase}
     />
   );
 };

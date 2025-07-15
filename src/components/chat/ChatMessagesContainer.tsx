@@ -1,6 +1,6 @@
 
 import { ChatMessage } from "@/types/chat";
-import ChatMessageList from "./ChatMessageList";
+import InterviewMessages from "./InterviewMessages";
 import ChatErrorAlert from "./ChatErrorAlert";
 
 interface ChatMessagesContainerProps {
@@ -8,13 +8,24 @@ interface ChatMessagesContainerProps {
   errorMessage: string | null;
   currentSessionId: string | null;
   showFinishButton?: boolean;
+  isProcessing?: boolean;
 }
 
-const ChatMessagesContainer = ({ messages, errorMessage, currentSessionId, showFinishButton = false }: ChatMessagesContainerProps) => {
+const ChatMessagesContainer = ({ 
+  messages, 
+  errorMessage, 
+  currentSessionId, 
+  showFinishButton = false,
+  isProcessing = false 
+}: ChatMessagesContainerProps) => {
   return (
     <div className="relative z-10 flex flex-col h-full">
       <ChatErrorAlert errorMessage={errorMessage} />
-      <ChatMessageList messages={messages} currentSessionId={currentSessionId} showFinishButton={showFinishButton} />
+      <InterviewMessages 
+        messages={messages} 
+        showFinishButton={showFinishButton} 
+        isProcessing={isProcessing}
+      />
     </div>
   );
 };

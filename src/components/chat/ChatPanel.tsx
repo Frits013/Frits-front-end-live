@@ -51,6 +51,7 @@ const ChatPanel = ({
             errorMessage={errorMessage}
             currentSessionId={currentChatId}
             showFinishButton={showCompleteButton}
+            isProcessing={isProcessing}
           />
         </div>
         
