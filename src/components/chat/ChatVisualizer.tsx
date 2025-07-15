@@ -1,8 +1,8 @@
 
 import { useEffect, useState } from "react";
-import ThreeScene from "@/components/chat/ThreeScene";
 import { useChatMessages } from "@/hooks/use-chat-messages";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Loader2, Brain, MessageSquare } from "lucide-react";
 
 interface ChatVisualizerProps {
   isThinking: boolean;
@@ -11,37 +11,38 @@ interface ChatVisualizerProps {
 }
 
 const ChatVisualizer = ({ isThinking, audioData, currentSessionId }: ChatVisualizerProps) => {
-  const [showWelcomeAnimation, setShowWelcomeAnimation] = useState(false);
   const { autoMessageSent, isProcessing } = useChatMessages(currentSessionId);
   const isMobile = useIsMobile();
   
-  // Show welcome animation only when there's actual processing happening
-  useEffect(() => {
-    // Only show animation if we have active processing or thinking state
-    const shouldShowAnimation = (autoMessageSent && isProcessing) || isThinking || isProcessing;
-    
-    if (shouldShowAnimation) {
-      setShowWelcomeAnimation(true);
-    } else {
-      // Small delay before hiding to avoid abrupt transitions
-      const timer = setTimeout(() => {
-        setShowWelcomeAnimation(false);
-      }, 500);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [autoMessageSent, isProcessing, isThinking]);
-
-  // Pass only actual processing state, not welcome animation state
   const shouldShowThinking = isThinking || isProcessing;
 
   return (
-    <div className="w-full h-full flex items-center justify-center p-2 sm:p-4 overflow-hidden touch-none">
-      <div className={`aspect-square max-w-full max-h-full ${isMobile ? 'w-3/4' : 'w-full'}`}>
-        <ThreeScene 
-          isThinking={shouldShowThinking} 
-          audioData={audioData} 
-        />
+    <div className="w-full h-full flex items-center justify-center p-8">
+      <div className="flex flex-col items-center gap-4">
+        {shouldShowThinking ? (
+          <>
+            <div className="relative">
+              <Loader2 className="h-16 w-16 animate-spin text-primary" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Brain className="h-8 w-8 text-primary/60" />
+              </div>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-medium text-foreground">Frits is thinking...</p>
+              <p className="text-sm text-muted-foreground">Processing your response</p>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-primary/10">
+              <MessageSquare className="h-8 w-8 text-primary" />
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-medium text-foreground">Ready to continue</p>
+              <p className="text-sm text-muted-foreground">Share your thoughts</p>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
