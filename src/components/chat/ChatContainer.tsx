@@ -117,29 +117,34 @@ const ChatContainer = ({
   return (
     <>
       <ChatPanelLayout>
-        <ChatVisualizerPanel
-          defaultSize={defaultVisualizerSize}
-          minSize={isMobile ? 15 : 20}
-          isThinking={isProcessing && isThinkingRef.current}
-          audioData={audioData}
-          currentSessionId={currentChatId}
-        />
-        
-        
-        <ChatPanel
-          defaultSize={100 - defaultVisualizerSize}
-          minSize={isMobile ? 40 : 30}
-          messages={messages}
-          setMessages={setMessages}
-          currentChatId={currentChatId}
-          setErrorMessage={setErrorMessage}
-          isProcessing={isProcessing}
-          setIsProcessing={setIsProcessing}
-          isThinkingRef={isThinkingRef}
-          errorMessage={errorMessage}
-          showCompleteButton={showCompleteButton}
-          onCompleteButtonClick={handleCompleteButtonClick}
-        />
+        <div className="flex flex-col h-full">
+          <div className={`${isMobile ? 'h-1/4' : 'h-1/3'} flex-shrink-0`}>
+            <ChatVisualizerPanel
+              defaultSize={defaultVisualizerSize}
+              minSize={isMobile ? 15 : 20}
+              isThinking={isProcessing && isThinkingRef.current}
+              audioData={audioData}
+              currentSessionId={currentChatId}
+            />
+          </div>
+          
+          <div className="flex-1 overflow-hidden">
+            <ChatPanel
+              defaultSize={100 - defaultVisualizerSize}
+              minSize={isMobile ? 40 : 30}
+              messages={messages}
+              setMessages={setMessages}
+              currentChatId={currentChatId}
+              setErrorMessage={setErrorMessage}
+              isProcessing={isProcessing}
+              setIsProcessing={setIsProcessing}
+              isThinkingRef={isThinkingRef}
+              errorMessage={errorMessage}
+              showCompleteButton={showCompleteButton}
+              onCompleteButtonClick={handleCompleteButtonClick}
+            />
+          </div>
+        </div>
       </ChatPanelLayout>
 
       <ConsultCompleteDialog
