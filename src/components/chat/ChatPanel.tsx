@@ -38,8 +38,8 @@ const ChatPanel = ({
   const inputContainerRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="h-full flex-1">
-      <div className="h-full flex flex-col overflow-hidden rounded-b-3xl bg-gradient-to-br from-white/95 via-white/85 to-purple-50/30 dark:from-gray-900/95 dark:via-gray-900/85 dark:to-purple-900/30 backdrop-blur-xl">
+    <div className="h-full flex flex-col">
+      <div className="flex-1 flex flex-col overflow-hidden rounded-b-3xl bg-gradient-to-br from-white/95 via-white/85 to-purple-50/30 dark:from-gray-900/95 dark:via-gray-900/85 dark:to-purple-900/30 backdrop-blur-xl">
         
         {/* Subtle inner glow */}
         <div className="absolute inset-0 rounded-b-3xl shadow-inner pointer-events-none"></div>
