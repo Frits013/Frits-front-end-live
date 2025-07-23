@@ -28,38 +28,15 @@ const ChatSidebarContent = ({
 }: ChatSidebarContentProps) => {
   return (
     <SidebarContent className="flex-1 min-h-0 overflow-hidden">
-      <div className="h-full flex flex-col px-3 py-4 space-y-6 overflow-hidden">
-        {/* Ongoing consults section */}
+      <div className="h-full flex flex-col px-3 py-4 overflow-hidden">
         <ChatSessionsSection
-          title="Ongoing Consults"
-          sessions={ongoingConsults}
+          title="All Consults"
+          sessions={[...ongoingConsults, ...finishableConsults, ...completedConsults]}
           currentSessionId={currentSessionId}
           onSessionsUpdate={onSessionsUpdate}
           onSessionSelect={onSessionSelect}
-          emptyMessage="No ongoing consults"
+          emptyMessage="No consults yet"
           emptySubMessage="Start a new consultation above"
-          animationState={animationState}
-        />
-
-        {/* Finishable consults section */}
-        <ChatSessionsSection
-          title="Finishable Consults"
-          sessions={finishableConsults}
-          currentSessionId={currentSessionId}
-          onSessionsUpdate={onSessionsUpdate}
-          onSessionSelect={onSessionSelect}
-          titleColor="text-amber-700 dark:text-amber-300"
-          animationState={animationState}
-        />
-
-        {/* Completed consults section */}
-        <ChatSessionsSection
-          title="Completed Consults"
-          sessions={completedConsults}
-          currentSessionId={currentSessionId}
-          onSessionsUpdate={onSessionsUpdate}
-          onSessionSelect={onSessionSelect}
-          titleColor="text-slate-600 dark:text-slate-400"
           animationState={animationState}
         />
       </div>
