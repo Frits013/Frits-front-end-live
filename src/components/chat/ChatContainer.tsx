@@ -1,5 +1,6 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import InterviewProgress from "./InterviewProgress";
 import { ChatMessage } from "@/types/chat";
 import ConsultCompleteDialog from "@/components/chat/ConsultCompleteDialog";
 import { useToast } from "@/hooks/use-toast";
@@ -114,6 +115,22 @@ const ChatContainer = ({
     // Note: We do NOT call onConsultFinish here - session stays active
   };
 
+  // Calculate interview progress
+  const userMessages = messages.filter(msg => msg.role === 'user');
+  const totalQuestions = 10; // Estimate total questions for interview
+  const answeredQuestions = userMessages.length;
+  const progress = Math.min((answeredQuestions / totalQuestions) * 100, 100);
+  
+  const getPhase = (progress: number) => {
+    if (progress < 25) return 'Introduction';
+    if (progress < 50) return 'Core Questions';
+    if (progress < 75) return 'Summary';
+    return 'Conclusion';
+  };
+
+  const currentPhase = getPhase(progress);
+  const estimatedTimeLeft = progress < 100 ? `${Math.max(1, Math.ceil((100 - progress) / 10))} min` : undefined;
+
   return (
     <>
       <ChatPanelLayout>
@@ -127,6 +144,19 @@ const ChatContainer = ({
               currentSessionId={currentChatId}
             />
           </div>
+          
+          {/* Interview Progress - positioned between visualizer and chat */}
+          {messages.length > 0 && (
+            <div className="flex-shrink-0 px-4 py-2">
+              <InterviewProgress
+                currentPhase={currentPhase}
+                progress={progress}
+                totalQuestions={totalQuestions}
+                answeredQuestions={answeredQuestions}
+                estimatedTimeLeft={estimatedTimeLeft}
+              />
+            </div>
+          )}
           
           <div className="flex-1 overflow-hidden">
             <ChatPanel

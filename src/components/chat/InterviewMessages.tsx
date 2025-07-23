@@ -34,17 +34,6 @@ const InterviewMessages = ({
 
   return (
     <div className={`flex flex-col gap-6 p-6 ${showFinishButton ? 'pb-24' : ''}`}>
-      {/* Show progress only if we have messages */}
-      {messages.length > 0 && (
-        <InterviewProgress
-          currentPhase={phase}
-          progress={progress}
-          totalQuestions={totalQuestions}
-          answeredQuestions={answeredQuestions}
-          estimatedTimeLeft={estimatedTimeLeft}
-        />
-      )}
-
       {/* Messages */}
       {messages.map((message, index) => {
         const isLatest = index === messages.length - 1;
