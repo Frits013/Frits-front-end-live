@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instanciate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "12.2.12 (cd3cf9e)"
   }
   public: {
     Tables: {
@@ -66,22 +66,37 @@ export type Database = {
       chat_sessions: {
         Row: {
           created_at: string
+          current_phase: Database["public"]["Enums"]["interview_phase"] | null
           finished: boolean
           id: string
+          phase_completion_criteria: Json | null
+          phase_max_questions: Json | null
+          phase_metadata: Json | null
+          phase_question_counts: Json | null
           session_name: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          current_phase?: Database["public"]["Enums"]["interview_phase"] | null
           finished?: boolean
           id?: string
+          phase_completion_criteria?: Json | null
+          phase_max_questions?: Json | null
+          phase_metadata?: Json | null
+          phase_question_counts?: Json | null
           session_name?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          current_phase?: Database["public"]["Enums"]["interview_phase"] | null
           finished?: boolean
           id?: string
+          phase_completion_criteria?: Json | null
+          phase_max_questions?: Json | null
+          phase_metadata?: Json | null
+          phase_question_counts?: Json | null
           session_name?: string
           user_id?: string
         }
@@ -188,6 +203,78 @@ export type Database = {
           },
         ]
       }
+      interview_phases_config: {
+        Row: {
+          completion_threshold: number | null
+          created_at: string | null
+          id: string
+          max_questions: number
+          phase: Database["public"]["Enums"]["interview_phase"]
+          phase_description: string | null
+          system_prompt: string
+          updated_at: string | null
+        }
+        Insert: {
+          completion_threshold?: number | null
+          created_at?: string | null
+          id?: string
+          max_questions: number
+          phase: Database["public"]["Enums"]["interview_phase"]
+          phase_description?: string | null
+          system_prompt: string
+          updated_at?: string | null
+        }
+        Update: {
+          completion_threshold?: number | null
+          created_at?: string | null
+          id?: string
+          max_questions?: number
+          phase?: Database["public"]["Enums"]["interview_phase"]
+          phase_description?: string | null
+          system_prompt?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      interview_progress: {
+        Row: {
+          completion_confidence: number | null
+          created_at: string | null
+          id: string
+          insights: Json | null
+          phase: Database["public"]["Enums"]["interview_phase"]
+          questions_asked: number | null
+          selected_themes: Json | null
+          session_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completion_confidence?: number | null
+          created_at?: string | null
+          id?: string
+          insights?: Json | null
+          phase: Database["public"]["Enums"]["interview_phase"]
+          questions_asked?: number | null
+          selected_themes?: Json | null
+          session_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completion_confidence?: number | null
+          created_at?: string | null
+          id?: string
+          insights?: Json | null
+          phase?: Database["public"]["Enums"]["interview_phase"]
+          questions_asked?: number | null
+          selected_themes?: Json | null
+          session_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           company_id: string | null
@@ -257,7 +344,12 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      interview_phase:
+        | "introduction"
+        | "theme_selection"
+        | "deep_dive"
+        | "summary"
+        | "recommendations"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -384,6 +476,14 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      interview_phase: [
+        "introduction",
+        "theme_selection",
+        "deep_dive",
+        "summary",
+        "recommendations",
+      ],
+    },
   },
 } as const
