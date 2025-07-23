@@ -21,11 +21,13 @@ const ChatMessagesContainer = ({
   return (
     <div className="relative z-10 flex flex-col h-full">
       <ChatErrorAlert errorMessage={errorMessage} />
-      <InterviewMessages 
-        messages={messages} 
-        showFinishButton={showFinishButton} 
-        isProcessing={isProcessing}
-      />
+      <div className="flex-1 overflow-y-auto pb-32">
+        <InterviewMessages 
+          messages={messages} 
+          showFinishButton={showFinishButton} 
+          isProcessing={isProcessing}
+        />
+      </div>
     </div>
   );
 };
