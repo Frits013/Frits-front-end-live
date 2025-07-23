@@ -17,7 +17,7 @@ const ChatVisualizer = ({ isThinking, audioData, currentSessionId }: ChatVisuali
   const shouldShowThinking = isThinking || isProcessing;
 
   return (
-    <div className="w-full h-32 flex items-center justify-center p-4">
+    <div className="w-full h-full flex items-center justify-center p-8">
       <div className="flex flex-col items-center gap-4">
         {shouldShowThinking ? (
           <>
