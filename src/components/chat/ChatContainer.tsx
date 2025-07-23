@@ -5,7 +5,7 @@ import { ChatMessage } from "@/types/chat";
 import ConsultCompleteDialog from "@/components/chat/ConsultCompleteDialog";
 import { useToast } from "@/hooks/use-toast";
 import ChatPanelLayout from "./ChatPanelLayout";
-import ChatVisualizerPanel from "./ChatVisualizerPanel";
+
 import ChatPanel from "./ChatPanel";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -40,25 +40,16 @@ const ChatContainer = ({
 }: ChatContainerProps) => {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
-  const isThinkingRef = useRef(false);
-  const [audioData, setAudioData] = useState<number[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const isMobile = useIsMobile();
   
   // Add a new state to track whether the complete button is showing
   const [showCompleteButton, setShowCompleteButton] = useState(false);
-  
-  // Track the default size of the visualizer panel - smaller on mobile
-  const [defaultVisualizerSize, setDefaultVisualizerSize] = useState(isMobile ? 25 : 35);
+  const isThinkingRef = useRef(false);
 
   // Use the session animations hook
   const { shouldTriggerAnimation, startSessionAnimation } = useSessionAnimations(showCompleteButton);
-
-  // Update default size when mobile status changes
-  useEffect(() => {
-    setDefaultVisualizerSize(isMobile ? 25 : 35);
-  }, [isMobile]);
 
   // Button visibility logic - show when session is marked as finished in database but not yet completed by user
   useEffect(() => {
@@ -135,17 +126,7 @@ const ChatContainer = ({
     <>
       <ChatPanelLayout>
         <div className="flex flex-col h-full">
-          <div className={`${isMobile ? 'h-1/4' : 'h-1/3'} flex-shrink-0`}>
-            <ChatVisualizerPanel
-              defaultSize={defaultVisualizerSize}
-              minSize={isMobile ? 15 : 20}
-              isThinking={isProcessing && isThinkingRef.current}
-              audioData={audioData}
-              currentSessionId={currentChatId}
-            />
-          </div>
-          
-          {/* Interview Progress - positioned between visualizer and chat */}
+          {/* Interview Progress - positioned at the top */}
           {messages.length > 0 && (
             <div className="flex-shrink-0 px-4 py-2">
               <InterviewProgress
@@ -160,7 +141,7 @@ const ChatContainer = ({
           
           <div className="flex-1 min-h-0 overflow-hidden">
             <ChatPanel
-              defaultSize={100 - defaultVisualizerSize}
+              defaultSize={100}
               minSize={isMobile ? 40 : 30}
               messages={messages}
               setMessages={setMessages}
