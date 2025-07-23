@@ -1,5 +1,5 @@
 
-import { ResizablePanel } from "@/components/ui/resizable";
+
 import { ChatMessage } from "@/types/chat";
 import ChatMessagesContainer from "./ChatMessagesContainer";
 import ChatInputContainer from "./ChatInputContainer";
@@ -38,7 +38,7 @@ const ChatPanel = ({
   const inputContainerRef = useRef<HTMLDivElement>(null);
 
   return (
-    <ResizablePanel defaultSize={defaultSize} minSize={minSize}>
+    <div className="h-full flex-1">
       <div className="h-full flex flex-col overflow-hidden rounded-b-3xl bg-gradient-to-br from-white/95 via-white/85 to-purple-50/30 dark:from-gray-900/95 dark:via-gray-900/85 dark:to-purple-900/30 backdrop-blur-xl">
         
         {/* Subtle inner glow */}
@@ -77,7 +77,7 @@ const ChatPanel = ({
           />
         </div>
       </div>
-    </ResizablePanel>
+    </div>
   );
 };
 

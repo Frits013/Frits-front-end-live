@@ -7,7 +7,7 @@ import ChatPanelLayout from "./ChatPanelLayout";
 import ChatVisualizerPanel from "./ChatVisualizerPanel";
 import ChatPanel from "./ChatPanel";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ResizableHandle } from "@/components/ui/resizable";
+
 import { useSessionAnimations } from "@/hooks/chat/use-session-animations";
 
 interface ChatContainerProps {
@@ -125,10 +125,6 @@ const ChatContainer = ({
           currentSessionId={currentChatId}
         />
         
-        <ResizableHandle 
-          withHandle={true}
-          className="relative group h-4 cursor-row-resize bg-gradient-to-r from-purple-200/80 via-indigo-200/80 to-purple-200/80 dark:from-purple-700/60 dark:via-indigo-700/60 dark:to-purple-700/60 hover:from-purple-300/90 hover:via-indigo-300/90 hover:to-purple-300/90 dark:hover:from-purple-600/70 dark:hover:via-indigo-600/70 dark:hover:to-purple-600/70 transition-all duration-300"
-        />
         
         <ChatPanel
           defaultSize={100 - defaultVisualizerSize}
