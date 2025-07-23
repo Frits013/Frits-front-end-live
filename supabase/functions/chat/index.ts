@@ -2,10 +2,90 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+// Initialize Supabase client for phase management
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Helper function to get current session phase data
+async function getSessionPhaseData(sessionId: string) {
+  const { data, error } = await supabase
+    .from('chat_sessions')
+    .select(`
+      current_phase,
+      phase_metadata,
+      phase_question_counts,
+      phase_max_questions,
+      phase_completion_criteria
+    `)
+    .eq('id', sessionId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching session phase data:', error);
+    return null;
+  }
+
+  return data;
+}
+
+// Helper function to get phase configuration
+async function getPhaseConfig(phase: string) {
+  const { data, error } = await supabase
+    .from('interview_phases_config')
+    .select('*')
+    .eq('phase', phase)
+    .single();
+
+  if (error) {
+    console.error('Error fetching phase config:', error);
+    return null;
+  }
+
+  return data;
+}
+
+// Helper function to update session phase data
+async function updateSessionPhase(sessionId: string, updates: any) {
+  const { error } = await supabase
+    .from('chat_sessions')
+    .update(updates)
+    .eq('id', sessionId);
+
+  if (error) {
+    console.error('Error updating session phase:', error);
+    return false;
+  }
+
+  return true;
+}
+
+// Helper function to update interview progress
+async function updateInterviewProgress(sessionId: string, userId: string, phase: string, data: any) {
+  const { error } = await supabase
+    .from('interview_progress')
+    .upsert({
+      session_id: sessionId,
+      user_id: userId,
+      phase: phase,
+      ...data,
+      updated_at: new Date().toISOString()
+    }, {
+      onConflict: 'session_id,user_id,phase'
+    });
+
+  if (error) {
+    console.error('Error updating interview progress:', error);
+    return false;
+  }
+
+  return true;
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -41,6 +121,10 @@ serve(async (req) => {
     const { message, session_id, message_id } = await req.json();
     console.log('Received request:', { session_id, message_id });
     console.log('Message content:', message);
+
+    // Get current session phase data
+    const currentPhaseData = await getSessionPhaseData(session_id);
+    console.log('Current phase data:', currentPhaseData);
 
     // Extract the token for debugging.
     const supabaseToken = authHeader.split(' ')[1];
@@ -116,11 +200,31 @@ serve(async (req) => {
     
     console.log('Token exchange successful, received FastAPI token');
     
+    // Get phase configuration if phase data exists
+    let phaseConfig = null;
+    if (currentPhaseData?.current_phase) {
+      phaseConfig = await getPhaseConfig(currentPhaseData.current_phase);
+    }
+
     // Call the FastAPI chat endpoint using the new token.
     console.log(`Calling FastAPI chat endpoint at: ${fastApiUrl}/chat/send_message`);
     
-    const requestBody = JSON.stringify({ session_id, message_id, message });
-    console.log('Chat request body:', requestBody);
+    // Enhanced request body with phase data
+    const requestBody = JSON.stringify({ 
+      session_id, 
+      message_id, 
+      message,
+      phase_data: {
+        current_phase: currentPhaseData?.current_phase || 'introduction',
+        phase_metadata: currentPhaseData?.phase_metadata || {},
+        phase_question_counts: currentPhaseData?.phase_question_counts || {},
+        phase_max_questions: currentPhaseData?.phase_max_questions || {},
+        system_prompt: phaseConfig?.system_prompt,
+        max_questions: phaseConfig?.max_questions,
+        completion_threshold: phaseConfig?.completion_threshold
+      }
+    });
+    console.log('Enhanced chat request body with phase data:', requestBody);
     
     const response = await fetch(`${fastApiUrl}/chat/send_message`, {
       method: 'POST',
@@ -180,11 +284,50 @@ serve(async (req) => {
       );
     }
     
-    // For successful responses, return the backend data directly.
+    // Process phase information from FastAPI response
+    if (data.phase_info) {
+      console.log('Processing phase info:', data.phase_info);
+      
+      // Update session phase data if phase transition occurred
+      if (data.phase_info.current_phase && data.phase_info.current_phase !== currentPhaseData?.current_phase) {
+        console.log(`Phase transition detected: ${currentPhaseData?.current_phase} -> ${data.phase_info.current_phase}`);
+        await updateSessionPhase(session_id, {
+          current_phase: data.phase_info.current_phase,
+          phase_metadata: data.phase_info.phase_metadata || currentPhaseData?.phase_metadata || {},
+          phase_question_counts: data.phase_info.phase_question_counts || currentPhaseData?.phase_question_counts || {},
+          updated_at: new Date().toISOString()
+        });
+      }
+
+      // Update interview progress
+      if (data.phase_info.current_phase) {
+        // Get user ID from token (you may need to decode the JWT token)
+        // For now, we'll use a placeholder - you should implement proper user ID extraction
+        const userId = tokenData.user_id || 'placeholder_user_id';
+        
+        await updateInterviewProgress(session_id, userId, data.phase_info.current_phase, {
+          questions_asked: data.phase_info.questions_in_phase || 0,
+          completion_confidence: data.phase_info.completion_confidence || 0,
+          selected_themes: data.phase_info.selected_themes || [],
+          insights: data.phase_info.insights || {}
+        });
+      }
+    }
+
+    // For successful responses, return enhanced data with phase information
     return new Response(
       JSON.stringify({
         response: data.response,
-        session_id: data.session_id
+        session_id: data.session_id,
+        phase_info: data.phase_info || {
+          current_phase: currentPhaseData?.current_phase || 'introduction',
+          progress_percent: 0,
+          questions_in_phase: 0,
+          max_questions_in_phase: phaseConfig?.max_questions || 3,
+          should_transition: false,
+          selected_themes: [],
+          completion_confidence: 0
+        }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

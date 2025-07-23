@@ -12,6 +12,50 @@ export interface ChatSession {
   created_at: string;
   finished: boolean;
   user_id: string;
+  current_phase?: InterviewPhase;
+  phase_metadata?: Record<string, any>;
+  phase_question_counts?: Record<string, number>;
+  phase_max_questions?: Record<string, number>;
+  phase_completion_criteria?: Record<string, any>;
+}
+
+// Interview Phase Types
+export type InterviewPhase = 'introduction' | 'theme_selection' | 'deep_dive' | 'summary' | 'recommendations';
+
+export interface PhaseInfo {
+  current_phase: InterviewPhase;
+  progress_percent: number;
+  questions_in_phase: number;
+  max_questions_in_phase: number;
+  should_transition: boolean;
+  selected_themes: string[];
+  completion_confidence: number;
+  phase_metadata?: Record<string, any>;
+  insights?: Record<string, any>;
+}
+
+export interface PhaseConfig {
+  id: string;
+  phase: InterviewPhase;
+  max_questions: number;
+  system_prompt: string;
+  completion_threshold: number;
+  phase_description: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InterviewProgress {
+  id: string;
+  session_id: string;
+  user_id: string;
+  phase: InterviewPhase;
+  questions_asked: number;
+  completion_confidence: number;
+  selected_themes: string[];
+  insights: Record<string, any>;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface MultiAgentState {
@@ -31,6 +75,14 @@ export interface MultiAgentState {
 
 export interface ChatMessageWithState extends ChatMessage {
   multi_agent_state?: MultiAgentState;
+  phase_info?: PhaseInfo;
+}
+
+export interface ChatResponse {
+  response: string;
+  session_id: string;
+  phase_info?: PhaseInfo;
+  error?: string;
 }
 
 export interface SessionWithFeedback extends ChatSession {
