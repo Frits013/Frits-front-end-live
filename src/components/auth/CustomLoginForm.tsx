@@ -8,6 +8,7 @@ import { Eye, EyeOff, Mail, Lock, Shield, Sparkles, LogIn } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle } from "lucide-react";
+import { validateEmail, validatePassword, sanitizeInput, RateLimiter } from "@/lib/input-validation";
 interface CustomLoginFormProps {
   authView: 'sign_in' | 'sign_up';
 }
@@ -19,6 +20,10 @@ export const CustomLoginForm = ({
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [emailConfirmed, setEmailConfirmed] = useState(false);
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+  
+  // Rate limiter for login attempts
+  const rateLimiter = new RateLimiter(5, 300000); // 5 attempts per 5 minutes
   const {
     toast
   } = useToast();
@@ -33,7 +38,12 @@ export const CustomLoginForm = ({
   };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
+    
+    // Input validation and sanitization
+    const cleanEmail = sanitizeInput(email.trim(), 254);
+    const cleanPassword = password; // Don't sanitize password as it might contain special chars
+    
+    if (!cleanEmail || !cleanPassword) {
       toast({
         title: "Missing Information",
         description: "Please enter both email and password.",
@@ -41,12 +51,48 @@ export const CustomLoginForm = ({
       });
       return;
     }
+    
+    // Email validation
+    if (!validateEmail(cleanEmail)) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Password validation for sign up
+    if (authView === 'sign_up') {
+      const passwordValidation = validatePassword(cleanPassword);
+      if (!passwordValidation.isValid) {
+        setPasswordErrors(passwordValidation.errors);
+        toast({
+          title: "Password Requirements",
+          description: passwordValidation.errors[0],
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+    
+    // Rate limiting check
+    if (!rateLimiter.isAllowed(cleanEmail)) {
+      toast({
+        title: "Too Many Attempts",
+        description: "Please wait 5 minutes before trying again.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setPasswordErrors([]);
     setLoading(true);
     try {
-      console.log(`Attempting to ${authView === 'sign_in' ? 'sign in' : 'sign up'} with email: ${email}`);
+      // Attempting authentication
       let result;
       if (authView === 'sign_in') {
-        result = await handleEmailSignIn(email, password);
+        result = await handleEmailSignIn(cleanEmail, cleanPassword);
 
         // Check if email is confirmed
         if (result?.data?.user) {
@@ -79,7 +125,7 @@ export const CustomLoginForm = ({
           }, 1000);
         }
       } else {
-        result = await handleEmailSignUp(email, password);
+        result = await handleEmailSignUp(cleanEmail, cleanPassword);
       }
 
       // Check for errors and handle accordingly
@@ -168,9 +214,24 @@ export const CustomLoginForm = ({
             </Button>
           </div>
           
-          {authView === 'sign_up' && <p className="text-xs text-gray-500 mt-1">
-              Use 8+ characters with a mix of letters, numbers & symbols
-            </p>}
+          {authView === 'sign_up' && (
+            <>
+              <p className="text-xs text-gray-500 mt-1">
+                Use 8+ characters with a mix of letters, numbers & symbols
+              </p>
+              {passwordErrors.length > 0 && (
+                <Alert variant="destructive" className="mt-2">
+                  <AlertDescription>
+                    <ul className="list-disc list-inside text-xs">
+                      {passwordErrors.map((error, index) => (
+                        <li key={index}>{error}</li>
+                      ))}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
+            </>
+          )}
         </div>
       </div>
       
