@@ -1,5 +1,6 @@
 
 import { ChatMessage } from "@/types/chat";
+import DOMPurify from 'dompurify';
 
 interface ChatMessagesProps {
   messages: ChatMessage[];
@@ -8,8 +9,12 @@ interface ChatMessagesProps {
 
 const ChatMessages = ({ messages, showFinishButton = false }: ChatMessagesProps) => {
   const formatText = (text: string) => {
-    // Handle bold text wrapped in **
-    return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    // Handle bold text wrapped in ** and sanitize HTML
+    const formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    return DOMPurify.sanitize(formatted, { 
+      ALLOWED_TAGS: ['strong', 'em', 'br'],
+      ALLOWED_ATTR: []
+    });
   };
 
   const formatMessage = (message: ChatMessage) => {
