@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChatMessage } from "@/types/chat";
+import { ChatMessage, ChatSession, InterviewProgress, PhaseConfig } from "@/types/chat";
 import { supabase } from "@/integrations/supabase/client";
 import { INITIAL_MESSAGE } from "@/hooks/chat-sessions/use-session-creation";
 
@@ -10,6 +10,9 @@ export const useMessageFetcher = (sessionId: string | null) => {
   const [isConsultComplete, setIsConsultComplete] = useState(false);
   const [hasFeedback, setHasFeedback] = useState(false);
   const [autoMessageSent, setAutoMessageSent] = useState(false);
+  const [sessionData, setSessionData] = useState<ChatSession | null>(null);
+  const [currentProgress, setCurrentProgress] = useState<InterviewProgress | null>(null);
+  const [phaseConfigs, setPhaseConfigs] = useState<PhaseConfig[]>([]);
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -25,10 +28,10 @@ export const useMessageFetcher = (sessionId: string | null) => {
       if (isDev) console.log('Loading messages for session:', sessionId);
 
       try {
-        // First, check if the session is marked as finished
-        const { data: sessionData, error: sessionError } = await supabase
+        // First, fetch complete session data including phase information
+        const { data: sessionResult, error: sessionError } = await supabase
           .from('chat_sessions')
-          .select('finished, created_at')
+          .select('*')
           .eq('id', sessionId)
           .single();
 
@@ -42,12 +45,42 @@ export const useMessageFetcher = (sessionId: string | null) => {
           return;
         }
 
-        if (sessionData) {
-          // Update the consult complete state based on the finished column
-          setIsConsultComplete(sessionData.finished);
+        if (sessionResult) {
+          // Update session data and consult complete state
+          setSessionData(sessionResult);
+          setIsConsultComplete(sessionResult.finished);
           
+          // Fetch current interview progress
+          const { data: progressData, error: progressError } = await supabase
+            .from('interview_progress')
+            .select('*')
+            .eq('session_id', sessionId)
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (progressError && progressError.code !== 'PGRST116') {
+            if (isDev) console.error('Error fetching interview progress:', progressError);
+          } else {
+            setCurrentProgress(progressData);
+          }
+
+          // Fetch phase configurations (only once)
+          if (phaseConfigs.length === 0) {
+            const { data: configData, error: configError } = await supabase
+              .from('interview_phases_config')
+              .select('*')
+              .order('phase');
+
+            if (configError) {
+              if (isDev) console.error('Error fetching phase configs:', configError);
+            } else {
+              setPhaseConfigs(configData || []);
+            }
+          }
+
           // If the session is finished, check if feedback exists
-          if (sessionData.finished) {
+          if (sessionResult.finished) {
             const { data: feedbackData, error: feedbackError } = await supabase
               .from('feedback')
               .select('id')
@@ -91,7 +124,7 @@ export const useMessageFetcher = (sessionId: string | null) => {
           );
           
           // Get session creation time
-          const sessionCreationTime = sessionData ? new Date(sessionData.created_at) : null;
+          const sessionCreationTime = sessionResult ? new Date(sessionResult.created_at) : null;
           const currentTime = new Date();
           
           // Consider it a new session if created within the last 60 seconds
@@ -108,6 +141,8 @@ export const useMessageFetcher = (sessionId: string | null) => {
         setIsConsultComplete(false);
         setHasFeedback(false);
         setAutoMessageSent(false);
+        setSessionData(null);
+        setCurrentProgress(null);
       }
     };
 
@@ -122,6 +157,8 @@ export const useMessageFetcher = (sessionId: string | null) => {
       setIsConsultComplete(false);
       setHasFeedback(false);
       setAutoMessageSent(false);
+      setSessionData(null);
+      setCurrentProgress(null);
     }
     
     // Set up a polling mechanism to check for new messages regularly
@@ -169,6 +206,9 @@ export const useMessageFetcher = (sessionId: string | null) => {
     setIsConsultComplete,
     hasFeedback,
     setHasFeedback,
-    autoMessageSent
+    autoMessageSent,
+    sessionData,
+    currentProgress,
+    phaseConfigs
   };
 };

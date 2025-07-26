@@ -5,6 +5,7 @@ import { useMessageFetcher } from "./chat/use-message-fetcher";
 import { useProcessingState } from "./chat/use-processing-state";
 import { useSessionSubscription } from "./chat/use-session-subscription";
 import { useMessageSubscription } from "./chat/use-message-subscription";
+import { usePhaseSubscription } from "./chat/use-phase-subscription";
 
 export const useChatMessages = (sessionId: string | null) => {
   const [dialogDismissed, setDialogDismissed] = useState(false);
@@ -17,7 +18,10 @@ export const useChatMessages = (sessionId: string | null) => {
     setIsConsultComplete,
     hasFeedback,
     setHasFeedback,
-    autoMessageSent
+    autoMessageSent,
+    sessionData,
+    currentProgress,
+    phaseConfigs
   } = useMessageFetcher(sessionId);
   
   const { isProcessing, setIsProcessing } = useProcessingState(sessionId);
@@ -33,6 +37,12 @@ export const useChatMessages = (sessionId: string | null) => {
   
   // Set up subscription to message changes
   useMessageSubscription(sessionId, messages, setMessages, setIsProcessing);
+  
+  // Set up subscription to phase changes
+  usePhaseSubscription(sessionId, 
+    (data) => { /* sessionData is managed by useMessageFetcher */ }, 
+    (progress) => { /* currentProgress is managed by useMessageFetcher */ }
+  );
 
   return {
     messages,
@@ -44,6 +54,9 @@ export const useChatMessages = (sessionId: string | null) => {
     hasFeedback,
     autoMessageSent,
     isProcessing,
-    setIsProcessing
+    setIsProcessing,
+    sessionData,
+    currentProgress,
+    phaseConfigs
   };
 };
