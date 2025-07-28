@@ -2,6 +2,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { sanitizeCompanyCode } from "@/lib/input-validation";
 
 interface CompanyCodeFieldProps {
   companyCode: string;
@@ -31,13 +32,15 @@ const CompanyCodeField = ({
             id="companyCode"
             value={companyCode}
             onChange={(e) => {
-              const value = e.target.value.replace(/\D/g, '').slice(0, 8);
-              onCodeChange(value);
+              const sanitized = sanitizeCompanyCode(e.target.value);
+              onCodeChange(sanitized);
             }}
             className="w-full font-mono"
             placeholder="Enter 8-digit company code"
             maxLength={8}
             inputMode="numeric"
+            autoComplete="off"
+            spellCheck="false"
           />
           {codeError && (
             <p className="text-sm text-destructive">{codeError}</p>
