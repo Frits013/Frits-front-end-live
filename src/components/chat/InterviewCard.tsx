@@ -2,6 +2,8 @@ import { ChatMessage } from "@/types/chat";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { User, Bot, CheckCircle, Clock, ChevronRight } from "lucide-react";
+import { sanitizeInput } from "@/lib/input-validation";
+import DOMPurify from 'dompurify';
 
 interface InterviewCardProps {
   message: ChatMessage;
@@ -21,8 +23,21 @@ const InterviewCard = ({
   showProgress = false
 }: InterviewCardProps) => {
   const formatText = (text: string) => {
+    // Sanitize input first
+    const sanitized = sanitizeInput(text);
+    
     // Handle bold text wrapped in **
-    return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    const boldText = sanitized.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // Comprehensive sanitization with DOMPurify
+    return DOMPurify.sanitize(boldText, {
+      ALLOWED_TAGS: ['strong', 'em', 'br'],
+      ALLOWED_ATTR: [],
+      KEEP_CONTENT: true,
+      SANITIZE_DOM: true,
+      FORBID_ATTR: ['style', 'class', 'onclick', 'onload', 'onerror'],
+      FORBID_TAGS: ['script', 'object', 'embed', 'iframe', 'form', 'input']
+    });
   };
 
   const formatMessage = (message: ChatMessage) => {

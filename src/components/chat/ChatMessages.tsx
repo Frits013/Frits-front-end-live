@@ -19,8 +19,10 @@ const ChatMessages = ({ messages, showFinishButton = false }: ChatMessagesProps)
       ALLOWED_TAGS: ['strong', 'em', 'br'],
       ALLOWED_ATTR: [],
       ALLOW_DATA_ATTR: false,
-      FORBID_ATTR: ['style', 'class'],
-      FORBID_TAGS: ['script', 'object', 'embed', 'iframe']
+      FORBID_ATTR: ['style', 'class', 'onclick', 'onload', 'onerror'],
+      FORBID_TAGS: ['script', 'object', 'embed', 'iframe', 'form', 'input'],
+      KEEP_CONTENT: true,
+      SANITIZE_DOM: true
     });
   };
 

@@ -8,13 +8,19 @@ export const sanitizeInput = (input: string, maxLength: number = 5000): string =
   // Trim and limit length
   const trimmed = input.trim().slice(0, maxLength);
   
+  // Remove any potential XSS patterns
+  const cleaned = trimmed
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/javascript:/gi, '')
+    .replace(/on\w+\s*=/gi, '');
+  
   // Comprehensive HTML sanitization with strict settings
-  return DOMPurify.sanitize(trimmed, { 
+  return DOMPurify.sanitize(cleaned, { 
     ALLOWED_TAGS: [],
     ALLOWED_ATTR: [],
     ALLOW_DATA_ATTR: false,
-    FORBID_ATTR: ['style', 'class', 'onclick', 'onload', 'onerror'],
-    FORBID_TAGS: ['script', 'object', 'embed', 'iframe', 'form', 'input'],
+    FORBID_ATTR: ['style', 'class', 'onclick', 'onload', 'onerror', 'onmouseover', 'onfocus'],
+    FORBID_TAGS: ['script', 'object', 'embed', 'iframe', 'form', 'input', 'link', 'meta', 'style'],
     KEEP_CONTENT: true,
     SANITIZE_DOM: true
   });
