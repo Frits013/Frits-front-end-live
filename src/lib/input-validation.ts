@@ -8,10 +8,15 @@ export const sanitizeInput = (input: string, maxLength: number = 5000): string =
   // Trim and limit length
   const trimmed = input.trim().slice(0, maxLength);
   
-  // Basic HTML sanitization
+  // Comprehensive HTML sanitization with strict settings
   return DOMPurify.sanitize(trimmed, { 
     ALLOWED_TAGS: [],
-    ALLOWED_ATTR: []
+    ALLOWED_ATTR: [],
+    ALLOW_DATA_ATTR: false,
+    FORBID_ATTR: ['style', 'class', 'onclick', 'onload', 'onerror'],
+    FORBID_TAGS: ['script', 'object', 'embed', 'iframe', 'form', 'input'],
+    KEEP_CONTENT: true,
+    SANITIZE_DOM: true
   });
 };
 
@@ -53,8 +58,11 @@ export const validatePassword = (password: string): {
 };
 
 export const sanitizeCompanyCode = (code: string): string => {
-  // Only allow numeric characters
-  return code.replace(/\D/g, '').slice(0, 10);
+  if (!code || typeof code !== 'string') return '';
+  // Only allow numeric characters, strict validation
+  const cleaned = code.replace(/\D/g, '').slice(0, 10);
+  // Additional validation - ensure it's a valid number
+  return /^\d+$/.test(cleaned) ? cleaned : '';
 };
 
 // Rate limiting helper (client-side basic implementation)

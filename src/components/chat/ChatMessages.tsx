@@ -1,6 +1,7 @@
 
 import { ChatMessage } from "@/types/chat";
 import DOMPurify from 'dompurify';
+import { sanitizeInput } from '@/lib/input-validation';
 
 interface ChatMessagesProps {
   messages: ChatMessage[];
@@ -9,18 +10,25 @@ interface ChatMessagesProps {
 
 const ChatMessages = ({ messages, showFinishButton = false }: ChatMessagesProps) => {
   const formatText = (text: string) => {
-    // Handle bold text wrapped in ** and sanitize HTML
-    const formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    // First sanitize input to prevent XSS
+    const cleanInput = sanitizeInput(text, 10000);
+    // Handle bold text wrapped in ** 
+    const formatted = cleanInput.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    // Final sanitization with strict settings
     return DOMPurify.sanitize(formatted, { 
       ALLOWED_TAGS: ['strong', 'em', 'br'],
-      ALLOWED_ATTR: []
+      ALLOWED_ATTR: [],
+      ALLOW_DATA_ATTR: false,
+      FORBID_ATTR: ['style', 'class'],
+      FORBID_TAGS: ['script', 'object', 'embed', 'iframe']
     });
   };
 
   const formatMessage = (message: ChatMessage) => {
     if (!message || !message.content) return ''; // Add null check for message and content
     
-    let text = message.content;
+    // Sanitize the entire message content first
+    let text = sanitizeInput(message.content, 10000);
 
     // First, handle any markdown list numbers that might appear
     text = text.replace(/^\d+\.\s+/gm, '');
