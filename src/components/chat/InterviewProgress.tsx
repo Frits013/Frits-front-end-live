@@ -2,10 +2,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Clock, ArrowRight } from "lucide-react";
+import { InterviewPhase, PhaseInfo } from "@/types/chat";
 
 interface InterviewProgressProps {
-  currentPhase: string;
-  progress: number;
+  currentPhase?: InterviewPhase;
+  phaseInfo?: PhaseInfo;
   totalQuestions: number;
   answeredQuestions: number;
   estimatedTimeLeft?: string;
@@ -13,19 +14,44 @@ interface InterviewProgressProps {
 
 const InterviewProgress = ({
   currentPhase,
-  progress,
+  phaseInfo,
   totalQuestions,
   answeredQuestions,
   estimatedTimeLeft
 }: InterviewProgressProps) => {
-  const phases = [
-    { name: 'Introduction', completed: progress >= 25 },
-    { name: 'Core Questions', completed: progress >= 50 },
-    { name: 'Summary', completed: progress >= 75 },
-    { name: 'Conclusion', completed: progress >= 100 }
+  // Define the correct phases with proper names and order
+  const phaseDefinitions = [
+    { id: 'introduction', name: 'Introduction', maxQuestions: 3 },
+    { id: 'theme_selection', name: 'Theme Selection', maxQuestions: 5 },
+    { id: 'deep_dive', name: 'Deep Dive', maxQuestions: 8 },
+    { id: 'summary', name: 'Summary', maxQuestions: 3 },
+    { id: 'recommendations', name: 'Recommendations', maxQuestions: 2 }
   ];
 
-  const getPhaseColor = (phase: string, isActive: boolean, isCompleted: boolean) => {
+  // Calculate total progress across all phases
+  const totalMaxQuestions = phaseDefinitions.reduce((sum, phase) => sum + phase.maxQuestions, 0);
+  const totalProgress = Math.min((answeredQuestions / totalMaxQuestions) * 100, 100);
+
+  // Calculate current phase progress
+  const currentPhaseProgress = phaseInfo ? 
+    Math.min((phaseInfo.questions_in_phase / phaseInfo.max_questions_in_phase) * 100, 100) : 0;
+
+  const getPhaseStatus = (phaseId: string) => {
+    if (!currentPhase) return { isActive: false, isCompleted: false, progress: 0 };
+    
+    const currentIndex = phaseDefinitions.findIndex(p => p.id === currentPhase);
+    const phaseIndex = phaseDefinitions.findIndex(p => p.id === phaseId);
+    
+    const isActive = phaseId === currentPhase;
+    const isCompleted = phaseIndex < currentIndex || (isActive && phaseInfo?.should_transition);
+    
+    // If completed or should transition, show 100%, otherwise show actual progress for current phase
+    const progress = isCompleted ? 100 : (isActive ? currentPhaseProgress : 0);
+    
+    return { isActive, isCompleted, progress };
+  };
+
+  const getPhaseColor = (isActive: boolean, isCompleted: boolean) => {
     if (isCompleted) return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
     if (isActive) return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
     return 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400';
@@ -46,41 +72,57 @@ const InterviewProgress = ({
           )}
         </div>
 
-        {/* Progress bar */}
+        {/* Total Progress */}
         <div className="mb-4">
-          <Progress value={progress} className="h-2" />
-          <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 mt-1">
-            <span>{answeredQuestions} of {totalQuestions} questions</span>
-            <span>{Math.round(progress)}%</span>
+          <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300 mb-1">
+            <span>Total Interview Progress</span>
+            <span>{Math.round(totalProgress)}%</span>
+          </div>
+          <Progress value={totalProgress} className="h-2 mb-2" />
+          <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+            <span>{answeredQuestions} of {totalMaxQuestions} total questions</span>
           </div>
         </div>
 
+        {/* Current Phase Progress */}
+        {currentPhase && phaseInfo && (
+          <div className="mb-4">
+            <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300 mb-1">
+              <span>Current Phase: {phaseDefinitions.find(p => p.id === currentPhase)?.name}</span>
+              <span>{Math.round(currentPhaseProgress)}%</span>
+            </div>
+            <Progress value={currentPhaseProgress} className="h-2 mb-2" />
+            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+              <span>{phaseInfo.questions_in_phase} of {phaseInfo.max_questions_in_phase} phase questions</span>
+            </div>
+          </div>
+        )}
+
         {/* Phase indicators */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2">
-          {phases.map((phase, index) => (
-            <div key={phase.name} className="flex items-center gap-2 min-w-0">
-              <Badge 
-                className={`text-xs transition-all duration-300 ${
-                  getPhaseColor(phase.name, currentPhase === phase.name, phase.completed)
-                }`}
-              >
-                <div className="flex items-center gap-1">
-                  {phase.completed && <CheckCircle className="w-3 h-3" />}
-                  <span className="truncate">{phase.name}</span>
+          {phaseDefinitions.map((phase, index) => {
+            const status = getPhaseStatus(phase.id);
+            return (
+              <div key={phase.id} className="flex items-center gap-2 min-w-0">
+                <div className="flex flex-col items-center gap-1">
+                  <Badge 
+                    className={`text-xs transition-all duration-300 ${
+                      getPhaseColor(status.isActive, status.isCompleted)
+                    }`}
+                  >
+                    <div className="flex items-center gap-1">
+                      {status.isCompleted && <CheckCircle className="w-3 h-3" />}
+                      <span className="truncate">{phase.name}</span>
+                    </div>
+                  </Badge>
+                  <Progress value={status.progress} className="h-1 w-16" />
                 </div>
-              </Badge>
-              {index < phases.length - 1 && (
-                <ArrowRight className="w-3 h-3 text-gray-400 dark:text-gray-500 flex-shrink-0" />
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Current phase description */}
-        <div className="mt-4 p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            <strong>Current Phase:</strong> {currentPhase}
-          </p>
+                {index < phaseDefinitions.length - 1 && (
+                  <ArrowRight className="w-3 h-3 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                )}
+              </div>
+            );
+          })}
         </div>
       </CardContent>
     </Card>

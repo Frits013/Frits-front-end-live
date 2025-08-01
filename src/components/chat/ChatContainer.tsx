@@ -1,7 +1,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import InterviewProgress from "./InterviewProgress";
-import { ChatMessage } from "@/types/chat";
+import { ChatMessage, ChatSession, InterviewProgress as InterviewProgressType } from "@/types/chat";
 import ConsultCompleteDialog from "@/components/chat/ConsultCompleteDialog";
 import { useToast } from "@/hooks/use-toast";
 import ChatPanelLayout from "./ChatPanelLayout";
@@ -23,6 +23,8 @@ interface ChatContainerProps {
   setDialogDismissed: (dismissed: boolean) => void;
   hasFeedback?: boolean;
   onSessionAnimation?: (shouldAnimate: boolean, sessionId?: string) => void;
+  sessionData?: ChatSession | null;
+  currentProgress?: InterviewProgressType | null;
 }
 
 const ChatContainer = ({
@@ -37,6 +39,8 @@ const ChatContainer = ({
   setDialogDismissed,
   hasFeedback = false,
   onSessionAnimation,
+  sessionData,
+  currentProgress
 }: ChatContainerProps) => {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -106,21 +110,41 @@ const ChatContainer = ({
     // Note: We do NOT call onConsultFinish here - session stays active
   };
 
-  // Calculate interview progress
-  const userMessages = messages.filter(msg => msg.role === 'user');
-  const totalQuestions = 10; // Estimate total questions for interview
-  const answeredQuestions = userMessages.length;
-  const progress = Math.min((answeredQuestions / totalQuestions) * 100, 100);
-  
-  const getPhase = (progress: number) => {
-    if (progress < 25) return 'Introduction';
-    if (progress < 50) return 'Core Questions';
-    if (progress < 75) return 'Summary';
-    return 'Conclusion';
+  // Helper function to get max questions for a phase
+  const getMaxQuestionsForPhase = (phase: string) => {
+    const phaseMaxQuestions = {
+      'introduction': 3,
+      'theme_selection': 5,
+      'deep_dive': 8,
+      'summary': 3,
+      'recommendations': 2
+    };
+    return phaseMaxQuestions[phase as keyof typeof phaseMaxQuestions] || 5;
   };
 
-  const currentPhase = getPhase(progress);
-  const estimatedTimeLeft = progress < 100 ? `${Math.max(1, Math.ceil((100 - progress) / 10))} min` : undefined;
+  // Calculate interview progress
+  const userMessages = messages.filter(msg => msg.role === 'user');
+  const totalQuestions = 21; // Total across all phases (3+5+8+3+2)
+  const answeredQuestions = userMessages.length;
+  
+  // Get current phase from session data
+  const currentPhase = sessionData?.current_phase;
+  
+  // Create phase info from current progress data
+  const phaseInfo = currentProgress ? {
+    current_phase: currentProgress.phase,
+    progress_percent: 0, // Will be calculated in InterviewProgress component
+    questions_in_phase: currentProgress.questions_asked,
+    max_questions_in_phase: getMaxQuestionsForPhase(currentProgress.phase),
+    should_transition: false, // We don't have this info directly
+    selected_themes: Array.isArray(currentProgress.selected_themes) ? 
+      currentProgress.selected_themes : 
+      (currentProgress.selected_themes as any)?.themes || [],
+    completion_confidence: currentProgress.completion_confidence || 0
+  } : undefined;
+  
+  const estimatedTimeLeft = answeredQuestions < totalQuestions ? 
+    `${Math.max(1, Math.ceil((totalQuestions - answeredQuestions) * 2))} min` : undefined;
 
   return (
     <>
@@ -131,7 +155,7 @@ const ChatContainer = ({
             <div className="flex-shrink-0 px-4 py-2">
               <InterviewProgress
                 currentPhase={currentPhase}
-                progress={progress}
+                phaseInfo={phaseInfo}
                 totalQuestions={totalQuestions}
                 answeredQuestions={answeredQuestions}
                 estimatedTimeLeft={estimatedTimeLeft}
