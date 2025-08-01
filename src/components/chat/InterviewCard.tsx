@@ -133,7 +133,7 @@ const InterviewCard = ({
               </div>
               <div className="flex-1">
                 <div className="text-white font-medium">Your Response</div>
-                <div className="text-white/70 text-sm">Interview Answer</div>
+                
               </div>
             </div>
             <div className="text-white leading-relaxed">
