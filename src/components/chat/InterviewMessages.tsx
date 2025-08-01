@@ -1,4 +1,4 @@
-import { ChatMessage } from "@/types/chat";
+import { ChatMessage, InterviewPhase } from "@/types/chat";
 import InterviewCard from "./InterviewCard";
 import InterviewProgress from "./InterviewProgress";
 import InterviewTypingIndicator from "./InterviewTypingIndicator";
@@ -7,29 +7,34 @@ interface InterviewMessagesProps {
   messages: ChatMessage[];
   showFinishButton?: boolean;
   isProcessing?: boolean;
-  currentPhase?: string;
+  currentPhase?: InterviewPhase;
+  sessionData?: any;
+  currentProgress?: any;
 }
 
 const InterviewMessages = ({ 
   messages, 
   showFinishButton = false, 
   isProcessing = false,
-  currentPhase = "Core Questions"
+  currentPhase,
+  sessionData,
+  currentProgress
 }: InterviewMessagesProps) => {
-  // Calculate progress based on messages
-  const totalQuestions = 8; // This could be dynamic based on session type
+  // Use real session data or fallback calculations
+  const currentSessionPhase = currentPhase || sessionData?.current_phase || 'introduction';
+  const phaseProgressData = currentProgress || {};
+  
+  // Calculate total questions and progress
+  const totalQuestions = sessionData?.phase_max_questions ? 
+    Object.values(sessionData.phase_max_questions).reduce((a: any, b: any) => Number(a) + Number(b), 0) : 8;
   const answeredQuestions = Math.floor(messages.filter(m => m.role === 'user').length);
-  const progress = Math.min((answeredQuestions / totalQuestions) * 100, 100);
-
-  // Determine current phase based on progress
-  const getPhase = (progress: number) => {
-    if (progress < 25) return 'Introduction';
-    if (progress < 50) return 'Core Questions';
-    if (progress < 75) return 'Summary';
-    return 'Conclusion';
-  };
-
-  const phase = getPhase(progress);
+  
+  // Get phase-specific data
+  const currentPhaseMaxQuestions = Number(sessionData?.phase_max_questions?.[currentSessionPhase]) || 5;
+  const currentPhaseQuestions = Number(phaseProgressData?.questions_asked) || 1;
+  
+  // Calculate overall progress
+  const progress = Math.min((answeredQuestions / Number(totalQuestions)) * 100, 100);
   const estimatedTimeLeft = progress < 100 ? `${Math.max(1, Math.ceil((100 - progress) / 10))} min` : undefined;
 
   return (
@@ -47,9 +52,13 @@ const InterviewMessages = ({
             message={message}
             isLatest={isLatest && message.role === 'assistant'}
             questionNumber={questionNumber}
-            totalQuestions={totalQuestions}
-            phase={phase}
+            totalQuestions={Number(totalQuestions)}
+            phase={currentSessionPhase as InterviewPhase}
             showProgress={message.role === 'assistant'}
+            phaseProgress={progress}
+            phaseMaxQuestions={currentPhaseMaxQuestions}
+            phaseQuestionNumber={currentPhaseQuestions}
+            sessionData={sessionData}
           />
         );
       })}
@@ -57,7 +66,7 @@ const InterviewMessages = ({
       {/* Typing indicator */}
       {isProcessing && (
         <InterviewTypingIndicator 
-          phase={phase}
+          phase={currentSessionPhase as InterviewPhase}
         />
       )}
     </div>
