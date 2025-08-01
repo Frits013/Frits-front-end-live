@@ -172,9 +172,7 @@ const InterviewCard = ({
                     {getPhaseTitle(phase)}
                   </Badge>
                 </div>
-                {questionNumber && totalQuestions && <Badge variant="outline" className="text-xs">
-                    Question {questionNumber} of {totalQuestions}
-                  </Badge>}
+                {questionNumber && totalQuestions}
               </div>}
           </div>
 
