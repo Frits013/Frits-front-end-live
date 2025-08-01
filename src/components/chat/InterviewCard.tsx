@@ -157,9 +157,7 @@ const InterviewCard = ({
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-1">
                   <span className="font-bold text-lg text-gray-900 dark:text-white">Frits</span>
-                  <Badge variant="secondary" className="text-xs px-2 py-1">
-                    AI Interview Consultant
-                  </Badge>
+                  <Badge variant="secondary" className="text-xs px-2 py-1">AI Consultant</Badge>
                 </div>
                 
               </div>
