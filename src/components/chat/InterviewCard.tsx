@@ -5,7 +5,6 @@ import { Progress } from "@/components/ui/progress";
 import { User, Bot, CheckCircle, Clock, ChevronRight, MessageCircle, Target, Brain, FileText, Award } from "lucide-react";
 import { sanitizeInput } from "@/lib/input-validation";
 import DOMPurify from 'dompurify';
-
 interface InterviewCardProps {
   message: ChatMessage;
   isLatest?: boolean;
@@ -18,7 +17,6 @@ interface InterviewCardProps {
   phaseQuestionNumber?: number;
   sessionData?: any;
 }
-
 const InterviewCard = ({
   message,
   isLatest = false,
@@ -34,10 +32,10 @@ const InterviewCard = ({
   const formatText = (text: string) => {
     // Sanitize input first
     const sanitized = sanitizeInput(text);
-    
+
     // Handle bold text wrapped in **
     const boldText = sanitized.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
+
     // Comprehensive sanitization with DOMPurify
     return DOMPurify.sanitize(boldText, {
       ALLOWED_TAGS: ['strong', 'em', 'br'],
@@ -48,10 +46,8 @@ const InterviewCard = ({
       FORBID_TAGS: ['script', 'object', 'embed', 'iframe', 'form', 'input']
     });
   };
-
   const formatMessage = (message: ChatMessage) => {
     if (!message || !message.content) return '';
-    
     let text = message.content;
 
     // First, handle any markdown list numbers that might appear
@@ -63,34 +59,22 @@ const InterviewCard = ({
       return sections.map((section, index) => {
         const [header, ...contentParts] = section.trim().split('\n');
         const content = contentParts.join('\n');
-
-        return (
-          <div key={index} className="mb-4 last:mb-0">
+        return <div key={index} className="mb-4 last:mb-0">
             <div className="font-semibold text-base mb-2 text-purple-700 dark:text-purple-300">
               {header.trim()}
             </div>
-            <div 
-              className="pl-4 border-l-2 border-purple-200 dark:border-purple-700"
-              dangerouslySetInnerHTML={{ 
-                __html: formatText(content.trim())
-              }}
-            />
-          </div>
-        );
+            <div className="pl-4 border-l-2 border-purple-200 dark:border-purple-700" dangerouslySetInnerHTML={{
+            __html: formatText(content.trim())
+          }} />
+          </div>;
       });
     }
 
     // If there are no ###, treat the entire text as regular content
-    return (
-      <div 
-        className="whitespace-pre-wrap"
-        dangerouslySetInnerHTML={{ 
-          __html: formatText(text)
-        }}
-      />
-    );
+    return <div className="whitespace-pre-wrap" dangerouslySetInnerHTML={{
+      __html: formatText(text)
+    }} />;
   };
-
   const getPhaseIcon = (phase?: InterviewPhase) => {
     switch (phase) {
       case 'introduction':
@@ -107,7 +91,6 @@ const InterviewCard = ({
         return Bot;
     }
   };
-
   const getPhaseColor = (phase?: InterviewPhase) => {
     switch (phase) {
       case 'introduction':
@@ -124,7 +107,6 @@ const InterviewCard = ({
         return 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:border-gray-800';
     }
   };
-
   const getPhaseTitle = (phase?: InterviewPhase) => {
     switch (phase) {
       case 'introduction':
@@ -141,10 +123,8 @@ const InterviewCard = ({
         return 'Interview';
     }
   };
-
   if (message.role === 'user') {
-    return (
-      <div className="flex justify-end mb-8 animate-fade-in">
+    return <div className="flex justify-end mb-8 animate-fade-in">
         <Card className="max-w-[85%] border-none shadow-xl bg-gradient-to-br from-indigo-500 via-purple-600 to-indigo-700">
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-4">
@@ -161,20 +141,12 @@ const InterviewCard = ({
             </div>
           </CardContent>
         </Card>
-      </div>
-    );
+      </div>;
   }
-
   const PhaseIcon = getPhaseIcon(phase);
-  const phasePercentage = phaseMaxQuestions > 0 ? Math.min((phaseQuestionNumber / phaseMaxQuestions) * 100, 100) : 0;
-
-  return (
-    <div className="mb-8 animate-fade-in">
-      <Card className={`max-w-[95%] transition-all duration-500 shadow-xl border-0 ${
-        isLatest 
-          ? 'bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/40 dark:from-gray-900 dark:via-blue-950/20 dark:to-indigo-950/30 ring-2 ring-blue-200/40 dark:ring-blue-800/40' 
-          : 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm'
-      }`}>
+  const phasePercentage = phaseMaxQuestions > 0 ? Math.min(phaseQuestionNumber / phaseMaxQuestions * 100, 100) : 0;
+  return <div className="mb-8 animate-fade-in">
+      <Card className={`max-w-[95%] transition-all duration-500 shadow-xl border-0 ${isLatest ? 'bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/40 dark:from-gray-900 dark:via-blue-950/20 dark:to-indigo-950/30 ring-2 ring-blue-200/40 dark:ring-blue-800/40' : 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm'}`}>
         <CardContent className="p-8">
           {/* Enhanced Header with Interview Context */}
           <div className="flex items-start justify-between mb-6">
@@ -189,32 +161,25 @@ const InterviewCard = ({
                     AI Interview Consultant
                   </Badge>
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  Professional Business Interview
-                </div>
+                
               </div>
             </div>
             
-            {showProgress && phase && (
-              <div className="flex flex-col items-end gap-2">
+            {showProgress && phase && <div className="flex flex-col items-end gap-2">
                 <div className="flex items-center gap-2">
                   <PhaseIcon className="w-4 h-4 text-gray-500" />
                   <Badge className={`text-xs border ${getPhaseColor(phase)}`}>
                     {getPhaseTitle(phase)}
                   </Badge>
                 </div>
-                {questionNumber && totalQuestions && (
-                  <Badge variant="outline" className="text-xs">
+                {questionNumber && totalQuestions && <Badge variant="outline" className="text-xs">
                     Question {questionNumber} of {totalQuestions}
-                  </Badge>
-                )}
-              </div>
-            )}
+                  </Badge>}
+              </div>}
           </div>
 
           {/* Phase Progress Indicator */}
-          {showProgress && phase && phaseMaxQuestions > 0 && (
-            <div className="mb-6 p-4 rounded-lg bg-gray-50/80 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50">
+          {showProgress && phase && phaseMaxQuestions > 0 && <div className="mb-6 p-4 rounded-lg bg-gray-50/80 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <PhaseIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
@@ -227,8 +192,7 @@ const InterviewCard = ({
                 </span>
               </div>
               <Progress value={phasePercentage} className="h-2" />
-            </div>
-          )}
+            </div>}
 
           {/* Enhanced Message Content */}
           <div className="text-gray-800 dark:text-gray-200 leading-relaxed text-[15px]">
@@ -236,25 +200,9 @@ const InterviewCard = ({
           </div>
 
           {/* Enhanced Footer */}
-          <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200/60 dark:border-gray-700/60">
-            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-              <CheckCircle className="w-4 h-4 text-green-500" />
-              <span>Interview question delivered</span>
-            </div>
-            {isLatest && (
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400">
-                  <Clock className="w-4 h-4" />
-                  <span>Awaiting your response</span>
-                </div>
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-              </div>
-            )}
-          </div>
+          
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 };
-
 export default InterviewCard;
