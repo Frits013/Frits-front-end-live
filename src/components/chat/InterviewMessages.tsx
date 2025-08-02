@@ -33,8 +33,12 @@ const InterviewMessages = ({
   
   // Get current phase data from session
   const currentPhaseMaxQuestions = Number(sessionData?.phase_max_questions?.[currentSessionPhase]) || 5;
-  const currentPhaseQuestions = Number(currentProgress?.questions_asked) || 
-    (currentSessionPhase === sessionData?.current_phase ? answeredQuestions : 0);
+  
+  // Calculate current phase questions - prioritize actual user messages over database value
+  const currentPhaseQuestions = Math.max(
+    Number(currentProgress?.questions_asked) || 0,
+    userMessages.length // Use actual user message count as fallback
+  );
   
   // Calculate progress for completed phases
   const phaseOrder = ['introduction', 'theme_selection', 'deep_dive', 'summary', 'recommendations'];
