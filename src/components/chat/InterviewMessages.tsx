@@ -66,8 +66,15 @@ const InterviewMessages = ({
     currentPhaseQuestions,
     currentPhaseMaxQuestions,
     totalQuestions,
-    completedQuestions
+    completedQuestions,
+    currentSessionPhase,
+    shouldTransition: currentPhaseQuestions >= currentPhaseMaxQuestions
   });
+
+  // Log if we should transition phases
+  if (currentPhaseQuestions >= currentPhaseMaxQuestions && currentSessionPhase === 'introduction') {
+    console.warn('Introduction phase should transition to theme_selection - 5 questions reached');
+  }
 
   return (
     <div className={`flex flex-col gap-6 p-6 ${showFinishButton ? 'pb-24' : ''}`}>
