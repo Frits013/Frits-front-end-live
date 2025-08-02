@@ -78,6 +78,23 @@ const InterviewMessages = ({
 
   return (
     <div className={`flex flex-col gap-6 p-6 ${showFinishButton ? 'pb-24' : ''}`}>
+      {/* Show loading state if no messages and processing */}
+      {messages.length === 0 && isProcessing && (
+        <div className="flex flex-col items-center justify-center py-16 gap-6">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg animate-pulse">
+            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <div className="text-center">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              Preparing Your Interview
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              Frits is getting ready to start your consultation...
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Messages */}
       {messages.map((message, index) => {
         const isLatest = index === messages.length - 1;
