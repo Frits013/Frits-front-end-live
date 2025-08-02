@@ -20,22 +20,41 @@ const InterviewMessages = ({
   sessionData,
   currentProgress
 }: InterviewMessagesProps) => {
-  // Use real session data or fallback calculations
-  const currentSessionPhase = currentPhase || sessionData?.current_phase || 'introduction';
-  const phaseProgressData = currentProgress || {};
+  // Use real session data - prioritize database values
+  const currentSessionPhase = sessionData?.current_phase || currentPhase || 'introduction';
   
-  // Calculate total questions and progress
+  // Calculate total questions from session phase configs
   const totalQuestions = sessionData?.phase_max_questions ? 
-    Object.values(sessionData.phase_max_questions).reduce((a: any, b: any) => Number(a) + Number(b), 0) : 8;
-  const answeredQuestions = Math.floor(messages.filter(m => m.role === 'user').length);
+    Object.values(sessionData.phase_max_questions).reduce((a: any, b: any) => Number(a) + Number(b), 0) : 25;
   
-  // Get phase-specific data
+  // Calculate actual answered questions (user messages only)
+  const userMessages = messages.filter(m => m.role === 'user');
+  const answeredQuestions = userMessages.length;
+  
+  // Get current phase data from session
   const currentPhaseMaxQuestions = Number(sessionData?.phase_max_questions?.[currentSessionPhase]) || 5;
-  const currentPhaseQuestions = Number(phaseProgressData?.questions_asked) || 1;
+  const currentPhaseQuestions = Number(currentProgress?.questions_asked) || 
+    (currentSessionPhase === sessionData?.current_phase ? answeredQuestions : 0);
   
-  // Calculate overall progress
-  const progress = Math.min((answeredQuestions / Number(totalQuestions)) * 100, 100);
-  const estimatedTimeLeft = progress < 100 ? `${Math.max(1, Math.ceil((100 - progress) / 10))} min` : undefined;
+  // Calculate progress for completed phases
+  const phaseOrder = ['introduction', 'theme_selection', 'deep_dive', 'summary', 'recommendations'];
+  const currentPhaseIndex = phaseOrder.indexOf(currentSessionPhase);
+  
+  let completedQuestions = 0;
+  for (let i = 0; i < currentPhaseIndex; i++) {
+    const phaseName = phaseOrder[i];
+    completedQuestions += Number(sessionData?.phase_max_questions?.[phaseName]) || 5;
+  }
+  
+  // Add current phase questions
+  completedQuestions += Math.min(currentPhaseQuestions, currentPhaseMaxQuestions);
+  
+  // Calculate overall progress percentage
+  const overallProgress = Math.min((completedQuestions / Number(totalQuestions)) * 100, 100);
+  
+  // Calculate current phase progress percentage
+  const phaseProgress = currentPhaseMaxQuestions > 0 ? 
+    Math.min((currentPhaseQuestions / currentPhaseMaxQuestions) * 100, 100) : 0;
 
   return (
     <div className={`flex flex-col gap-6 p-6 ${showFinishButton ? 'pb-24' : ''}`}>
@@ -55,7 +74,7 @@ const InterviewMessages = ({
             totalQuestions={Number(totalQuestions)}
             phase={currentSessionPhase as InterviewPhase}
             showProgress={message.role === 'assistant'}
-            phaseProgress={progress}
+            phaseProgress={phaseProgress}
             phaseMaxQuestions={currentPhaseMaxQuestions}
             phaseQuestionNumber={currentPhaseQuestions}
             sessionData={sessionData}
