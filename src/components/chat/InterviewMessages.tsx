@@ -55,6 +55,15 @@ const InterviewMessages = ({
   // Calculate current phase progress percentage
   const phaseProgress = currentPhaseMaxQuestions > 0 ? 
     Math.min((currentPhaseQuestions / currentPhaseMaxQuestions) * 100, 100) : 0;
+  
+  console.log('Debug - Progress values:', {
+    overallProgress,
+    phaseProgress,
+    currentPhaseQuestions,
+    currentPhaseMaxQuestions,
+    totalQuestions,
+    completedQuestions
+  });
 
   return (
     <div className={`flex flex-col gap-6 p-6 ${showFinishButton ? 'pb-24' : ''}`}>
