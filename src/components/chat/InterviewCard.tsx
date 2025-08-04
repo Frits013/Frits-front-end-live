@@ -170,7 +170,6 @@ const InterviewCard = ({
                     {getPhaseTitle(phase)}
                   </Badge>
                 </div>
-                {questionNumber && totalQuestions}
               </div>}
           </div>
 
