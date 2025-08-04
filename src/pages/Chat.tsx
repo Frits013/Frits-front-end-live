@@ -1,9 +1,6 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import ChatLayout from "@/components/chat/ChatLayout";
-import ChatSidebar from "@/components/chat/ChatSidebar";
 import ChatContainer from "@/components/chat/ChatContainer";
 import { useChatSessions } from "@/hooks/use-chat-sessions";
 import { useChatMessages } from "@/hooks/use-chat-messages";
@@ -119,45 +116,28 @@ const Chat = () => {
   }
 
   return (
-    <SidebarProvider>
+    <div className="min-h-[100dvh] w-full bg-gradient-to-br from-gray-50 via-purple-50/30 to-indigo-50/30 dark:from-gray-900 dark:via-purple-900/20 dark:to-indigo-900/20">
       <WelcomeAnimation currentSessionId={currentSessionId} />
-      <ChatLayout
-        sidebar={
-          <ChatSidebar
-            chatSessions={chatSessions}
-            currentSessionId={currentSessionId}
-            setChatSessions={setChatSessions}
-            setCurrentSessionId={setCurrentSessionId}
-            onNewChat={createNewChat}
-            isLoading={isLoading}
-            animationState={sessionAnimationState}
-          />
-        }
-        content={
-          <>
-            <ChatContainer
-              messages={messages}
-              setMessages={setMessages}
-              currentChatId={currentSessionId}
-              updateChatTitle={updateSessionTitle}
-              isConsultComplete={isConsultComplete}
-              setIsConsultComplete={setIsConsultComplete}
-              onConsultFinish={handleConsultFinish}
-              dialogDismissed={dialogDismissed}
-              setDialogDismissed={setDialogDismissed}
-              hasFeedback={hasFeedback}
-              onSessionAnimation={handleSessionAnimation}
-              sessionData={sessionData}
-              currentProgress={currentProgress}
-            />
-            <OnboardingWizard
-              open={showOnboarding}
-              onComplete={() => setShowOnboarding(false)}
-            />
-          </>
-        }
+      <ChatContainer
+        messages={messages}
+        setMessages={setMessages}
+        currentChatId={currentSessionId}
+        updateChatTitle={updateSessionTitle}
+        isConsultComplete={isConsultComplete}
+        setIsConsultComplete={setIsConsultComplete}
+        onConsultFinish={handleConsultFinish}
+        dialogDismissed={dialogDismissed}
+        setDialogDismissed={setDialogDismissed}
+        hasFeedback={hasFeedback}
+        onSessionAnimation={handleSessionAnimation}
+        sessionData={sessionData}
+        currentProgress={currentProgress}
       />
-    </SidebarProvider>
+      <OnboardingWizard
+        open={showOnboarding}
+        onComplete={() => setShowOnboarding(false)}
+      />
+    </div>
   );
 };
 
