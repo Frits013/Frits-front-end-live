@@ -39,7 +39,7 @@ const ChatHistoryItem = ({
     }`}>
       <button
         onClick={onSelect}
-        className="w-full p-4 text-left focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 rounded-xl"
+        className="w-full p-5 pb-12 text-left focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 rounded-xl"
       >
         <div className="flex items-start gap-3">
           <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
@@ -86,7 +86,7 @@ const ChatHistoryItem = ({
       </button>
       
       {/* Action buttons */}
-      <div className={`absolute top-2 right-2 flex gap-1 transition-opacity duration-200 ${
+      <div className={`absolute bottom-2 right-2 flex gap-1 transition-opacity duration-200 ${
         isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
       }`}>
         <Button
