@@ -1,6 +1,6 @@
 
 
-import { ChatMessage } from "@/types/chat";
+import { ChatMessage, InterviewPhase } from "@/types/chat";
 import ChatMessagesContainer from "./ChatMessagesContainer";
 import ChatInputContainer from "./ChatInputContainer";
 import FinishInterviewButton from "./FinishInterviewButton";
@@ -19,6 +19,13 @@ interface ChatPanelProps {
   errorMessage: string | null;
   showCompleteButton: boolean;
   onCompleteButtonClick: () => void;
+  sessionData?: any;
+  currentProgress?: any;
+  demoPhaseData?: {
+    currentPhase: InterviewPhase;
+    questionCount: number;
+    maxQuestions: number;
+  };
 }
 
 const ChatPanel = ({
@@ -33,7 +40,10 @@ const ChatPanel = ({
   isThinkingRef,
   errorMessage,
   showCompleteButton,
-  onCompleteButtonClick
+  onCompleteButtonClick,
+  sessionData,
+  currentProgress,
+  demoPhaseData
 }: ChatPanelProps) => {
   const inputContainerRef = useRef<HTMLDivElement>(null);
 
@@ -52,6 +62,9 @@ const ChatPanel = ({
             currentSessionId={currentChatId}
             showFinishButton={showCompleteButton}
             isProcessing={isProcessing}
+            sessionData={sessionData}
+            currentProgress={currentProgress}
+            demoPhaseData={demoPhaseData}
           />
         </div>
         

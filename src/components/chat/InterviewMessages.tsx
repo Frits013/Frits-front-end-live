@@ -10,6 +10,11 @@ interface InterviewMessagesProps {
   currentPhase?: InterviewPhase;
   sessionData?: any;
   currentProgress?: any;
+  demoPhaseData?: {
+    currentPhase: InterviewPhase;
+    questionCount: number;
+    maxQuestions: number;
+  };
 }
 
 const InterviewMessages = ({ 
@@ -18,10 +23,11 @@ const InterviewMessages = ({
   isProcessing = false,
   currentPhase,
   sessionData,
-  currentProgress
+  currentProgress,
+  demoPhaseData
 }: InterviewMessagesProps) => {
-  // Use real session data - prioritize database values
-  const currentSessionPhase = sessionData?.current_phase || currentPhase || 'introduction';
+  // Use demo phase data if available, otherwise fall back to session data
+  const currentSessionPhase = demoPhaseData?.currentPhase || sessionData?.current_phase || currentPhase || 'introduction';
   
   // Calculate total questions from session phase configs
   const totalQuestions = sessionData?.phase_max_questions ? 
@@ -31,14 +37,16 @@ const InterviewMessages = ({
   const userMessages = messages.filter(m => m.role === 'user');
   const answeredQuestions = userMessages.length;
   
-  // Get current phase data from session
-  const currentPhaseMaxQuestions = Number(sessionData?.phase_max_questions?.[currentSessionPhase]) || 5;
+  // Use demo phase data if available for more accurate tracking
+  const currentPhaseMaxQuestions = demoPhaseData?.maxQuestions || 
+    Number(sessionData?.phase_max_questions?.[currentSessionPhase]) || 5;
   
-  // Calculate current phase questions - prioritize actual user messages over database value
-  const currentPhaseQuestions = Math.max(
-    Number(currentProgress?.questions_asked) || 0,
-    userMessages.length // Use actual user message count as fallback
-  );
+  // Calculate current phase questions - use demo data if available
+  const currentPhaseQuestions = demoPhaseData?.questionCount || 
+    Math.max(
+      Number(currentProgress?.questions_asked) || 0,
+      userMessages.length // Use actual user message count as fallback
+    );
   
   // Calculate progress for completed phases
   const phaseOrder = ['introduction', 'theme_selection', 'deep_dive', 'summary', 'recommendations'];

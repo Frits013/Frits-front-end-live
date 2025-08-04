@@ -33,7 +33,8 @@ const Chat = () => {
     setDialogDismissed,
     hasFeedback,
     sessionData,
-    currentProgress
+    currentProgress,
+    demoPhaseData
   } = useChatMessages(currentSessionId);
   
   const { handleSignOut } = useAuthOperations();
@@ -132,6 +133,7 @@ const Chat = () => {
         onSessionAnimation={handleSessionAnimation}
         sessionData={sessionData}
         currentProgress={currentProgress}
+        demoPhaseData={demoPhaseData}
       />
       <OnboardingWizard
         open={showOnboarding}

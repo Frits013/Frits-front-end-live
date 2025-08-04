@@ -2,7 +2,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import InterviewProgress from "./InterviewProgress";
-import { ChatMessage, ChatSession, InterviewProgress as InterviewProgressType } from "@/types/chat";
+import { ChatMessage, ChatSession, InterviewProgress as InterviewProgressType, InterviewPhase } from "@/types/chat";
 import ConsultCompleteDialog from "@/components/chat/ConsultCompleteDialog";
 import { useToast } from "@/hooks/use-toast";
 import ChatPanelLayout from "./ChatPanelLayout";
@@ -26,6 +26,11 @@ interface ChatContainerProps {
   onSessionAnimation?: (shouldAnimate: boolean, sessionId?: string) => void;
   sessionData?: ChatSession | null;
   currentProgress?: InterviewProgressType | null;
+  demoPhaseData?: {
+    currentPhase: InterviewPhase;
+    questionCount: number;
+    maxQuestions: number;
+  };
 }
 
 const ChatContainer = ({
@@ -41,7 +46,8 @@ const ChatContainer = ({
   hasFeedback = false,
   onSessionAnimation,
   sessionData,
-  currentProgress
+  currentProgress,
+  demoPhaseData
 }: ChatContainerProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -129,26 +135,28 @@ const ChatContainer = ({
     return phaseMaxQuestions[phase as keyof typeof phaseMaxQuestions] || 5;
   };
 
-  // Calculate interview progress
+  // Calculate interview progress using demo phase data if available
   const userMessages = messages.filter(msg => msg.role === 'user');
   const totalQuestions = 21; // Total across all phases (3+5+8+3+2)
   const answeredQuestions = userMessages.length;
   
-  // Get current phase from session data
-  const currentPhase = sessionData?.current_phase;
+  // Use demo phase data if available, otherwise fall back to session data
+  const currentPhase = demoPhaseData?.currentPhase || sessionData?.current_phase;
+  const currentQuestionCount = demoPhaseData?.questionCount || answeredQuestions;
+  const maxQuestionsInPhase = demoPhaseData?.maxQuestions || getMaxQuestionsForPhase(currentPhase || 'introduction');
   
-  // Create phase info from current progress data
-  const phaseInfo = currentProgress ? {
-    current_phase: currentProgress.phase,
+  // Create phase info from current progress data, enhanced with demo data
+  const phaseInfo = {
+    current_phase: currentPhase,
     progress_percent: 0, // Will be calculated in InterviewProgress component
-    questions_in_phase: currentProgress.questions_asked,
-    max_questions_in_phase: getMaxQuestionsForPhase(currentProgress.phase),
-    should_transition: false, // We don't have this info directly
-    selected_themes: Array.isArray(currentProgress.selected_themes) ? 
+    questions_in_phase: currentQuestionCount,
+    max_questions_in_phase: maxQuestionsInPhase,
+    should_transition: currentQuestionCount >= maxQuestionsInPhase,
+    selected_themes: currentProgress ? (Array.isArray(currentProgress.selected_themes) ? 
       currentProgress.selected_themes : 
-      (currentProgress.selected_themes as any)?.themes || [],
-    completion_confidence: currentProgress.completion_confidence || 0
-  } : undefined;
+      (currentProgress.selected_themes as any)?.themes || []) : [],
+    completion_confidence: currentProgress?.completion_confidence || 0
+  };
   
   const estimatedTimeLeft = answeredQuestions < totalQuestions ? 
     `${Math.max(1, Math.ceil((totalQuestions - answeredQuestions) * 2))} min` : undefined;
@@ -185,6 +193,9 @@ const ChatContainer = ({
               errorMessage={errorMessage}
               showCompleteButton={showCompleteButton}
               onCompleteButtonClick={handleCompleteButtonClick}
+              sessionData={sessionData}
+              currentProgress={currentProgress}
+              demoPhaseData={demoPhaseData}
             />
           </div>
         </div>

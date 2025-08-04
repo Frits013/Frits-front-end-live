@@ -6,6 +6,7 @@ import { useProcessingState } from "./chat/use-processing-state";
 import { useSessionSubscription } from "./chat/use-session-subscription";
 import { useMessageSubscription } from "./chat/use-message-subscription";
 import { usePhaseSubscription } from "./chat/use-phase-subscription";
+import { useDemoPhaseManagement } from "./chat/use-demo-phase-management";
 
 export const useChatMessages = (sessionId: string | null) => {
   const [dialogDismissed, setDialogDismissed] = useState(false);
@@ -44,6 +45,14 @@ export const useChatMessages = (sessionId: string | null) => {
     (progress) => { /* currentProgress is managed by useMessageFetcher */ }
   );
 
+  // Demo phase management with client-side logic
+  const demoPhaseData = useDemoPhaseManagement({
+    sessionId,
+    messages,
+    sessionData,
+    currentProgress
+  });
+
   return {
     messages,
     setMessages,
@@ -57,6 +66,7 @@ export const useChatMessages = (sessionId: string | null) => {
     setIsProcessing,
     sessionData,
     currentProgress,
-    phaseConfigs
+    phaseConfigs,
+    demoPhaseData
   };
 };
