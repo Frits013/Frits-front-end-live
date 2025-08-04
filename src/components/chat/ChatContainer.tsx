@@ -1,14 +1,15 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import InterviewProgress from "./InterviewProgress";
 import { ChatMessage, ChatSession, InterviewProgress as InterviewProgressType } from "@/types/chat";
 import ConsultCompleteDialog from "@/components/chat/ConsultCompleteDialog";
 import { useToast } from "@/hooks/use-toast";
 import ChatPanelLayout from "./ChatPanelLayout";
-
+import ChatHeader from "./ChatHeader";
 import ChatPanel from "./ChatPanel";
 import { useIsMobile } from "@/hooks/use-mobile";
-
+import { supabase } from "@/integrations/supabase/client";
 import { useSessionAnimations } from "@/hooks/chat/use-session-animations";
 
 interface ChatContainerProps {
@@ -43,10 +44,16 @@ const ChatContainer = ({
   currentProgress
 }: ChatContainerProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const isMobile = useIsMobile();
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
+  };
   
   // Add a new state to track whether the complete button is showing
   const [showCompleteButton, setShowCompleteButton] = useState(false);
@@ -148,6 +155,7 @@ const ChatContainer = ({
 
   return (
     <>
+      <ChatHeader onSignOut={handleSignOut} />
       <ChatPanelLayout>
         <div className="flex flex-col h-full">
           {/* Interview Progress - positioned at the top */}
