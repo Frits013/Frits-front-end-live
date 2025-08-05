@@ -93,7 +93,7 @@ const InterviewProgress = ({
             </div>
             <Progress value={currentPhaseProgress} className="h-2 mb-2" />
             <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-              <span>{phaseInfo.questions_in_phase} of {phaseInfo.max_questions_in_phase} phase questions</span>
+              <span>{phaseInfo.questions_in_phase} of {phaseInfo.max_questions_in_phase} answers</span>
             </div>
           </div>
         )}
