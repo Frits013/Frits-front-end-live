@@ -70,11 +70,11 @@ export const useDemoPhaseManagement = ({
         questionCount: questionExchanges
       }));
 
-      // Demo logic: Auto-advance introduction phase after 5 questions
-      if (localPhaseData.phase === 'introduction' && questionExchanges >= 5) {
+      // Demo logic: Auto-advance introduction phase after 3 questions
+      if (localPhaseData.phase === 'introduction' && questionExchanges >= 3) {
         // Only advance if backend hasn't already moved us forward
         if (sessionData?.current_phase === 'introduction' || !sessionData?.current_phase) {
-          if (isDev) console.log('Demo: Auto-advancing from introduction to theme_selection after 5 questions');
+          if (isDev) console.log('Demo: Auto-advancing from introduction to theme_selection after 3 questions');
           
           // Update the session phase in the database
           updateSessionPhase('theme_selection');
@@ -112,7 +112,7 @@ export const useDemoPhaseManagement = ({
   return {
     currentPhase: (localPhaseData?.phase || sessionData?.current_phase || 'introduction') as InterviewPhase,
     questionCount: localPhaseData?.questionCount || 0,
-    maxQuestions: localPhaseData?.phase === 'introduction' ? 5 : 
+    maxQuestions: localPhaseData?.phase === 'introduction' ? 3 : 
                   localPhaseData?.phase === 'theme_selection' ? 3 :
                   localPhaseData?.phase === 'deep_dive' ? 8 :
                   localPhaseData?.phase === 'summary' ? 2 : 3
