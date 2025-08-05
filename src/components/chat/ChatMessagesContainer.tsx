@@ -2,7 +2,7 @@
 import { ChatMessage, InterviewPhase } from "@/types/chat";
 import InterviewMessages from "./InterviewMessages";
 import ChatErrorAlert from "./ChatErrorAlert";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface ChatMessagesContainerProps {
   messages: ChatMessage[];
@@ -30,13 +30,15 @@ const ChatMessagesContainer = ({
   demoPhaseData
 }: ChatMessagesContainerProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [previousMessageCount, setPreviousMessageCount] = useState(0);
 
-  // Auto-scroll to bottom when messages change or when processing
+  // Auto-scroll to bottom only when new messages arrive
   useEffect(() => {
-    if (scrollRef.current) {
+    if (messages.length > previousMessageCount && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      setPreviousMessageCount(messages.length);
     }
-  }, [messages, isProcessing]);
+  }, [messages.length, previousMessageCount]);
 
   return (
     <div className="relative z-10 flex flex-col h-full">
