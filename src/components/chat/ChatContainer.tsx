@@ -175,6 +175,7 @@ const ChatContainer = ({
                 totalQuestions={totalQuestions}
                 answeredQuestions={answeredQuestions}
                 estimatedTimeLeft={estimatedTimeLeft}
+                demoPhaseData={demoPhaseData}
               />
             </div>
           )}

@@ -10,6 +10,11 @@ interface InterviewProgressProps {
   totalQuestions: number;
   answeredQuestions: number;
   estimatedTimeLeft?: string;
+  demoPhaseData?: {
+    currentPhase: InterviewPhase;
+    questionCount: number;
+    maxQuestions: number;
+  };
 }
 
 const InterviewProgress = ({
@@ -17,7 +22,8 @@ const InterviewProgress = ({
   phaseInfo,
   totalQuestions,
   answeredQuestions,
-  estimatedTimeLeft
+  estimatedTimeLeft,
+  demoPhaseData
 }: InterviewProgressProps) => {
   // Define the correct phases with proper names and order
   const phaseDefinitions = [
@@ -32,9 +38,11 @@ const InterviewProgress = ({
   const totalMaxQuestions = phaseDefinitions.reduce((sum, phase) => sum + phase.maxQuestions, 0);
   const totalProgress = Math.min((answeredQuestions / totalMaxQuestions) * 100, 100);
 
-  // Calculate current phase progress
-  const currentPhaseProgress = phaseInfo ? 
-    Math.min((phaseInfo.questions_in_phase / phaseInfo.max_questions_in_phase) * 100, 100) : 0;
+  // Calculate current phase progress - use demo data for accurate tracking
+  const currentPhaseQuestions = demoPhaseData?.questionCount || phaseInfo?.questions_in_phase || 0;
+  const currentPhaseMaxQuestions = demoPhaseData?.maxQuestions || phaseInfo?.max_questions_in_phase || 5;
+  const currentPhaseProgress = currentPhaseMaxQuestions > 0 ? 
+    Math.min((currentPhaseQuestions / currentPhaseMaxQuestions) * 100, 100) : 0;
 
   const getPhaseStatus = (phaseId: string) => {
     if (!currentPhase) return { isActive: false, isCompleted: false, progress: 0 };
@@ -85,7 +93,7 @@ const InterviewProgress = ({
         </div>
 
         {/* Current Phase Progress */}
-        {currentPhase && phaseInfo && (
+        {currentPhase && (currentPhaseQuestions > 0 || currentPhaseMaxQuestions > 0) && (
           <div className="mb-4">
             <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300 mb-1">
               <span>Current Phase: {phaseDefinitions.find(p => p.id === currentPhase)?.name}</span>
@@ -93,7 +101,7 @@ const InterviewProgress = ({
             </div>
             <Progress value={currentPhaseProgress} className="h-2 mb-2" />
             <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-              <span>{phaseInfo.questions_in_phase} of {phaseInfo.max_questions_in_phase} answers</span>
+              <span>{currentPhaseQuestions} of {currentPhaseMaxQuestions} answers</span>
             </div>
           </div>
         )}
