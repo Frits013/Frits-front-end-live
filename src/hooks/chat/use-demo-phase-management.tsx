@@ -21,18 +21,21 @@ export const useDemoPhaseManagement = ({
     phase: InterviewPhase;
     questionCount: number;
     lastBackendPhase: InterviewPhase | null;
+    phaseStartMessageCount: number; // Track messages at phase start
   } | null>(null);
 
   // Initialize local phase data when session starts
   useEffect(() => {
     if (sessionData && !localPhaseData) {
+      const userMessages = messages.filter(msg => msg.role === 'user');
       setLocalPhaseData({
         phase: sessionData.current_phase || 'introduction',
         questionCount: 0,
-        lastBackendPhase: sessionData.current_phase || null
+        lastBackendPhase: sessionData.current_phase || null,
+        phaseStartMessageCount: userMessages.length
       });
     }
-  }, [sessionData, localPhaseData]);
+  }, [sessionData, localPhaseData, messages]);
 
   // Track backend phase changes and update local data
   useEffect(() => {
@@ -41,11 +44,13 @@ export const useDemoPhaseManagement = ({
       if (sessionData.current_phase !== localPhaseData.lastBackendPhase) {
         if (isDev) console.log('Backend phase changed to:', sessionData.current_phase);
         
+        const userMessages = messages.filter(msg => msg.role === 'user');
         setLocalPhaseData(prev => ({
           ...prev!,
           phase: sessionData.current_phase!,
           lastBackendPhase: sessionData.current_phase!,
-          questionCount: 0 // Reset question count when phase changes
+          questionCount: 0, // Reset question count when phase changes
+          phaseStartMessageCount: userMessages.length // Track where this phase started
         }));
       }
     }
@@ -55,23 +60,19 @@ export const useDemoPhaseManagement = ({
   useEffect(() => {
     if (!localPhaseData || !sessionId) return;
 
-    // Count assistant questions in current session
-    const assistantMessages = messages.filter(msg => msg.role === 'assistant');
+    // Count user responses since the current phase started
     const userResponses = messages.filter(msg => msg.role === 'user');
-    
-    // For introduction phase, count the number of assistant-user exchanges
-    // Each exchange = one question asked and answered
-    const questionExchanges = Math.min(assistantMessages.length, userResponses.length);
+    const currentPhaseQuestionCount = userResponses.length - localPhaseData.phaseStartMessageCount;
     
     // Update question count if it changed
-    if (questionExchanges !== localPhaseData.questionCount) {
+    if (currentPhaseQuestionCount !== localPhaseData.questionCount) {
       setLocalPhaseData(prev => ({
         ...prev!,
-        questionCount: questionExchanges
+        questionCount: currentPhaseQuestionCount
       }));
 
       // Demo logic: Auto-advance introduction phase after 3 questions
-      if (localPhaseData.phase === 'introduction' && questionExchanges >= 3) {
+      if (localPhaseData.phase === 'introduction' && currentPhaseQuestionCount >= 3) {
         // Only advance if backend hasn't already moved us forward
         if (sessionData?.current_phase === 'introduction' || !sessionData?.current_phase) {
           if (isDev) console.log('Demo: Auto-advancing from introduction to theme_selection after 3 questions');
