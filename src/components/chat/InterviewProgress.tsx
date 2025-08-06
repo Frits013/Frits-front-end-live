@@ -92,19 +92,6 @@ const InterviewProgress = ({
           </div>
         </div>
 
-        {/* Current Phase Progress */}
-        {currentPhase && (currentPhaseQuestions > 0 || currentPhaseMaxQuestions > 0) && (
-          <div className="mb-4">
-            <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300 mb-1">
-              <span>Current Phase: {phaseDefinitions.find(p => p.id === currentPhase)?.name}</span>
-              <span>{Math.round(currentPhaseProgress)}%</span>
-            </div>
-            <Progress value={currentPhaseProgress} className="h-2 mb-2" />
-            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-              <span>{currentPhaseQuestions} of {currentPhaseMaxQuestions} answers</span>
-            </div>
-          </div>
-        )}
 
         {/* Phase indicators */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2">

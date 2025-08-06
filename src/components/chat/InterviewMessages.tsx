@@ -105,23 +105,37 @@ const InterviewMessages = ({
 
       {/* Messages */}
       {messages.map((message, index) => {
-        const isLatest = index === messages.length - 1;
-        const questionNumber = message.role === 'assistant' ? 
-          Math.floor(messages.slice(0, index + 1).filter(m => m.role === 'assistant').length) : 
-          undefined;
+        const isLatest = index === messages.length - 1 && message.role === 'assistant';
+        
+        // Calculate phase progress for each AI message based on when it was sent
+        let messagePhaseProgress = 0;
+        let messagePhaseMaxQuestions = 5;
+        
+        if (message.role === 'assistant') {
+          // Count user messages up to this point to determine the phase progress at this message
+          const userMessagesUpToHere = messages.slice(0, index).filter(m => m.role === 'user').length;
+          
+          // Use demoPhaseData for max questions if available
+          messagePhaseMaxQuestions = demoPhaseData?.maxQuestions || 5;
+          
+          if (isLatest) {
+            // Latest message shows live progress
+            messagePhaseProgress = demoPhaseData?.questionCount || 0;
+          } else {
+            // Static progress: calculate based on user messages at the time this message was sent
+            messagePhaseProgress = userMessagesUpToHere;
+          }
+        }
         
         return (
           <InterviewCard
             key={message.id}
             message={message}
-            isLatest={isLatest && message.role === 'assistant'}
-            questionNumber={questionNumber}
-            totalQuestions={Number(totalQuestions)}
+            isLatest={isLatest}
             phase={currentSessionPhase as InterviewPhase}
             showProgress={message.role === 'assistant'}
-            phaseProgress={phaseProgress}
-            phaseMaxQuestions={currentPhaseMaxQuestions}
-            phaseQuestionNumber={currentPhaseQuestions}
+            phaseMaxQuestions={messagePhaseMaxQuestions}
+            phaseQuestionNumber={messagePhaseProgress}
             sessionData={sessionData}
           />
         );
