@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { User } from "lucide-react";
+import { User, Plus } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +10,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import ProfileDialog from "./ProfileDialog";
 import { useState } from "react";
+import { useChatSessionsContext } from "@/hooks/chat-sessions/chat-sessions-context";
 
 interface ChatHeaderProps {
   onSignOut: () => void;
@@ -18,6 +19,7 @@ interface ChatHeaderProps {
 
 const ChatHeader = ({ onSignOut, isInCanvas = false }: ChatHeaderProps) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const { createNewChat } = useChatSessionsContext();
 
   return (
     <div className={isInCanvas ? "" : "absolute top-4 right-4 z-50"}>
@@ -40,6 +42,13 @@ const ChatHeader = ({ onSignOut, isInCanvas = false }: ChatHeaderProps) => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem 
+            onClick={createNewChat}
+            className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white hover:text-white focus:bg-gradient-to-r focus:from-purple-700 focus:to-indigo-700 focus:text-white mb-2"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Start New Consult
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setIsProfileOpen(true)}>
             Edit Profile
           </DropdownMenuItem>
