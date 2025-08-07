@@ -10,6 +10,7 @@ import OnboardingWizard from "@/components/onboarding/OnboardingWizard";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import WelcomeAnimation from "@/components/chat/WelcomeAnimation";
+import SessionCreationLoader from "@/components/chat/SessionCreationLoader";
 
 const Chat = () => {
   const navigate = useNavigate();
@@ -45,6 +46,7 @@ const Chat = () => {
     shouldAnimate: boolean;
     sessionId?: string;
   }>({ shouldAnimate: false });
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
 
   // Check if user is authenticated
   useEffect(() => {
@@ -107,6 +109,15 @@ const Chat = () => {
     setSessionAnimationState({ shouldAnimate, sessionId });
   };
 
+  const handleCreateNewChat = async () => {
+    setIsCreatingSession(true);
+    try {
+      await createNewChat();
+    } finally {
+      setIsCreatingSession(false);
+    }
+  };
+
   // Show loading state while checking auth or loading sessions
   if (isCheckingAuth || isLoading) {
     return (
@@ -134,12 +145,13 @@ const Chat = () => {
         sessionData={sessionData}
         currentProgress={currentProgress}
         demoPhaseData={demoPhaseData}
-        createNewChat={createNewChat}
+        createNewChat={handleCreateNewChat}
       />
       <OnboardingWizard
         open={showOnboarding}
         onComplete={() => setShowOnboarding(false)}
       />
+      <SessionCreationLoader isVisible={isCreatingSession} />
     </div>
   );
 };
