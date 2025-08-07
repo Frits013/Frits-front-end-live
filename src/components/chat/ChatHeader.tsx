@@ -10,16 +10,15 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import ProfileDialog from "./ProfileDialog";
 import { useState } from "react";
-import { useChatSessionsContext } from "@/hooks/chat-sessions/chat-sessions-context";
 
 interface ChatHeaderProps {
   onSignOut: () => void;
   isInCanvas?: boolean;
+  createNewChat: () => Promise<void>;
 }
 
-const ChatHeader = ({ onSignOut, isInCanvas = false }: ChatHeaderProps) => {
+const ChatHeader = ({ onSignOut, isInCanvas = false, createNewChat }: ChatHeaderProps) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const { createNewChat } = useChatSessionsContext();
 
   return (
     <div className={isInCanvas ? "" : "absolute top-4 right-4 z-50"}>

@@ -134,6 +134,7 @@ const Chat = () => {
         sessionData={sessionData}
         currentProgress={currentProgress}
         demoPhaseData={demoPhaseData}
+        createNewChat={createNewChat}
       />
       <OnboardingWizard
         open={showOnboarding}

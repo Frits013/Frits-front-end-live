@@ -9,9 +9,10 @@ import { useAuthOperations } from "@/hooks/use-auth-operations";
 interface ThreeSceneProps {
   isThinking: boolean;
   audioData?: number[];
+  createNewChat: () => Promise<void>;
 }
 
-const ThreeScene = ({ isThinking, audioData }: ThreeSceneProps) => {
+const ThreeScene = ({ isThinking, audioData, createNewChat }: ThreeSceneProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const brainRef = useRef<THREE.Group | null>(null);
@@ -172,7 +173,7 @@ const ThreeScene = ({ isThinking, audioData }: ThreeSceneProps) => {
         
         {/* Profile button positioned to align with chat content */}
         <div className="absolute top-4 right-0 z-50 pr-4 max-w-4xl mx-auto w-full flex justify-end">
-          <ChatHeader onSignOut={handleSignOut} isInCanvas={true} />
+          <ChatHeader onSignOut={handleSignOut} isInCanvas={true} createNewChat={createNewChat} />
         </div>
         
         {/* Only show thinking indicator when actually processing */}

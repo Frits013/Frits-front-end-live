@@ -31,6 +31,7 @@ interface ChatContainerProps {
     questionCount: number;
     maxQuestions: number;
   };
+  createNewChat: () => Promise<void>;
 }
 
 const ChatContainer = ({
@@ -47,7 +48,8 @@ const ChatContainer = ({
   onSessionAnimation,
   sessionData,
   currentProgress,
-  demoPhaseData
+  demoPhaseData,
+  createNewChat
 }: ChatContainerProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -163,7 +165,7 @@ const ChatContainer = ({
 
   return (
     <>
-      <ChatHeader onSignOut={handleSignOut} />
+      <ChatHeader onSignOut={handleSignOut} createNewChat={createNewChat} />
       <ChatPanelLayout>
         <div className="flex flex-col h-full">
           {/* Interview Progress - positioned at the top */}
