@@ -114,7 +114,7 @@ export const useDemoPhaseManagement = ({
     currentPhase: (localPhaseData?.phase || sessionData?.current_phase || 'introduction') as InterviewPhase,
     questionCount: localPhaseData?.questionCount || 0,
     maxQuestions: localPhaseData?.phase === 'introduction' ? 3 : 
-                  localPhaseData?.phase === 'theme_selection' ? 3 :
+                  localPhaseData?.phase === 'theme_selection' ? 4 :
                   localPhaseData?.phase === 'deep_dive' ? 8 :
                   localPhaseData?.phase === 'summary' ? 2 : 3
   };

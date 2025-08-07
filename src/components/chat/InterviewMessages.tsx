@@ -107,23 +107,43 @@ const InterviewMessages = ({
       {messages.map((message, index) => {
         const isLatest = index === messages.length - 1 && message.role === 'assistant';
         
-        // Calculate phase progress for each AI message based on when it was sent
+        // Determine the correct phase for this message based on when it was sent
+        let messagePhase: InterviewPhase = 'introduction';
         let messagePhaseProgress = 0;
-        let messagePhaseMaxQuestions = 5;
+        let messagePhaseMaxQuestions = 3; // Default to introduction max
         
         if (message.role === 'assistant') {
-          // Count user messages up to this point to determine the phase progress at this message
+          // Count user messages up to this point to determine the phase at this message
           const userMessagesUpToHere = messages.slice(0, index).filter(m => m.role === 'user').length;
           
-          // Use demoPhaseData for max questions if available
-          messagePhaseMaxQuestions = demoPhaseData?.maxQuestions || 5;
-          
-          if (isLatest) {
-            // Latest message shows live progress
-            messagePhaseProgress = demoPhaseData?.questionCount || 0;
-          } else {
-            // Static progress: calculate based on user messages at the time this message was sent
+          // Determine phase based on user message count when this message was sent
+          if (userMessagesUpToHere <= 3) {
+            messagePhase = 'introduction';
+            messagePhaseMaxQuestions = 3;
             messagePhaseProgress = userMessagesUpToHere;
+          } else if (userMessagesUpToHere <= 7) {
+            messagePhase = 'theme_selection';
+            messagePhaseMaxQuestions = 4;
+            messagePhaseProgress = userMessagesUpToHere - 3; // Questions in this phase
+          } else if (userMessagesUpToHere <= 15) {
+            messagePhase = 'deep_dive';
+            messagePhaseMaxQuestions = 8;
+            messagePhaseProgress = userMessagesUpToHere - 7;
+          } else if (userMessagesUpToHere <= 17) {
+            messagePhase = 'summary';
+            messagePhaseMaxQuestions = 2;
+            messagePhaseProgress = userMessagesUpToHere - 15;
+          } else {
+            messagePhase = 'recommendations';
+            messagePhaseMaxQuestions = 3;
+            messagePhaseProgress = userMessagesUpToHere - 17;
+          }
+          
+          // For the latest message, use current live data if available
+          if (isLatest && demoPhaseData) {
+            messagePhase = demoPhaseData.currentPhase;
+            messagePhaseProgress = demoPhaseData.questionCount;
+            messagePhaseMaxQuestions = demoPhaseData.maxQuestions;
           }
         }
         
@@ -132,7 +152,7 @@ const InterviewMessages = ({
             key={message.id}
             message={message}
             isLatest={isLatest}
-            phase={currentSessionPhase as InterviewPhase}
+            phase={messagePhase}
             showProgress={message.role === 'assistant'}
             phaseMaxQuestions={messagePhaseMaxQuestions}
             phaseQuestionNumber={messagePhaseProgress}
