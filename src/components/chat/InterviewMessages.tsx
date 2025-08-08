@@ -107,42 +107,52 @@ const InterviewMessages = ({
       {messages.map((message, index) => {
         const isLatest = index === messages.length - 1 && message.role === 'assistant';
         
-        // Determine the correct phase for this message based on when it was sent
+        // Determine the correct phase for this message based on number of questions asked
         let messagePhase: InterviewPhase = 'introduction';
         let messagePhaseProgress = 0;
         let messagePhaseMaxQuestions = 3; // Default to introduction max
         
         if (message.role === 'assistant') {
-          // Count user messages up to this point to determine the phase at this message
-          const userMessagesUpToHere = messages.slice(0, index).filter(m => m.role === 'user').length;
-          
-          // Determine phase based on user message count when this message was sent
-          if (userMessagesUpToHere <= 3) {
+          // Count assistant (AI) messages up to and including this one = questions asked
+          const assistantMessagesUpToHere = messages
+            .slice(0, index + 1)
+            .filter(m => m.role === 'assistant').length;
+
+          // Phase boundaries based on questions per phase
+          const introMax = 3;
+          const themeMax = 4;
+          const deepMax = 8;
+          const summaryMax = 2;
+          const introCum = introMax; // 3
+          const themeCum = introMax + themeMax; // 7
+          const deepCum = introMax + themeMax + deepMax; // 15
+          const summaryCum = introMax + themeMax + deepMax + summaryMax; // 17
+
+          if (assistantMessagesUpToHere <= introCum) {
             messagePhase = 'introduction';
-            messagePhaseMaxQuestions = 3;
-            messagePhaseProgress = userMessagesUpToHere;
-          } else if (userMessagesUpToHere <= 7) {
+            messagePhaseMaxQuestions = introMax;
+            messagePhaseProgress = assistantMessagesUpToHere; // 1..3
+          } else if (assistantMessagesUpToHere <= themeCum) {
             messagePhase = 'theme_selection';
-            messagePhaseMaxQuestions = 4;
-            messagePhaseProgress = userMessagesUpToHere - 3; // Questions in this phase
-          } else if (userMessagesUpToHere <= 15) {
+            messagePhaseMaxQuestions = themeMax;
+            messagePhaseProgress = assistantMessagesUpToHere - introCum; // 1..4
+          } else if (assistantMessagesUpToHere <= deepCum) {
             messagePhase = 'deep_dive';
-            messagePhaseMaxQuestions = 8;
-            messagePhaseProgress = userMessagesUpToHere - 7;
-          } else if (userMessagesUpToHere <= 17) {
+            messagePhaseMaxQuestions = deepMax;
+            messagePhaseProgress = assistantMessagesUpToHere - themeCum; // 1..8
+          } else if (assistantMessagesUpToHere <= summaryCum) {
             messagePhase = 'summary';
-            messagePhaseMaxQuestions = 2;
-            messagePhaseProgress = userMessagesUpToHere - 15;
+            messagePhaseMaxQuestions = summaryMax;
+            messagePhaseProgress = assistantMessagesUpToHere - deepCum; // 1..2
           } else {
             messagePhase = 'recommendations';
             messagePhaseMaxQuestions = 3;
-            messagePhaseProgress = userMessagesUpToHere - 17;
+            messagePhaseProgress = assistantMessagesUpToHere - summaryCum; // 1..3
           }
-          
-          // For the latest message, use current live data if available
+
+          // For the latest message, respect live phase/max from demo data but keep question-based progress
           if (isLatest && demoPhaseData) {
             messagePhase = demoPhaseData.currentPhase;
-            messagePhaseProgress = demoPhaseData.questionCount;
             messagePhaseMaxQuestions = demoPhaseData.maxQuestions;
           }
         }

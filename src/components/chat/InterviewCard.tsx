@@ -183,7 +183,7 @@ const InterviewCard = ({
                   </span>
                 </div>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {phaseQuestionNumber} / {phaseMaxQuestions} answers
+                  {phaseQuestionNumber} / {phaseMaxQuestions} questions
                 </span>
               </div>
               <Progress value={phasePercentage} className="h-2" />
