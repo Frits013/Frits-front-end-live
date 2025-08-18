@@ -66,7 +66,11 @@ export const useMessageSubscription = (
               created_at: new Date(newMessage.created_at),
             };
             
-            setMessages([...messages, processedMessage]);
+            // Check if message already exists to prevent duplicates
+            const messageExists = messages.some(msg => msg.id === processedMessage.id);
+            if (!messageExists) {
+              setMessages([...messages, processedMessage]);
+            }
             
             // If it's an assistant message, stop processing indicator
             if (processedMessage.role === 'assistant') {

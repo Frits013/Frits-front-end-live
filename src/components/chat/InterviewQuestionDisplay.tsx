@@ -98,63 +98,81 @@ const InterviewQuestionDisplay = ({
 }: InterviewQuestionDisplayProps) => {
   const [displayText, setDisplayText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const displayedQuestionsRef = useRef<Set<string>>(new Set());
   const currentAnimationRef = useRef<string | null>(null);
+  const lastProcessedQuestionRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (currentQuestion && !isProcessing) {
-      // Prevent re-running animation for the same question
-      if (currentAnimationRef.current === currentQuestion.id) {
-        return;
-      }
+    if (!currentQuestion) {
+      setIsVisible(false);
+      return;
+    }
 
-      const formattedContent = formatMessage(currentQuestion);
-      const sanitizedContent = DOMPurify.sanitize(formattedContent, { 
-        ALLOWED_TAGS: ['p', 'div', 'h3', 'strong', 'em', 'br'],
-        ALLOWED_ATTR: ['class']
-      });
+    // If question has changed, handle the transition
+    if (currentQuestion.id !== lastProcessedQuestionRef.current) {
+      // Hide previous question first
+      setIsVisible(false);
       
-      // Check if this question was already displayed
-      if (displayedQuestionsRef.current.has(currentQuestion.id)) {
-        // Show immediately without animation
-        setDisplayText(sanitizedContent);
-        setIsTyping(false);
-        currentAnimationRef.current = currentQuestion.id;
-        return;
-      }
-      
-      // New question - start word-by-word animation
-      currentAnimationRef.current = currentQuestion.id;
-      setDisplayText("");
-      setIsTyping(true);
-      
-      // Split content into words while preserving HTML tags and spacing
-      const words = sanitizedContent.split(/(\s+|<[^>]*>)/);  // Better HTML tag handling
-      let wordIndex = 0;
-      
-      const timer = setInterval(() => {
-        // Double-check we're still animating the same question
-        if (currentAnimationRef.current !== currentQuestion.id) {
-          clearInterval(timer);
+      setTimeout(() => {
+        // Prevent re-running animation for the same question
+        if (currentAnimationRef.current === currentQuestion.id) {
+          setIsVisible(true);
+          return;
+        }
+
+        const formattedContent = formatMessage(currentQuestion);
+        const sanitizedContent = DOMPurify.sanitize(formattedContent, { 
+          ALLOWED_TAGS: ['p', 'div', 'h3', 'strong', 'em', 'br'],
+          ALLOWED_ATTR: ['class']
+        });
+        
+        // Check if this question was already displayed
+        if (displayedQuestionsRef.current.has(currentQuestion.id)) {
+          // Show immediately without animation
+          setDisplayText(sanitizedContent);
+          setIsTyping(false);
+          setIsVisible(true);
+          currentAnimationRef.current = currentQuestion.id;
+          lastProcessedQuestionRef.current = currentQuestion.id;
           return;
         }
         
-        if (wordIndex < words.length) {
-          setDisplayText(words.slice(0, wordIndex + 1).join(''));
-          wordIndex++;
-        } else {
-          setIsTyping(false);
+        // New question - start word-by-word animation
+        currentAnimationRef.current = currentQuestion.id;
+        lastProcessedQuestionRef.current = currentQuestion.id;
+        setDisplayText("");
+        setIsTyping(true);
+        setIsVisible(true);
+        
+        // Split content into words while preserving HTML tags and spacing
+        const words = sanitizedContent.split(/(\s+|<[^>]*>)/);
+        let wordIndex = 0;
+        
+        const timer = setInterval(() => {
+          // Double-check we're still animating the same question
+          if (currentAnimationRef.current !== currentQuestion.id) {
+            clearInterval(timer);
+            return;
+          }
+          
+          if (wordIndex < words.length) {
+            setDisplayText(words.slice(0, wordIndex + 1).join(''));
+            wordIndex++;
+          } else {
+            setIsTyping(false);
+            clearInterval(timer);
+            // Mark this question as displayed
+            displayedQuestionsRef.current.add(currentQuestion.id);
+          }
+        }, 40);
+        
+        return () => {
           clearInterval(timer);
-          // Mark this question as displayed
-          displayedQuestionsRef.current.add(currentQuestion.id);
-        }
-      }, 40); // Much faster word-by-word at 40ms intervals
-      
-      return () => {
-        clearInterval(timer);
-      };
+        };
+      }, 300); // Short delay for transition
     }
-  }, [currentQuestion?.id, isProcessing]); // Only depend on question ID and processing state
+  }, [currentQuestion?.id]); // Only depend on question ID
 
   return (
     <div className="h-full flex flex-col items-center justify-center relative bg-gradient-to-br from-background/95 via-background/85 to-accent/10 backdrop-blur-xl">
@@ -190,7 +208,7 @@ const InterviewQuestionDisplay = ({
       {/* Main Question Display */}
       <div className="max-w-4xl mx-auto px-8 text-center">
         <AnimatePresence mode="wait">
-          {currentQuestion && (
+          {currentQuestion && isVisible && (
             <motion.div
               key={currentQuestion.id}
               initial={{ opacity: 0, scale: 0.8, y: 50 }}
