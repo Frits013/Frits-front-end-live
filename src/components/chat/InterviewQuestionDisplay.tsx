@@ -99,18 +99,30 @@ const InterviewQuestionDisplay = ({
   const [displayText, setDisplayText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
+  const [isLocked, setIsLocked] = useState(false);
   const displayedQuestionsRef = useRef<Set<string>>(new Set());
   const currentAnimationRef = useRef<string | null>(null);
   const lastProcessedQuestionRef = useRef<string | null>(null);
+  const animationTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!currentQuestion) {
       setIsVisible(false);
+      setIsLocked(false);
       return;
+    }
+
+    // Clear any existing timer
+    if (animationTimerRef.current) {
+      clearInterval(animationTimerRef.current);
+      animationTimerRef.current = null;
     }
 
     // If question has changed, handle the transition
     if (currentQuestion.id !== lastProcessedQuestionRef.current) {
+      // Reset locked state for new question
+      setIsLocked(false);
+      
       // Hide previous question first
       setIsVisible(false);
       
@@ -150,9 +162,10 @@ const InterviewQuestionDisplay = ({
         let wordIndex = 0;
         
         const timer = setInterval(() => {
-          // Double-check we're still animating the same question
-          if (currentAnimationRef.current !== currentQuestion.id) {
+          // Triple-check we're still animating the same question and not locked
+          if (currentAnimationRef.current !== currentQuestion.id || isLocked) {
             clearInterval(timer);
+            animationTimerRef.current = null;
             return;
           }
           
@@ -162,17 +175,25 @@ const InterviewQuestionDisplay = ({
           } else {
             setIsTyping(false);
             clearInterval(timer);
+            animationTimerRef.current = null;
             // Mark this question as displayed
             displayedQuestionsRef.current.add(currentQuestion.id);
           }
         }, 40);
         
-        return () => {
-          clearInterval(timer);
-        };
+        animationTimerRef.current = timer;
       }, 300); // Short delay for transition
     }
-  }, [currentQuestion?.id]); // Only depend on question ID
+  }, [currentQuestion?.id, isLocked]); // Depend on question ID and locked state
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (animationTimerRef.current) {
+        clearInterval(animationTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="h-full flex flex-col items-center justify-center relative bg-gradient-to-br from-background/95 via-background/85 to-accent/10 backdrop-blur-xl">
