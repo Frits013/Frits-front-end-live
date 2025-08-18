@@ -148,7 +148,7 @@ const InterviewQuestionDisplay = ({
           // Mark this question as displayed
           displayedQuestionsRef.current.add(currentQuestion.id);
         }
-      }, 80); // Faster word-by-word at 80ms intervals
+      }, 40); // Much faster word-by-word at 40ms intervals
       
       return () => {
         clearInterval(timer);
@@ -203,14 +203,6 @@ const InterviewQuestionDisplay = ({
                 dangerouslySetInnerHTML={{ __html: displayText }}
               />
               
-              {/* Typing Indicator */}
-              {isTyping && (
-                <motion.div
-                  animate={{ opacity: [0, 1, 0] }}
-                  transition={{ duration: 1, repeat: Infinity }}
-                  className="inline-block w-3 h-6 bg-primary ml-1"
-                />
-              )}
             </motion.div>
           )}
         </AnimatePresence>
