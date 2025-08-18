@@ -114,26 +114,29 @@ const InterviewQuestionDisplay = ({
         return;
       }
       
-      // New question - start typing animation
+      // New question - start word-by-word animation
       setDisplayText("");
       setIsTyping(true);
       
-      let index = 0;
+      // Split content into words while preserving HTML tags and spacing
+      const words = sanitizedContent.split(/(\s+|<br\/>|<strong>|<\/strong>|<em>|<\/em>)/);
+      let wordIndex = 0;
+      
       const timer = setInterval(() => {
-        if (index < sanitizedContent.length) {
-          setDisplayText(sanitizedContent.slice(0, index + 1));
-          index++;
+        if (wordIndex < words.length) {
+          setDisplayText(words.slice(0, wordIndex + 1).join(''));
+          wordIndex++;
         } else {
           setIsTyping(false);
           clearInterval(timer);
           // Mark this question as displayed
           setDisplayedQuestions(prev => new Set(prev).add(currentQuestion.id));
         }
-      }, 70); // Slower animation: 70ms instead of 20ms
+      }, 120); // Word-by-word at 120ms intervals
       
       return () => clearInterval(timer);
     }
-  }, [currentQuestion, isProcessing, displayedQuestions]);
+  }, [currentQuestion, isProcessing]); // Removed displayedQuestions from dependencies
 
   return (
     <div className="h-full flex flex-col items-center justify-center relative bg-gradient-to-br from-background/95 via-background/85 to-accent/10 backdrop-blur-xl">
