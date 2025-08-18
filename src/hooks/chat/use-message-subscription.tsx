@@ -9,7 +9,7 @@ const isDev = process.env.NODE_ENV !== 'production';
 export const useMessageSubscription = (
   sessionId: string | null,
   messages: ChatMessage[],
-  setMessages: (messages: ChatMessage[]) => void,
+  setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
   setIsProcessing: (processing: boolean) => void
 ) => {
   const channelRef = useRef<any>(null);
@@ -66,11 +66,14 @@ export const useMessageSubscription = (
               created_at: new Date(newMessage.created_at),
             };
             
-            // Check if message already exists to prevent duplicates
-            const messageExists = messages.some(msg => msg.id === processedMessage.id);
-            if (!messageExists) {
-              setMessages([...messages, processedMessage]);
-            }
+            // Use functional update to prevent stale closure issues and improve deduplication
+            setMessages((currentMessages: ChatMessage[]) => {
+              const messageExists = currentMessages.some(msg => msg.id === processedMessage.id);
+              if (!messageExists) {
+                return [...currentMessages, processedMessage];
+              }
+              return currentMessages;
+            });
             
             // If it's an assistant message, stop processing indicator
             if (processedMessage.role === 'assistant') {

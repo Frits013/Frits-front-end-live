@@ -37,7 +37,7 @@ const InterviewModeSwitcher = ({
   onSendMessage
 }: InterviewModeSwitcherProps) => {
   const [showHistory, setShowHistory] = useState(false);
-  const [answerFlow, setAnswerFlow] = useState<'idle' | 'card' | 'answer' | 'thinking'>('idle');
+  const [answerFlow, setAnswerFlow] = useState<'idle' | 'expanded' | 'thinking'>('idle');
   const [currentAnswer, setCurrentAnswer] = useState("");
   const [lockedQuestion, setLockedQuestion] = useState<ChatMessage | null>(null);
 
@@ -53,21 +53,16 @@ const InterviewModeSwitcher = ({
     if (!currentQuestion) return;
     
     try {
-      // Step 1: Lock current question and show as card
+      // Step 1: Lock current question and show expanded card with answer
       setLockedQuestion(currentQuestion);
       setCurrentAnswer(message);
-      setAnswerFlow('card');
+      setAnswerFlow('expanded');
       
-      // Step 2: Show answer bubble after short delay
-      setTimeout(() => {
-        setAnswerFlow('answer');
-      }, 200);
-      
-      // Step 3: Send message and show thinking state
+      // Step 2: Wait 1000ms then send message and show thinking
       setTimeout(async () => {
         setAnswerFlow('thinking');
         await onSendMessage(message);
-      }, 800);
+      }, 1000);
       
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -110,26 +105,16 @@ const InterviewModeSwitcher = ({
         <div className="h-full flex flex-col items-center justify-center relative bg-gradient-to-br from-background/95 via-background/85 to-accent/10 backdrop-blur-xl">
           <div className="max-w-4xl mx-auto px-8 w-full">
             
-            {/* Locked Question Card */}
+            {/* Expanded Question Card with Answer */}
             <AnimatePresence>
-              {lockedQuestion && answerFlow === 'card' && (
+              {lockedQuestion && answerFlow === 'expanded' && (
                 <QuestionCard
                   question={lockedQuestion}
                   phase={currentPhase}
                   questionNumber={questionNumber}
                   maxQuestions={maxQuestions}
-                />
-              )}
-            </AnimatePresence>
-
-            {/* Answer Bubble */}
-            <AnimatePresence>
-              {answerFlow === 'answer' && (
-                <AnswerBubble
-                  answer={currentAnswer}
-                  onAnimationComplete={() => {
-                    // Transition happens in handleSendMessage timeout
-                  }}
+                  attachedAnswer={currentAnswer}
+                  isExpanded={true}
                 />
               )}
             </AnimatePresence>

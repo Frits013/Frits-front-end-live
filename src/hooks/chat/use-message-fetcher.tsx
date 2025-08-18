@@ -160,17 +160,6 @@ export const useMessageFetcher = (sessionId: string | null) => {
       setSessionData(null);
       setCurrentProgress(null);
     }
-    
-    // Set up a polling mechanism to check for new messages regularly
-    const pollInterval = setInterval(() => {
-      if (sessionId) {
-        fetchMessages();
-      }
-    }, 5000);
-    
-    return () => {
-      clearInterval(pollInterval);
-    };
   }, [sessionId]); // Only depend on sessionId
 
   const processMessages = (data: any[]): ChatMessage[] => {

@@ -7,6 +7,8 @@ interface QuestionCardProps {
   phase?: InterviewPhase;
   questionNumber: number;
   maxQuestions: number;
+  attachedAnswer?: string;
+  isExpanded?: boolean;
 }
 
 const formatMessage = (message: ChatMessage) => {
@@ -29,7 +31,7 @@ const formatMessage = (message: ChatMessage) => {
   }).join('');
 };
 
-const QuestionCard = ({ question, phase, questionNumber, maxQuestions }: QuestionCardProps) => {
+const QuestionCard = ({ question, phase, questionNumber, maxQuestions, attachedAnswer, isExpanded = false }: QuestionCardProps) => {
   const formattedContent = formatMessage(question);
   const sanitizedContent = DOMPurify.sanitize(formattedContent, { 
     ALLOWED_TAGS: ['p', 'div', 'h3', 'strong', 'em', 'br'],
@@ -39,7 +41,11 @@ const QuestionCard = ({ question, phase, questionNumber, maxQuestions }: Questio
   return (
     <motion.div
       initial={{ scale: 1 }}
-      animate={{ scale: 0.95 }}
+      animate={{ 
+        scale: isExpanded ? 0.95 : 1,
+        height: attachedAnswer ? "auto" : "auto"
+      }}
+      exit={{ scale: 0.8, opacity: 0, x: 100, y: -50 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
       className="bg-background/90 backdrop-blur border border-border/50 rounded-2xl p-6 shadow-lg min-h-[120px] relative"
     >
@@ -55,6 +61,21 @@ const QuestionCard = ({ question, phase, questionNumber, maxQuestions }: Questio
         className="text-base leading-relaxed text-foreground/90"
         dangerouslySetInnerHTML={{ __html: sanitizedContent }}
       />
+
+      {/* Attached answer */}
+      {attachedAnswer && (
+        <motion.div
+          initial={{ opacity: 0, height: 0, marginTop: 0 }}
+          animate={{ opacity: 1, height: "auto", marginTop: 16 }}
+          transition={{ duration: 0.3, ease: "easeOut", delay: 0.1 }}
+          className="border-t border-border/30 pt-4"
+        >
+          <div className="bg-primary/10 rounded-xl p-4">
+            <p className="text-sm text-muted-foreground mb-2">Your answer:</p>
+            <p className="text-base leading-relaxed text-foreground">{attachedAnswer}</p>
+          </div>
+        </motion.div>
+      )}
     </motion.div>
   );
 };
