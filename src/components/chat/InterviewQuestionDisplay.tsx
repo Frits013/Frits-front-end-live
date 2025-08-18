@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChatMessage, InterviewPhase } from "@/types/chat";
 import { Button } from "@/components/ui/button";
@@ -97,24 +97,32 @@ const InterviewQuestionDisplay = ({
 }: InterviewQuestionDisplayProps) => {
   const [displayText, setDisplayText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [displayedQuestions, setDisplayedQuestions] = useState<Set<string>>(new Set());
+  const displayedQuestionsRef = useRef<Set<string>>(new Set());
+  const currentAnimationRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (currentQuestion && !isProcessing) {
+      // Prevent re-running animation for the same question
+      if (currentAnimationRef.current === currentQuestion.id) {
+        return;
+      }
+
       const formattedContent = formatMessage(currentQuestion);
       const sanitizedContent = DOMPurify.sanitize(formattedContent, { 
         ALLOWED_TAGS: ['strong', 'em', 'br'] 
       });
       
       // Check if this question was already displayed
-      if (displayedQuestions.has(currentQuestion.id)) {
+      if (displayedQuestionsRef.current.has(currentQuestion.id)) {
         // Show immediately without animation
         setDisplayText(sanitizedContent);
         setIsTyping(false);
+        currentAnimationRef.current = currentQuestion.id;
         return;
       }
       
       // New question - start word-by-word animation
+      currentAnimationRef.current = currentQuestion.id;
       setDisplayText("");
       setIsTyping(true);
       
@@ -123,6 +131,12 @@ const InterviewQuestionDisplay = ({
       let wordIndex = 0;
       
       const timer = setInterval(() => {
+        // Double-check we're still animating the same question
+        if (currentAnimationRef.current !== currentQuestion.id) {
+          clearInterval(timer);
+          return;
+        }
+        
         if (wordIndex < words.length) {
           setDisplayText(words.slice(0, wordIndex + 1).join(''));
           wordIndex++;
@@ -130,13 +144,15 @@ const InterviewQuestionDisplay = ({
           setIsTyping(false);
           clearInterval(timer);
           // Mark this question as displayed
-          setDisplayedQuestions(prev => new Set(prev).add(currentQuestion.id));
+          displayedQuestionsRef.current.add(currentQuestion.id);
         }
       }, 120); // Word-by-word at 120ms intervals
       
-      return () => clearInterval(timer);
+      return () => {
+        clearInterval(timer);
+      };
     }
-  }, [currentQuestion, isProcessing]); // Removed displayedQuestions from dependencies
+  }, [currentQuestion?.id, isProcessing]); // Only depend on question ID and processing state
 
   return (
     <div className="h-full flex flex-col items-center justify-center relative bg-gradient-to-br from-background/95 via-background/85 to-accent/10 backdrop-blur-xl">
