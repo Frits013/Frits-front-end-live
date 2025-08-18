@@ -71,7 +71,8 @@ const formatMessage = (message: ChatMessage) => {
   
   return sections.map((section, index) => {
     if (index === 0) {
-      return section.trim();
+      // Main content - add paragraph breaks for better readability
+      return section.trim().replace(/\n\n/g, '</p><p class="mb-4">').replace(/^\s*/, '<p class="mb-4">') + '</p>';
     }
     
     const lines = section.trim().split('\n');
@@ -79,11 +80,11 @@ const formatMessage = (message: ChatMessage) => {
     const content = lines.slice(1).join('\n').trim();
     
     if (title && content) {
-      return `<strong>${title}</strong><br/>${content}`;
+      return `<div class="mb-6"><h3 class="font-semibold text-lg mb-2 text-primary">${title}</h3><p class="text-base leading-relaxed">${content}</p></div>`;
     }
     
-    return section.trim();
-  }).join('<br/><br/>');
+    return `<p class="mb-4">${section.trim()}</p>`;
+  }).join('');
 };
 
 const InterviewQuestionDisplay = ({
@@ -109,7 +110,8 @@ const InterviewQuestionDisplay = ({
 
       const formattedContent = formatMessage(currentQuestion);
       const sanitizedContent = DOMPurify.sanitize(formattedContent, { 
-        ALLOWED_TAGS: ['strong', 'em', 'br'] 
+        ALLOWED_TAGS: ['p', 'div', 'h3', 'strong', 'em', 'br'],
+        ALLOWED_ATTR: ['class']
       });
       
       // Check if this question was already displayed
@@ -127,7 +129,7 @@ const InterviewQuestionDisplay = ({
       setIsTyping(true);
       
       // Split content into words while preserving HTML tags and spacing
-      const words = sanitizedContent.split(/(\s+|<br\/>|<strong>|<\/strong>|<em>|<\/em>)/);
+      const words = sanitizedContent.split(/(\s+|<[^>]*>)/);  // Better HTML tag handling
       let wordIndex = 0;
       
       const timer = setInterval(() => {
@@ -146,7 +148,7 @@ const InterviewQuestionDisplay = ({
           // Mark this question as displayed
           displayedQuestionsRef.current.add(currentQuestion.id);
         }
-      }, 120); // Word-by-word at 120ms intervals
+      }, 80); // Faster word-by-word at 80ms intervals
       
       return () => {
         clearInterval(timer);
@@ -197,7 +199,7 @@ const InterviewQuestionDisplay = ({
             >
               {/* Question Content */}
               <div 
-                className="text-lg md:text-xl lg:text-2xl leading-relaxed text-foreground/90 mb-8"
+                className="text-lg md:text-xl lg:text-2xl leading-relaxed text-foreground/90 mb-8 text-left max-w-3xl mx-auto"
                 dangerouslySetInnerHTML={{ __html: displayText }}
               />
               
