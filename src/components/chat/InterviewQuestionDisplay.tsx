@@ -176,7 +176,7 @@ const InterviewQuestionDisplay = ({
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="absolute top-8 left-1/2 transform -translate-x-1/2"
+          className="absolute top-8 left-0 right-0 flex justify-center"
         >
           <div className={`flex items-center gap-3 px-6 py-3 rounded-full bg-white/10 backdrop-blur border border-white/20 ${getPhaseColor(currentPhase)}`}>
             {getPhaseIcon(currentPhase)}
