@@ -97,6 +97,7 @@ const InterviewQuestionDisplay = ({
 }: InterviewQuestionDisplayProps) => {
   const [displayText, setDisplayText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [displayedQuestions, setDisplayedQuestions] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (currentQuestion && !isProcessing) {
@@ -105,6 +106,15 @@ const InterviewQuestionDisplay = ({
         ALLOWED_TAGS: ['strong', 'em', 'br'] 
       });
       
+      // Check if this question was already displayed
+      if (displayedQuestions.has(currentQuestion.id)) {
+        // Show immediately without animation
+        setDisplayText(sanitizedContent);
+        setIsTyping(false);
+        return;
+      }
+      
+      // New question - start typing animation
       setDisplayText("");
       setIsTyping(true);
       
@@ -116,12 +126,14 @@ const InterviewQuestionDisplay = ({
         } else {
           setIsTyping(false);
           clearInterval(timer);
+          // Mark this question as displayed
+          setDisplayedQuestions(prev => new Set(prev).add(currentQuestion.id));
         }
-      }, 20);
+      }, 70); // Slower animation: 70ms instead of 20ms
       
       return () => clearInterval(timer);
     }
-  }, [currentQuestion, isProcessing]);
+  }, [currentQuestion, isProcessing, displayedQuestions]);
 
   return (
     <div className="h-full flex flex-col items-center justify-center relative bg-gradient-to-br from-background/95 via-background/85 to-accent/10 backdrop-blur-xl">
