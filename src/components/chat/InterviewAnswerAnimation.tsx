@@ -25,12 +25,12 @@ const InterviewAnswerAnimation = ({
       // Brief pause then start exit
       const exitTimer = setTimeout(() => {
         setStage('exiting');
-      }, 800);
+      }, 700);
 
       // Complete the animation
       const completeTimer = setTimeout(() => {
         onAnimationComplete();
-      }, 1300);
+      }, 1400);
 
       return () => {
         clearTimeout(exitTimer);
@@ -57,23 +57,26 @@ const InterviewAnswerAnimation = ({
               </div>
             </motion.div>
 
-            {/* Answer (simplified animation) */}
+            {/* Answer (natural flow animation) */}
             <motion.div
               initial={{ 
                 opacity: 0,
-                scale: 0.9,
+                scale: 0.95,
                 x: "-50%",
-                y: "80vh"
+                y: "45vh"
               }}
               animate={{
                 opacity: stage === 'exiting' ? 0 : 1,
-                scale: 1,
+                scale: stage === 'exiting' ? 0.95 : 1,
                 x: "-50%",
-                y: stage === 'exiting' ? "-20vh" : "65vh"
+                y: stage === 'exiting' ? "-15vh" : "40vh"
               }}
               transition={{
-                duration: stage === 'exiting' ? 0.5 : 0.4,
-                ease: stage === 'exiting' ? [0.4, 0, 1, 1] : [0, 0, 0.2, 1]
+                duration: stage === 'exiting' ? 0.7 : 0.5,
+                ease: stage === 'exiting' ? [0.4, 0, 0.2, 1] : [0, 0, 0.2, 1],
+                type: "spring",
+                damping: stage === 'exiting' ? 25 : 20,
+                stiffness: stage === 'exiting' ? 300 : 200
               }}
               className="absolute left-1/2 bg-gradient-to-br from-accent/95 to-accent backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl max-w-2xl"
             >
