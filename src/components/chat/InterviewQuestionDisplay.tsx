@@ -176,12 +176,14 @@ const InterviewQuestionDisplay = ({
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`absolute top-8 left-1/2 transform -translate-x-1/2 flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur border border-white/20 ${getPhaseColor(currentPhase)}`}
+          className="absolute top-8 left-1/2 transform -translate-x-1/2"
         >
-          {getPhaseIcon(currentPhase)}
-          <span className="text-sm font-medium">
-            {getPhaseTitle(currentPhase)} - Question {questionNumber}/{maxQuestions}
-          </span>
+          <div className={`flex items-center gap-3 px-6 py-3 rounded-full bg-white/10 backdrop-blur border border-white/20 ${getPhaseColor(currentPhase)}`}>
+            {getPhaseIcon(currentPhase)}
+            <span className="text-base font-medium">
+              {getPhaseTitle(currentPhase)} - Question {questionNumber}/{maxQuestions}
+            </span>
+          </div>
         </motion.div>
       )}
 

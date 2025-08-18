@@ -94,26 +94,26 @@ const InterviewProgress = ({
 
 
         {/* Phase indicators */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2">
+        <div className="flex items-center justify-center gap-3 overflow-x-auto pb-2">
           {phaseDefinitions.map((phase, index) => {
             const status = getPhaseStatus(phase.id);
             return (
-              <div key={phase.id} className="flex items-center gap-2 min-w-0">
-                <div className="flex flex-col items-center gap-1">
+              <div key={phase.id} className="flex items-center gap-3 min-w-0">
+                <div className="flex flex-col items-center gap-2">
                   <Badge 
-                    className={`text-xs transition-all duration-300 ${
+                    className={`text-sm px-3 py-1 transition-all duration-300 ${
                       getPhaseColor(status.isActive, status.isCompleted)
                     }`}
                   >
-                    <div className="flex items-center gap-1">
-                      {status.isCompleted && <CheckCircle className="w-3 h-3" />}
+                    <div className="flex items-center gap-2">
+                      {status.isCompleted && <CheckCircle className="w-4 h-4" />}
                       <span className="truncate">{phase.name}</span>
                     </div>
                   </Badge>
-                  <Progress value={status.progress} className="h-1 w-16" />
+                  <Progress value={status.progress} className="h-2 w-24" />
                 </div>
                 {index < phaseDefinitions.length - 1 && (
-                  <ArrowRight className="w-3 h-3 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                  <ArrowRight className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />
                 )}
               </div>
             );
