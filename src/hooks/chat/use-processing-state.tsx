@@ -1,15 +1,22 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthContext } from "@/hooks/use-auth-context";
 
 export const useProcessingState = (sessionId: string | null) => {
   const [isProcessing, setIsProcessing] = useState(false);
+  const { isAuthenticated, session } = useAuthContext();
 
   // Check for processing state on messages
   useEffect(() => {
     if (!sessionId) return;
 
     const checkProcessingState = async () => {
+      if (!sessionId || !isAuthenticated) {
+        setIsProcessing(false);
+        return;
+      }
+
       try {
         const { data, error } = await supabase
           .from('chat_messages')
@@ -59,7 +66,7 @@ export const useProcessingState = (sessionId: string | null) => {
     const interval = setInterval(checkProcessingState, 2000);
     
     return () => clearInterval(interval);
-  }, [sessionId]);
+  }, [sessionId, isAuthenticated]);
 
   // Track visibility changes to ensure animation continues when tab is backgrounded
   useEffect(() => {

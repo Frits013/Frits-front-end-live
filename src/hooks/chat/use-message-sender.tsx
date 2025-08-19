@@ -3,6 +3,7 @@ import { ChatMessage, InterviewPhase } from "@/types/chat";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { INITIAL_MESSAGE } from "@/hooks/chat-sessions/use-session-creation";
+import { useSessionValidation } from "./use-session-validation";
 
 const isDev = process.env.NODE_ENV !== 'production';
 
@@ -26,6 +27,7 @@ export const useMessageSender = ({
   currentPhase
 }: UseMessageSenderProps) => {
   const currentRequestId = useRef<string | null>(null);
+  const { validateSession } = useSessionValidation();
 
   const getPhaseContextMessage = (userAnswer: string, phase: InterviewPhase): string => {
     // Special hardcoded prompts for summary and recommendations phases
@@ -41,10 +43,66 @@ export const useMessageSender = ({
     return `The next question you will ask will be from the ${phase} phase. You are in that part of the interview process KEEP THIS INTO ACCOUNT. "This was the user's last answer: ${userAnswer}."`;
   };
 
+  const executeWithRetry = async <T,>(
+    operation: () => Promise<T>,
+    operationName: string,
+    maxRetries: number = 2
+  ): Promise<T | null> => {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        // Validate session before each attempt
+        const session = await validateSession();
+        if (!session) {
+          throw new Error('Authentication required');
+        }
+
+        return await operation();
+      } catch (error: any) {
+        if (isDev) console.error(`${operationName} attempt ${attempt + 1} failed:`, error);
+        
+        // Check if it's an auth-related error
+        const isAuthError = error?.message?.includes('JWT') || 
+                           error?.message?.includes('auth') ||
+                           error?.message?.includes('Authentication') ||
+                           error?.code === 'PGRST301' ||
+                           error?.code === 'PGRST302';
+
+        if (isAuthError && attempt < maxRetries) {
+          if (isDev) console.log(`Auth error detected, refreshing session and retrying...`);
+          
+          // Attempt to refresh the session
+          const { error: refreshError } = await supabase.auth.refreshSession();
+          if (refreshError) {
+            if (isDev) console.error('Session refresh failed:', refreshError);
+            toast.error('Session expired. Please log in again.');
+            // Could redirect to login here if needed
+            return null;
+          }
+          
+          // Wait before retry with exponential backoff
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+          continue;
+        }
+        
+        // If it's the last attempt or not an auth error, throw
+        if (attempt === maxRetries) {
+          throw error;
+        }
+      }
+    }
+    return null;
+  };
+
   const sendMessage = async (inputMessage: string) => {
     if (!inputMessage.trim() || !currentChatId) {
       if (isDev) console.warn('Cannot send message: empty message or no chat ID');
       return;
+    }
+
+    // Validate authentication first
+    const session = await validateSession();
+    if (!session) {
+      return; // validateSession already shows error toast
     }
 
     // Generate unique request ID to prevent duplicates
@@ -67,20 +125,27 @@ export const useMessageSender = ({
       // Add user message to UI immediately
       setMessages([...messages, userMessage]);
 
-      // Save user message to database
-      const { data: savedUserMessage, error: userMessageError } = await supabase
-        .from('chat_messages')
-        .insert({
-          session_id: currentChatId,
-          content: inputMessage,
-          role: 'user',
-        })
-        .select()
-        .single();
+      // Save user message to database with retry logic
+      const savedUserMessage = await executeWithRetry(
+        async () => {
+          const { data, error } = await supabase
+            .from('chat_messages')
+            .insert({
+              session_id: currentChatId,
+              content: inputMessage,
+              role: 'user',
+            })
+            .select()
+            .single();
 
-      if (userMessageError) {
-        if (isDev) console.error('Error saving user message:', userMessageError);
-        toast.error('Failed to save your message');
+          if (error) throw error;
+          return data;
+        },
+        'Save user message'
+      );
+
+      if (!savedUserMessage) {
+        toast.error('Failed to save your message. Please check your connection and try again.');
         return;
       }
 
@@ -91,13 +156,21 @@ export const useMessageSender = ({
         messageToSend = `${phaseContext}\n\nUser's answer: ${inputMessage}`;
       }
 
-      // Call the chat function with phase context
-      const { data: chatResponse, error: functionError } = await supabase.functions.invoke('chat', {
-        body: {
-          message: messageToSend,
-          session_id: currentChatId,
+      // Call the chat function with phase context and retry logic
+      const chatResponse = await executeWithRetry(
+        async () => {
+          const { data, error } = await supabase.functions.invoke('chat', {
+            body: {
+              message: messageToSend,
+              session_id: currentChatId,
+            },
+          });
+
+          if (error) throw error;
+          return data;
         },
-      });
+        'Chat function invocation'
+      );
 
       // Check if this is still the current request
       if (currentRequestId.current !== requestId) {
@@ -105,9 +178,8 @@ export const useMessageSender = ({
         return;
       }
 
-      if (functionError) {
-        if (isDev) console.error('Function invocation error:', functionError);
-        toast.error('Failed to get response from AI');
+      if (!chatResponse) {
+        toast.error('Failed to get response from AI. Please try again.');
         setErrorMessage('Failed to get AI response. Please try again.');
         return;
       }
@@ -126,18 +198,25 @@ export const useMessageSender = ({
         return;
       }
 
-      // Retrieve the assistant's response from the database (stored as 'writer' role)
-      const { data: assistantMessages, error: messagesError } = await supabase
-        .from('chat_messages')
-        .select('*')
-        .eq('session_id', currentChatId)
-        .eq('role', 'writer') // Fixed: Look for 'writer' role, not 'assistant'
-        .order('created_at', { ascending: false })
-        .limit(1);
+      // Retrieve the assistant's response from the database with retry logic
+      const assistantMessages = await executeWithRetry(
+        async () => {
+          const { data, error } = await supabase
+            .from('chat_messages')
+            .select('*')
+            .eq('session_id', currentChatId)
+            .eq('role', 'writer') // Look for 'writer' role, not 'assistant'
+            .order('created_at', { ascending: false })
+            .limit(1);
 
-      if (messagesError) {
-        if (isDev) console.error('Error fetching assistant message:', messagesError);
-        toast.error('Failed to retrieve AI response');
+          if (error) throw error;
+          return data;
+        },
+        'Fetch assistant message'
+      );
+
+      if (!assistantMessages) {
+        toast.error('Failed to retrieve AI response. Please try again.');
         return;
       }
 
@@ -145,13 +224,21 @@ export const useMessageSender = ({
         const latestAssistantMessage = assistantMessages[0];
         
         // Update messages with the real assistant message
-        const { data: allMessages, error: allMessagesError } = await supabase
-          .from('chat_messages')
-          .select('*')
-          .eq('session_id', currentChatId)
-          .order('created_at', { ascending: true });
+        const allMessages = await executeWithRetry(
+          async () => {
+            const { data, error } = await supabase
+              .from('chat_messages')
+              .select('*')
+              .eq('session_id', currentChatId)
+              .order('created_at', { ascending: true });
 
-        if (!allMessagesError && allMessages) {
+            if (error) throw error;
+            return data;
+          },
+          'Fetch all messages'
+        );
+
+        if (allMessages) {
           // Filter and map messages like the message fetcher does
           const formattedMessages: ChatMessage[] = allMessages
             .filter(msg => {
