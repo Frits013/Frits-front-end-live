@@ -149,6 +149,7 @@ export const useMessageSender = ({
               session_id: currentChatId,
               content: inputMessage,
               role: 'user',
+              user_id: session.user.id,
             })
             .select()
             .single();
