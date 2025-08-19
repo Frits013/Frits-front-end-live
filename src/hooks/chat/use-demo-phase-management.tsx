@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ChatMessage, ChatSession, InterviewPhase, InterviewProgress } from "@/types/chat";
+import { ChatMessage, ChatSession, InterviewPhase, InterviewProgress, PhaseConfig } from "@/types/chat";
 import { supabase } from "@/integrations/supabase/client";
 
 const isDev = process.env.NODE_ENV !== 'production';
@@ -9,13 +9,15 @@ interface DemoPhaseManagementProps {
   messages: ChatMessage[];
   sessionData: ChatSession | null;
   currentProgress: InterviewProgress | null;
+  phaseConfigs: PhaseConfig[] | null;
 }
 
 export const useDemoPhaseManagement = ({
   sessionId,
   messages,
   sessionData,
-  currentProgress
+  currentProgress,
+  phaseConfigs
 }: DemoPhaseManagementProps) => {
   const [localPhaseData, setLocalPhaseData] = useState<{
     phase: InterviewPhase;
@@ -24,15 +26,33 @@ export const useDemoPhaseManagement = ({
     phaseStartMessageCount: number; // Track messages at phase start
   } | null>(null);
 
+  // Get max questions for current phase from database config
+  const getMaxQuestions = (phase: InterviewPhase): number => {
+    if (!phaseConfigs) {
+      // Fallback to hardcoded values if configs not loaded
+      const fallback = {
+        'introduction': 3,
+        'theme_selection': 4,
+        'deep_dive': 10,
+        'summary': 1,
+        'recommendations': 1
+      };
+      return fallback[phase] || 3;
+    }
+    
+    const config = phaseConfigs.find(c => c.phase === phase);
+    return config?.max_questions || 3;
+  };
+
   // Initialize local phase data when session starts
   useEffect(() => {
     if (sessionData && !localPhaseData) {
-      const userMessages = messages.filter(msg => msg.role === 'user');
+      const assistantMessages = messages.filter(msg => msg.role === 'assistant');
       setLocalPhaseData({
         phase: sessionData.current_phase || 'introduction',
         questionCount: 0,
         lastBackendPhase: sessionData.current_phase || null,
-        phaseStartMessageCount: userMessages.length
+        phaseStartMessageCount: assistantMessages.length
       });
     }
   }, [sessionData, localPhaseData, messages]);
@@ -44,25 +64,25 @@ export const useDemoPhaseManagement = ({
       if (sessionData.current_phase !== localPhaseData.lastBackendPhase) {
         if (isDev) console.log('Backend phase changed to:', sessionData.current_phase);
         
-        const userMessages = messages.filter(msg => msg.role === 'user');
+        const assistantMessages = messages.filter(msg => msg.role === 'assistant');
         setLocalPhaseData(prev => ({
           ...prev!,
           phase: sessionData.current_phase!,
           lastBackendPhase: sessionData.current_phase!,
           questionCount: 0, // Reset question count when phase changes
-          phaseStartMessageCount: userMessages.length // Track where this phase started
+          phaseStartMessageCount: assistantMessages.length // Track where this phase started
         }));
       }
     }
   }, [sessionData?.current_phase, localPhaseData]);
 
-  // Count questions and manage phase transitions for demo
+  // Count questions and manage phase transitions
   useEffect(() => {
     if (!localPhaseData || !sessionId) return;
 
-    // Count user responses since the current phase started
-    const userResponses = messages.filter(msg => msg.role === 'user');
-    const currentPhaseQuestionCount = userResponses.length - localPhaseData.phaseStartMessageCount;
+    // Count assistant questions since the current phase started
+    const assistantQuestions = messages.filter(msg => msg.role === 'assistant');
+    const currentPhaseQuestionCount = assistantQuestions.length - localPhaseData.phaseStartMessageCount;
     
     // Update question count if it changed
     if (currentPhaseQuestionCount !== localPhaseData.questionCount) {
@@ -71,18 +91,35 @@ export const useDemoPhaseManagement = ({
         questionCount: currentPhaseQuestionCount
       }));
 
-      // Demo logic: Auto-advance introduction phase after 3 questions
-      if (localPhaseData.phase === 'introduction' && currentPhaseQuestionCount >= 3) {
+      const currentMaxQuestions = getMaxQuestions(localPhaseData.phase);
+
+      // Auto-advance phases based on question limits
+      if (currentPhaseQuestionCount >= currentMaxQuestions) {
         // Only advance if backend hasn't already moved us forward
-        if (sessionData?.current_phase === 'introduction' || !sessionData?.current_phase) {
-          if (isDev) console.log('Demo: Auto-advancing from introduction to theme_selection after 3 questions');
+        if (sessionData?.current_phase === localPhaseData.phase || !sessionData?.current_phase) {
+          let nextPhase: InterviewPhase | null = null;
           
-          // Update the session phase in the database
-          updateSessionPhase('theme_selection');
+          switch (localPhaseData.phase) {
+            case 'introduction':
+              nextPhase = 'theme_selection';
+              break;
+            case 'theme_selection':
+              nextPhase = 'deep_dive';
+              break;
+            case 'deep_dive':
+              nextPhase = 'summary';
+              break;
+            // Summary and recommendations are handled differently (button/auto-complete)
+          }
+
+          if (nextPhase) {
+            if (isDev) console.log(`Auto-advancing from ${localPhaseData.phase} to ${nextPhase} after ${currentPhaseQuestionCount} questions`);
+            updateSessionPhase(nextPhase);
+          }
         }
       }
     }
-  }, [messages, localPhaseData, sessionId, sessionData?.current_phase]);
+  }, [messages, localPhaseData, sessionId, sessionData?.current_phase, phaseConfigs]);
 
   const updateSessionPhase = async (newPhase: InterviewPhase) => {
     if (!sessionId) return;
@@ -110,13 +147,21 @@ export const useDemoPhaseManagement = ({
     }
   };
 
+  // Function to trigger next phase (used for summary -> recommendations button)
+  const triggerNextPhase = () => {
+    if (localPhaseData?.phase === 'summary') {
+      updateSessionPhase('recommendations');
+    }
+  };
+
+  const currentPhase = (localPhaseData?.phase || sessionData?.current_phase || 'introduction') as InterviewPhase;
+  const maxQuestions = getMaxQuestions(currentPhase);
+
   return {
-    currentPhase: (localPhaseData?.phase || sessionData?.current_phase || 'introduction') as InterviewPhase,
+    currentPhase,
     questionCount: localPhaseData?.questionCount || 0,
-    maxQuestions: localPhaseData?.phase === 'introduction' ? 3 : 
-                  localPhaseData?.phase === 'theme_selection' ? 5 :
-                  localPhaseData?.phase === 'deep_dive' ? 8 :
-                  localPhaseData?.phase === 'summary' ? 3 :
-                  localPhaseData?.phase === 'recommendations' ? 2 : 3
+    maxQuestions,
+    triggerNextPhase,
+    canTriggerNextPhase: localPhaseData?.phase === 'summary'
   };
 };

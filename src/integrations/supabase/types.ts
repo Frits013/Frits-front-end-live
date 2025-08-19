@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
@@ -73,7 +73,10 @@ export type Database = {
           phase_max_questions: Json | null
           phase_metadata: Json | null
           phase_question_counts: Json | null
+          selected_themes: string[] | null
+          session_context: Json | null
           session_name: string
+          theme_selection_confidence: Json | null
           user_id: string
         }
         Insert: {
@@ -85,7 +88,10 @@ export type Database = {
           phase_max_questions?: Json | null
           phase_metadata?: Json | null
           phase_question_counts?: Json | null
+          selected_themes?: string[] | null
+          session_context?: Json | null
           session_name?: string
+          theme_selection_confidence?: Json | null
           user_id: string
         }
         Update: {
@@ -97,7 +103,10 @@ export type Database = {
           phase_max_questions?: Json | null
           phase_metadata?: Json | null
           phase_question_counts?: Json | null
+          selected_themes?: string[] | null
+          session_context?: Json | null
           session_name?: string
+          theme_selection_confidence?: Json | null
           user_id?: string
         }
         Relationships: []
@@ -275,14 +284,154 @@ export type Database = {
         }
         Relationships: []
       }
+      session_theme_selections: {
+        Row: {
+          created_at: string
+          id: string
+          priority_order: number | null
+          selection_confidence: number | null
+          selection_method: string | null
+          session_context: Json | null
+          session_id: string
+          theme_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          priority_order?: number | null
+          selection_confidence?: number | null
+          selection_method?: string | null
+          session_context?: Json | null
+          session_id: string
+          theme_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          priority_order?: number | null
+          selection_confidence?: number | null
+          selection_method?: string | null
+          session_context?: Json | null
+          session_id?: string
+          theme_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_theme_selections_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "chat_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_theme_selections_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "themes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      themes: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          difficulty_level: string | null
+          id: string
+          industry_tags: string[] | null
+          is_active: boolean
+          keywords: string[] | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          difficulty_level?: string | null
+          id?: string
+          industry_tags?: string[] | null
+          is_active?: boolean
+          keywords?: string[] | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          difficulty_level?: string | null
+          id?: string
+          industry_tags?: string[] | null
+          is_active?: boolean
+          keywords?: string[] | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_theme_profiles: {
+        Row: {
+          created_at: string
+          expertise_level: string | null
+          frequency_discussed: number | null
+          id: string
+          interest_level: number | null
+          last_discussed_at: string | null
+          theme_id: string
+          updated_at: string
+          user_id: string
+          user_notes: string | null
+        }
+        Insert: {
+          created_at?: string
+          expertise_level?: string | null
+          frequency_discussed?: number | null
+          id?: string
+          interest_level?: number | null
+          last_discussed_at?: string | null
+          theme_id: string
+          updated_at?: string
+          user_id: string
+          user_notes?: string | null
+        }
+        Update: {
+          created_at?: string
+          expertise_level?: string | null
+          frequency_discussed?: number | null
+          id?: string
+          interest_level?: number | null
+          last_discussed_at?: string | null
+          theme_id?: string
+          updated_at?: string
+          user_id?: string
+          user_notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_theme_profiles_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "themes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           company_id: string | null
+          consultation_history: Json | null
           created_at: string
           distilled_company_AIR_info: string | null
           distilled_user_AIR_info: string | null
           email: string | null
           onboarding_complete: boolean | null
+          preferred_themes: string[] | null
+          theme_expertise: Json | null
           TTS_flag: boolean | null
           updated_at: string
           user_description: string | null
@@ -290,11 +439,14 @@ export type Database = {
         }
         Insert: {
           company_id?: string | null
+          consultation_history?: Json | null
           created_at?: string
           distilled_company_AIR_info?: string | null
           distilled_user_AIR_info?: string | null
           email?: string | null
           onboarding_complete?: boolean | null
+          preferred_themes?: string[] | null
+          theme_expertise?: Json | null
           TTS_flag?: boolean | null
           updated_at?: string
           user_description?: string | null
@@ -302,11 +454,14 @@ export type Database = {
         }
         Update: {
           company_id?: string | null
+          consultation_history?: Json | null
           created_at?: string
           distilled_company_AIR_info?: string | null
           distilled_user_AIR_info?: string | null
           email?: string | null
           onboarding_complete?: boolean | null
+          preferred_themes?: string[] | null
+          theme_expertise?: Json | null
           TTS_flag?: boolean | null
           updated_at?: string
           user_description?: string | null
@@ -339,7 +494,7 @@ export type Database = {
     }
     Functions: {
       set_user_company: {
-        Args: { user_uuid: string; company_code: string }
+        Args: { company_code: string; user_uuid: string }
         Returns: boolean
       }
     }

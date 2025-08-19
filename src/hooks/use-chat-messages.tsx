@@ -50,7 +50,8 @@ export const useChatMessages = (sessionId: string | null) => {
     sessionId,
     messages,
     sessionData,
-    currentProgress
+    currentProgress,
+    phaseConfigs
   });
 
   return {

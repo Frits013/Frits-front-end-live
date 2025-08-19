@@ -5,8 +5,10 @@ import ChatMessagesContainer from "./ChatMessagesContainer";
 import ChatInputContainer from "./ChatInputContainer";
 import InterviewModeSwitcher from "./InterviewModeSwitcher";
 import FinishInterviewButton from "./FinishInterviewButton";
+import SummaryRecommendationsDisplay from "./SummaryRecommendationsDisplay";
 import { useRef, useState } from "react";
 import { useMessageSender } from "@/hooks/chat/use-message-sender";
+import ConsultCompleteDialog from "./ConsultCompleteDialog";
 
 interface ChatPanelProps {
   defaultSize: number;
@@ -27,6 +29,8 @@ interface ChatPanelProps {
     currentPhase: InterviewPhase;
     questionCount: number;
     maxQuestions: number;
+    triggerNextPhase?: () => void;
+    canTriggerNextPhase?: boolean;
   };
 }
 
@@ -49,6 +53,7 @@ const ChatPanel = ({
 }: ChatPanelProps) => {
   const inputContainerRef = useRef<HTMLDivElement>(null);
   const [useInterviewMode, setUseInterviewMode] = useState(true);
+  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
   
   // Message sender hook for interview mode
   const { sendMessage } = useMessageSender({
@@ -58,36 +63,60 @@ const ChatPanel = ({
     setErrorMessage,
     setIsProcessing,
     isThinkingRef,
+    currentPhase: demoPhaseData?.currentPhase,
   });
+
+  // Auto-trigger recommendations completion dialog
+  const isRecommendationsComplete = demoPhaseData?.currentPhase === 'recommendations' && 
+    demoPhaseData?.questionCount >= demoPhaseData?.maxQuestions;
+
+  // Show feedback dialog when recommendations phase is complete
+  if (isRecommendationsComplete && !showFeedbackDialog) {
+    setTimeout(() => setShowFeedbackDialog(true), 1000);
+  }
 
   // Calculate current question number for interview mode
   const assistantMessages = messages.filter(msg => msg.role === 'assistant');
   const currentQuestionNumber = assistantMessages.length;
   const maxQuestionsInPhase = demoPhaseData?.maxQuestions || 3;
 
+  // Check if we should show summary/recommendations display
+  const showSummaryRecommendations = demoPhaseData?.currentPhase === 'summary' || demoPhaseData?.currentPhase === 'recommendations';
+
   return (
     <div className="h-full flex flex-col">
       {useInterviewMode ? (
         // New Interview Mode - Centered UI
         <div className="flex-1 relative">
-          <InterviewModeSwitcher
-            messages={messages}
-            setMessages={setMessages}
-            currentChatId={currentChatId}
-            setErrorMessage={setErrorMessage}
-            isProcessing={isProcessing}
-            setIsProcessing={setIsProcessing}
-            isThinkingRef={isThinkingRef}
-            currentPhase={demoPhaseData?.currentPhase}
-            questionNumber={currentQuestionNumber}
-            maxQuestions={maxQuestionsInPhase}
-            onSendMessage={sendMessage}
-          />
+          {showSummaryRecommendations ? (
+            <SummaryRecommendationsDisplay
+              messages={messages}
+              currentPhase={demoPhaseData.currentPhase}
+              onGetRecommendations={demoPhaseData?.triggerNextPhase || (() => {})}
+              canTriggerRecommendations={demoPhaseData?.canTriggerNextPhase || false}
+            />
+          ) : (
+            <InterviewModeSwitcher
+              messages={messages}
+              setMessages={setMessages}
+              currentChatId={currentChatId}
+              setErrorMessage={setErrorMessage}
+              isProcessing={isProcessing}
+              setIsProcessing={setIsProcessing}
+              isThinkingRef={isThinkingRef}
+              currentPhase={demoPhaseData?.currentPhase}
+              questionNumber={currentQuestionNumber}
+              maxQuestions={maxQuestionsInPhase}
+              onSendMessage={sendMessage}
+            />
+          )}
           
-          {/* Complete button overlay */}
-          <FinishInterviewButton 
-            show={showCompleteButton}
-            onFinish={onCompleteButtonClick}
+          {/* Feedback dialog */}
+          <ConsultCompleteDialog
+            open={showFeedbackDialog}
+            onClose={() => setShowFeedbackDialog(false)}
+            onFinish={() => setShowFeedbackDialog(false)}
+            sessionId={currentChatId}
           />
         </div>
       ) : (

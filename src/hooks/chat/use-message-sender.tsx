@@ -1,9 +1,7 @@
-
-import { useState } from "react";
+import { useRef } from "react";
+import { ChatMessage, InterviewPhase } from "@/types/chat";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { ChatMessage } from "@/types/chat";
-import { useSessionValidation } from "./use-session-validation";
+import { toast } from "sonner";
 
 const isDev = process.env.NODE_ENV !== 'production';
 
@@ -14,6 +12,7 @@ interface UseMessageSenderProps {
   setErrorMessage: (error: string | null) => void;
   setIsProcessing: (isProcessing: boolean) => void;
   isThinkingRef: React.MutableRefObject<boolean>;
+  currentPhase?: InterviewPhase;
 }
 
 export const useMessageSender = ({
@@ -23,143 +22,161 @@ export const useMessageSender = ({
   setErrorMessage,
   setIsProcessing,
   isThinkingRef,
+  currentPhase
 }: UseMessageSenderProps) => {
-  const { toast } = useToast();
-  const { validateSession } = useSessionValidation();
-  const [currentRequestId, setCurrentRequestId] = useState<string | null>(null);
+  const currentRequestId = useRef<string | null>(null);
+
+  const getPhaseContextMessage = (userAnswer: string, phase: InterviewPhase): string => {
+    // Special hardcoded prompts for summary and recommendations phases
+    if (phase === 'summary') {
+      return "YOU ARE NOW IN THE SUMMARY PHASE I WANT YOU TO WRITE A SUMMARY FOR THE USER ABOUT THE AI READINESS CONVERSATION YOU JUST HAD WITH INTERESTING FINDINGS AND TOPICS YOU THOUGHT WERE UNIQUE/INTERESTING.";
+    }
+    
+    if (phase === 'recommendations') {
+      return "PROVIDE ACTIONABLE RECOMMENDATIONS BASED ON THE CONVERSATION...";
+    }
+    
+    // Standard phase context for other phases
+    return `The next question you will ask will be from the ${phase} phase. You are in that part of the interview process KEEP THIS INTO ACCOUNT. "This was the user's last answer: ${userAnswer}."`;
+  };
 
   const sendMessage = async (inputMessage: string) => {
-    if (!inputMessage.trim() || !currentChatId) return;
-
-    // Generate a unique request ID to prevent duplicate requests
-    const requestId = crypto.randomUUID();
-    
-    // If there's already a request in progress, ignore this one
-    if (currentRequestId) {
-      if (isDev) console.log('Request already in progress, ignoring duplicate');
+    if (!inputMessage.trim() || !currentChatId) {
+      if (isDev) console.warn('Cannot send message: empty message or no chat ID');
       return;
     }
-    
-    setCurrentRequestId(requestId);
-    setErrorMessage(null);
 
-    const session = await validateSession();
-    if (!session) {
-      setCurrentRequestId(null);
-      return;
-    }
-  
-    // Generate a unique message_id using crypto.randomUUID()
-    const message_id = crypto.randomUUID();
-    
-    // Create a new user message
-    const newUserMessage: ChatMessage = {
-      id: message_id,
-      content: inputMessage,
-      role: 'user',
-      created_at: new Date(),
-    };
-  
-    // Update UI with user message immediately for better UX
-    const updatedMessages = [...messages, newUserMessage];
-    setMessages(updatedMessages);
-    
-    // Set thinking state to true before making the API call
+    // Generate unique request ID to prevent duplicates
+    const requestId = Math.random().toString(36).substring(7);
+    currentRequestId.current = requestId;
+
     setIsProcessing(true);
+    setErrorMessage(null);
     isThinkingRef.current = true;
-  
+
     try {
-      // Save the user message to Supabase
-      const { error: saveError } = await supabase
-        .from('chat_messages')
-        .insert({
-          message_id,
-          content: inputMessage,
-          role: 'user',
-          user_id: session.user.id,
-          session_id: currentChatId,
-        });
-
-      if (saveError) {
-        if (isDev) console.error('Error saving message:', saveError);
-        throw new Error('Failed to save message');
-      }
-
-      // Call the Supabase Edge Function
-      const functionResponse = await supabase.functions.invoke('chat', {
-        body: {
-          session_id: currentChatId,
-          message_id,
-          message: inputMessage,
-          request_id: requestId,
-        }
-      });
-      
-      // Check for errors in the response
-      if (functionResponse.error) {
-        if (isDev) console.error('Error from edge function:', functionResponse.error);
-        throw new Error(`Edge function error: ${functionResponse.error.message || 'Unknown error'}`);
-      }
-      
-      // Check for errors in the data payload
-      const data = functionResponse.data;
-      if (!data) {
-        throw new Error('No data returned from edge function');
-      }
-      
-      // Handle errors in the data response
-      if (data.error) {
-        if (isDev) console.error('Error in response data:', data.error);
-        setErrorMessage(data.message || data.details || data.error || 'Error from backend');
-      }
-      
-      // After receiving response, check the session status
-      const { data: sessionData, error: sessionCheckError } = await supabase
-        .from('chat_sessions')
-        .select('finished')
-        .eq('id', currentChatId)
-        .single();
-        
-      if (!sessionCheckError && sessionData && sessionData.finished) {
-        if (isDev) console.log('Session marked as completed');
-      }
-      
-      // Get response content
-      const responseContent = data.response || "No response generated";
-      
-      // Create the assistant response message
-      const agentResponse: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        content: responseContent,
-        role: 'assistant',
+      // Create user message immediately for UI
+      const userMessage: ChatMessage = {
+        id: `temp-${Date.now()}`,
+        content: inputMessage,
+        role: 'user',
         created_at: new Date(),
       };
-  
-      // Check for duplicate messages
-      const existingMessage = updatedMessages.find(m => 
-        m.role === 'assistant' && m.content === responseContent
-      );
-      
-      if (!existingMessage) {
-        setMessages([...updatedMessages, agentResponse]);
+
+      // Add user message to UI immediately
+      setMessages([...messages, userMessage]);
+
+      // Save user message to database
+      const { data: savedUserMessage, error: userMessageError } = await supabase
+        .from('chat_messages')
+        .insert({
+          session_id: currentChatId,
+          content: inputMessage,
+          role: 'user',
+        })
+        .select()
+        .single();
+
+      if (userMessageError) {
+        if (isDev) console.error('Error saving user message:', userMessageError);
+        toast.error('Failed to save your message');
+        return;
       }
-  
-    } catch (error) {
-      if (isDev) console.error('Error getting response:', error);
-      
-      setErrorMessage(error instanceof Error ? error.message : "Failed to get response from AI");
-      
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to get response from AI",
-        variant: "destructive",
+
+      // Prepare the message with phase context
+      let messageToSend = inputMessage;
+      if (currentPhase) {
+        const phaseContext = getPhaseContextMessage(inputMessage, currentPhase);
+        messageToSend = `${phaseContext}\n\nUser's answer: ${inputMessage}`;
+      }
+
+      // Call the chat function with phase context
+      const { data: chatResponse, error: functionError } = await supabase.functions.invoke('chat', {
+        body: {
+          message: messageToSend,
+          session_id: currentChatId,
+        },
       });
+
+      // Check if this is still the current request
+      if (currentRequestId.current !== requestId) {
+        if (isDev) console.log('Request superseded, ignoring response');
+        return;
+      }
+
+      if (functionError) {
+        if (isDev) console.error('Function invocation error:', functionError);
+        toast.error('Failed to get response from AI');
+        setErrorMessage('Failed to get AI response. Please try again.');
+        return;
+      }
+
+      if (chatResponse?.error) {
+        if (isDev) console.error('Chat function returned error:', chatResponse.error);
+        toast.error('AI returned an error');
+        setErrorMessage(chatResponse.error);
+        return;
+      }
+
+      if (!chatResponse?.response) {
+        if (isDev) console.error('No response from chat function');
+        toast.error('No response received');
+        setErrorMessage('No response received from AI');
+        return;
+      }
+
+      // Retrieve the assistant's response from the database
+      const { data: assistantMessages, error: messagesError } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('session_id', currentChatId)
+        .eq('role', 'assistant')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (messagesError) {
+        if (isDev) console.error('Error fetching assistant message:', messagesError);
+        toast.error('Failed to retrieve AI response');
+        return;
+      }
+
+      if (assistantMessages && assistantMessages.length > 0) {
+        const latestAssistantMessage = assistantMessages[0];
+        
+        // Update messages with the real assistant message
+        const { data: allMessages, error: allMessagesError } = await supabase
+          .from('chat_messages')
+          .select('*')
+          .eq('session_id', currentChatId)
+          .order('created_at', { ascending: true });
+
+        if (!allMessagesError && allMessages) {
+          const formattedMessages: ChatMessage[] = allMessages.map(msg => ({
+            id: msg.message_id,
+            content: msg.content,
+            role: msg.role,
+            created_at: new Date(msg.created_at),
+          }));
+          setMessages(formattedMessages);
+        }
+
+        if (isDev) console.log('Message sent and response received successfully');
+      }
+
+    } catch (error) {
+      if (isDev) console.error('Unexpected error sending message:', error);
+      toast.error('An unexpected error occurred');
+      setErrorMessage('An unexpected error occurred. Please try again.');
     } finally {
-      setIsProcessing(false);
-      isThinkingRef.current = false;
-      setCurrentRequestId(null);
+      // Only clear processing if this is still the current request
+      if (currentRequestId.current === requestId) {
+        setIsProcessing(false);
+        isThinkingRef.current = false;
+      }
     }
   };
 
-  return { sendMessage };
+  return {
+    sendMessage,
+  };
 };

@@ -30,6 +30,8 @@ interface ChatContainerProps {
     currentPhase: InterviewPhase;
     questionCount: number;
     maxQuestions: number;
+    triggerNextPhase?: () => void;
+    canTriggerNextPhase?: boolean;
   };
   createNewChat: () => Promise<void>;
 }

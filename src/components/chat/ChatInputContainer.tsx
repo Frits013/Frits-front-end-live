@@ -12,6 +12,7 @@ interface ChatInputContainerProps {
   setIsProcessing: (isProcessing: boolean) => void;
   isProcessing: boolean;
   isThinkingRef: React.MutableRefObject<boolean>;
+  currentPhase?: string;
 }
 
 const ChatInputContainer = ({
@@ -22,6 +23,7 @@ const ChatInputContainer = ({
   setIsProcessing,
   isProcessing,
   isThinkingRef,
+  currentPhase,
 }: ChatInputContainerProps) => {
   const [inputMessage, setInputMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,6 +35,7 @@ const ChatInputContainer = ({
     setErrorMessage,
     setIsProcessing,
     isThinkingRef,
+    currentPhase: currentPhase as any,
   });
 
   // Load saved input message from localStorage on component mount
@@ -83,15 +86,7 @@ const ChatInputContainer = ({
     }
   };
 
-  // Calculate current phase based on message count
-  const getPhase = (messageCount: number) => {
-    if (messageCount < 4) return 'Introduction';
-    if (messageCount < 12) return 'Core Questions';
-    if (messageCount < 16) return 'Summary';
-    return 'Conclusion';
-  };
-
-  const currentPhase = getPhase(messages.length);
+  const displayPhase = currentPhase || 'Interview';
 
   return (
     <InterviewInput
@@ -99,7 +94,7 @@ const ChatInputContainer = ({
       setInputMessage={handleInputChange}
       handleSendMessage={handleSendMessage}
       isProcessing={isProcessing || isSubmitting}
-      currentPhase={currentPhase}
+      currentPhase={displayPhase}
     />
   );
 };
