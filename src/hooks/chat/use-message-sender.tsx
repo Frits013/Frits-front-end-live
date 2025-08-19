@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { ChatMessage, InterviewPhase } from "@/types/chat";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { INITIAL_MESSAGE } from "@/hooks/chat-sessions/use-session-creation";
 
 const isDev = process.env.NODE_ENV !== 'production';
 
@@ -125,12 +126,12 @@ export const useMessageSender = ({
         return;
       }
 
-      // Retrieve the assistant's response from the database
+      // Retrieve the assistant's response from the database (stored as 'writer' role)
       const { data: assistantMessages, error: messagesError } = await supabase
         .from('chat_messages')
         .select('*')
         .eq('session_id', currentChatId)
-        .eq('role', 'assistant')
+        .eq('role', 'writer') // Fixed: Look for 'writer' role, not 'assistant'
         .order('created_at', { ascending: false })
         .limit(1);
 
@@ -151,12 +152,27 @@ export const useMessageSender = ({
           .order('created_at', { ascending: true });
 
         if (!allMessagesError && allMessages) {
-          const formattedMessages: ChatMessage[] = allMessages.map(msg => ({
-            id: msg.message_id,
-            content: msg.content,
-            role: msg.role,
-            created_at: new Date(msg.created_at),
-          }));
+          // Filter and map messages like the message fetcher does
+          const formattedMessages: ChatMessage[] = allMessages
+            .filter(msg => {
+              // Keep user messages that aren't the automatic initialization message
+              if (msg.role === 'user') {
+                return msg.content !== INITIAL_MESSAGE;
+              }
+              
+              // Keep writer messages (assistant messages for the user)
+              if (msg.role === 'writer' || msg.role === 'assistant') {
+                return true;
+              }
+              
+              return false;
+            })
+            .map(msg => ({
+              id: msg.message_id,
+              content: msg.content,
+              role: msg.role === 'writer' ? 'assistant' : msg.role, // Map 'writer' role to 'assistant' for UI consistency
+              created_at: new Date(msg.created_at),
+            }));
           setMessages(formattedMessages);
         }
 
