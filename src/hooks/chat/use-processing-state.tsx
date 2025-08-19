@@ -29,30 +29,17 @@ export const useProcessingState = (sessionId: string | null) => {
             msg.role === 'writer' || msg.role === 'assistant'
           );
           
-          console.log('Processing state check:', {
-            sessionId,
-            userCount: userMessages.length,
-            assistantCount: assistantMessages.length,
-            totalMessages: data.length
-          });
-          
           // If we have more user messages than assistant messages, we're still processing
-          // But for initial session (no user messages yet), don't process unless we're waiting
           const shouldBeProcessing = userMessages.length > assistantMessages.length;
-          
-          // If this is a new session with no messages or only assistant messages, not processing
-          if (data.length === 0 || (userMessages.length === 0 && assistantMessages.length > 0)) {
-            setIsProcessing(false);
-          } else {
-            setIsProcessing(shouldBeProcessing);
-          }
+          setIsProcessing(shouldBeProcessing);
         }
       } catch (error) {
         console.error('Error checking processing state:', error);
       }
     };
 
-    // Check initial processing state when session changes
+    // Set initial processing state when session changes
+    setIsProcessing(true);
     checkProcessingState();
     
     // Check processing state periodically
