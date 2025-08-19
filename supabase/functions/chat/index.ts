@@ -286,22 +286,13 @@ serve(async (req) => {
     // Call the FastAPI chat endpoint using the new token.
     console.log(`Calling FastAPI chat endpoint at: ${fastApiUrl}/chat/send_message`);
     
-    // Enhanced request body with phase data
+    // Simple request body - backend expects only session_id, message_id, and message
     const requestBody = JSON.stringify({ 
       session_id, 
       message_id, 
-      message,
-      phase_data: {
-        current_phase: currentPhaseData?.current_phase || 'introduction',
-        phase_metadata: currentPhaseData?.phase_metadata || {},
-        phase_question_counts: currentPhaseData?.phase_question_counts || {},
-        phase_max_questions: currentPhaseData?.phase_max_questions || {},
-        system_prompt: phaseConfig?.system_prompt,
-        max_questions: phaseConfig?.max_questions,
-        completion_threshold: phaseConfig?.completion_threshold
-      }
+      message
     });
-    console.log('Enhanced chat request body with phase data:', requestBody);
+    console.log('Simple chat request body:', requestBody);
     
     const response = await fetch(`${fastApiUrl}/chat/send_message`, {
       method: 'POST',
