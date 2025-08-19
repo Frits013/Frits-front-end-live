@@ -177,6 +177,11 @@ export const useMessageSender = ({
       // Call the chat function with phase context and retry logic
       const chatResponse = await executeWithRetry(
         async () => {
+          console.log('About to call chat function with:', {
+            messageToSend,
+            session_id: currentChatId
+          });
+          
           const { data, error } = await supabase.functions.invoke('chat', {
             body: {
               message: messageToSend,
@@ -184,7 +189,12 @@ export const useMessageSender = ({
             },
           });
 
-          if (error) throw error;
+          console.log('Chat function response:', { data, error });
+          
+          if (error) {
+            console.error('Chat function error details:', error);
+            throw error;
+          }
           return data;
         },
         'Chat function invocation'
