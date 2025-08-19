@@ -62,7 +62,7 @@ const InterviewModeSwitcher = ({
       setTimeout(async () => {
         setAnswerFlow('thinking');
         await onSendMessage(message);
-      }, 1000);
+      }, 2500);
       
     } catch (error) {
       console.error('Failed to send message:', error);
