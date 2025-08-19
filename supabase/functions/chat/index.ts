@@ -387,18 +387,32 @@ serve(async (req) => {
       }
     }
 
-    // Save the AI response to database
-    const saveSuccess = await saveAIResponse(session_id, userId, data.response);
-    if (!saveSuccess) {
-      console.error('Failed to save AI response to database');
+    // Handle different response structures from FastAPI
+    let aiResponse;
+    let phaseInfo = data.phase_info;
+
+    // If FastAPI returns no response field but has phase_info, handle gracefully
+    if (!data.response && phaseInfo) {
+      console.log('FastAPI returned only phase_info, generating fallback response');
+      aiResponse = "I understand. Let me process that and continue our conversation.";
+    } else {
+      aiResponse = data.response;
+    }
+
+    // Save the AI response to database (use fallback if needed)
+    if (aiResponse) {
+      const saveSuccess = await saveAIResponse(session_id, userId, aiResponse);
+      if (!saveSuccess) {
+        console.error('Failed to save AI response to database');
+      }
     }
 
     // For successful responses, return enhanced data with phase information
     return new Response(
       JSON.stringify({
-        response: data.response,
-        session_id: data.session_id,
-        phase_info: data.phase_info || {
+        response: aiResponse || "I received your message and am processing it.",
+        session_id: session_id,
+        phase_info: phaseInfo || {
           current_phase: currentPhaseData?.current_phase || 'introduction',
           progress_percent: 0,
           questions_in_phase: 0,
