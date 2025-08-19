@@ -139,49 +139,13 @@ const InterviewQuestionDisplay = ({
           ALLOWED_ATTR: ['class']
         });
         
-        // Check if this question was already displayed
-        if (displayedQuestionsRef.current.has(currentQuestion.id)) {
-          // Show immediately without animation
-          setDisplayText(sanitizedContent);
-          setIsTyping(false);
-          setIsVisible(true);
-          currentAnimationRef.current = currentQuestion.id;
-          lastProcessedQuestionRef.current = currentQuestion.id;
-          return;
-        }
-        
-        // New question - start word-by-word animation
+        // Show immediately without animation for all questions
+        setDisplayText(sanitizedContent);
+        setIsTyping(false);
+        setIsVisible(true);
         currentAnimationRef.current = currentQuestion.id;
         lastProcessedQuestionRef.current = currentQuestion.id;
-        setDisplayText("");
-        setIsTyping(true);
-        setIsVisible(true);
-        
-        // Split content into words while preserving HTML tags and spacing
-        const words = sanitizedContent.split(/(\s+|<[^>]*>)/);
-        let wordIndex = 0;
-        
-        const timer = setInterval(() => {
-          // Triple-check we're still animating the same question and not locked
-          if (currentAnimationRef.current !== currentQuestion.id || isLocked) {
-            clearInterval(timer);
-            animationTimerRef.current = null;
-            return;
-          }
-          
-          if (wordIndex < words.length) {
-            setDisplayText(words.slice(0, wordIndex + 1).join(''));
-            wordIndex++;
-          } else {
-            setIsTyping(false);
-            clearInterval(timer);
-            animationTimerRef.current = null;
-            // Mark this question as displayed
-            displayedQuestionsRef.current.add(currentQuestion.id);
-          }
-        }, 40);
-        
-        animationTimerRef.current = timer;
+        displayedQuestionsRef.current.add(currentQuestion.id);
       }, 300); // Short delay for transition
     }
   }, [currentQuestion?.id, isLocked]); // Depend on question ID and locked state
