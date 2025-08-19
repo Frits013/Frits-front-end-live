@@ -118,11 +118,11 @@ const InterviewMessages = ({
             .slice(0, index + 1)
             .filter(m => m.role === 'assistant').length;
 
-          // Phase boundaries based on questions per phase - updated to match database
+          // Phase boundaries based on questions per phase
           const introMax = 3;
           const themeMax = 4;
-          const deepMax = 10; // Fixed: was 8, now 10
-          const summaryMax = 1; // Fixed: was 2, now 1
+          const deepMax = 8;
+          const summaryMax = 2;
           const introCum = introMax; // 3
           const themeCum = introMax + themeMax; // 7
           const deepCum = introMax + themeMax + deepMax; // 15
@@ -146,8 +146,8 @@ const InterviewMessages = ({
             messagePhaseProgress = assistantMessagesUpToHere - deepCum; // 1..2
           } else {
             messagePhase = 'recommendations';
-            messagePhaseMaxQuestions = 1; // Fixed: was 3, now 1
-            messagePhaseProgress = assistantMessagesUpToHere - summaryCum; // 1..1
+            messagePhaseMaxQuestions = 3;
+            messagePhaseProgress = assistantMessagesUpToHere - summaryCum; // 1..3
           }
 
           // For the latest message, respect live phase/max from demo data but keep question-based progress

@@ -1,7 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { verify } from "https://deno.land/x/djwt@v2.9.1/mod.ts";
 
 // Initialize Supabase client for phase management
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -95,56 +94,6 @@ async function updateInterviewProgress(sessionId: string, userId: string, phase:
   return true;
 }
 
-// Helper function to extract user ID from JWT token
-async function extractUserIdFromToken(authHeader: string): Promise<string | null> {
-  try {
-    const token = authHeader.split(' ')[1];
-    // Use Supabase client to verify the token and get user info
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!
-    );
-    
-    const { data: { user }, error } = await supabaseClient.auth.getUser(token);
-    
-    if (error || !user) {
-      console.error('Error extracting user from token:', error);
-      return null;
-    }
-    
-    return user.id;
-  } catch (error) {
-    console.error('Error parsing token:', error);
-    return null;
-  }
-}
-
-// Helper function to save AI response to database
-async function saveAIResponse(sessionId: string, userId: string, content: string): Promise<boolean> {
-  try {
-    const { error } = await supabase
-      .from('chat_messages')
-      .insert({
-        session_id: sessionId,
-        user_id: userId,
-        content: content,
-        role: 'writer',
-        created_at: new Date().toISOString()
-      });
-
-    if (error) {
-      console.error('Error saving AI response to database:', error);
-      return false;
-    }
-
-    console.log('AI response saved to database successfully');
-    return true;
-  } catch (error) {
-    console.error('Exception saving AI response:', error);
-    return false;
-  }
-}
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -180,17 +129,6 @@ serve(async (req) => {
     console.log('Received request:', { session_id, message_id });
     console.log('Message content:', message);
 
-    // Extract user ID from token
-    const userId = await extractUserIdFromToken(authHeader);
-    if (!userId) {
-      console.error('Could not extract user ID from token');
-      return new Response(
-        JSON.stringify({ error: 'Invalid or expired token' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    console.log('Extracted user ID:', userId);
-
     // Get current session phase data
     const currentPhaseData = await getSessionPhaseData(session_id);
     console.log('Current phase data:', currentPhaseData);
@@ -204,16 +142,8 @@ serve(async (req) => {
     const fastApiUrl = Deno.env.get('DEVELOPMENT_FASTAPI_URL');
     if (!fastApiUrl) {
       console.log('DEVELOPMENT_FASTAPI_URL not found, using direct response instead');
-      const aiResponse = message ? `I received your message: "${message}"` : "Hello! How can I help you today?";
-      
-      // Save the AI response to database
-      const saveSuccess = await saveAIResponse(session_id, userId, aiResponse);
-      if (!saveSuccess) {
-        console.error('Failed to save simulated AI response to database');
-      }
-      
       const simulatedResponse = {
-        response: aiResponse,
+        response: message ? `I received your message: "${message}"` : "Hello! How can I help you today?",
         session_id: session_id
       };
       console.log('Generated direct response:', simulatedResponse);
@@ -378,6 +308,10 @@ serve(async (req) => {
 
       // Update interview progress
       if (data.phase_info.current_phase) {
+        // Get user ID from token (you may need to decode the JWT token)
+        // For now, we'll use a placeholder - you should implement proper user ID extraction
+        const userId = tokenData.user_id || 'placeholder_user_id';
+        
         await updateInterviewProgress(session_id, userId, data.phase_info.current_phase, {
           questions_asked: data.phase_info.questions_in_phase || 0,
           completion_confidence: data.phase_info.completion_confidence || 0,
@@ -385,12 +319,6 @@ serve(async (req) => {
           insights: data.phase_info.insights || {}
         });
       }
-    }
-
-    // Save the AI response to database
-    const saveSuccess = await saveAIResponse(session_id, userId, data.response);
-    if (!saveSuccess) {
-      console.error('Failed to save AI response to database');
     }
 
     // For successful responses, return enhanced data with phase information

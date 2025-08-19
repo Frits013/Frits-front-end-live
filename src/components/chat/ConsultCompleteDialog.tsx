@@ -53,7 +53,6 @@ const ConsultCompleteDialog = ({
   
   const [showConfetti, setShowConfetti] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
-  const [isExiting, setIsExiting] = useState(false);
 
   // Trigger confetti when dialog opens with a slight delay to ensure visibility
   useEffect(() => {
@@ -75,13 +74,10 @@ const ConsultCompleteDialog = ({
 
   const handleSubmitFeedback = async () => {
     console.log('Submit feedback button clicked');
-    setIsExiting(true);
     const success = await handleSubmit();
     if (success) {
       // After successful feedback submission, end the session
       onFinish();
-    } else {
-      setIsExiting(false);
     }
   };
 
@@ -93,7 +89,6 @@ const ConsultCompleteDialog = ({
   const handleConfirmExit = async () => {
     console.log('User confirmed exit without feedback - submitting placeholder feedback');
     setShowExitConfirm(false);
-    setIsExiting(true);
     
     try {
       // Get current user session
@@ -125,23 +120,23 @@ const ConsultCompleteDialog = ({
   };
 
   const handleCancelExit = () => {
-    console.log('User cancelled exit - going back to feedback form');
+    console.log('User cancelled exit - going back to chat');
     setShowExitConfirm(false);
-    // Do NOT call onClose() - just close the warning and return to feedback form
+    onClose(); // Close the entire feedback dialog and return to chat
   };
 
   return (
     <>
+      <Confetti active={showConfetti} />
       <Dialog 
-        open={open && !isExiting} 
+        open={open} 
         onOpenChange={(isOpen) => {
-          if (!isOpen && !isExiting) {
+          if (!isOpen) {
             handleCloseAttempt();
           }
         }}
       >
         <DialogContent className="sm:max-w-[425px] z-50" hideCloseButton={true}>
-          <Confetti active={showConfetti} />
           <DialogHeader>
             <DialogTitle>Consult Session Complete</DialogTitle>
             <DialogDescription>
@@ -161,16 +156,16 @@ const ConsultCompleteDialog = ({
             <Button 
               variant="outline"
               onClick={handleCloseAttempt}
-              disabled={isSubmitting || isExiting}
+              disabled={isSubmitting}
             >
               Close
             </Button>
             <Button 
               onClick={handleSubmitFeedback} 
               className="bg-green-600 hover:bg-green-700"
-              disabled={isSubmitting || isExiting}
+              disabled={isSubmitting}
             >
-              {isSubmitting || isExiting ? "Submitting..." : "Submit Feedback"}
+              {isSubmitting ? "Submitting..." : "Submit Feedback"}
             </Button>
           </DialogFooter>
         </DialogContent>
