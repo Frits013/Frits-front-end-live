@@ -94,6 +94,12 @@ export const useMessageSender = ({
   };
 
   const sendMessage = async (inputMessage: string) => {
+    // Helper function to clear processing state
+    const clearProcessingState = () => {
+      setIsProcessing(false);
+      isThinkingRef.current = false;
+    };
+
     if (!inputMessage.trim() || !currentChatId) {
       if (isDev) console.warn('Cannot send message: empty message or no chat ID');
       return;
@@ -112,6 +118,15 @@ export const useMessageSender = ({
     setIsProcessing(true);
     setErrorMessage(null);
     isThinkingRef.current = true;
+
+    // Fail-safe timeout to prevent stuck processing state
+    const timeoutId = setTimeout(() => {
+      if (currentRequestId.current === requestId) {
+        if (isDev) console.warn('Message processing timeout, clearing state');
+        clearProcessingState();
+        toast.error('Request timeout. Please try again.');
+      }
+    }, 30000); // 30 second timeout
 
     try {
       // Create user message immediately for UI
@@ -145,6 +160,8 @@ export const useMessageSender = ({
       );
 
       if (!savedUserMessage) {
+        clearTimeout(timeoutId);
+        clearProcessingState();
         toast.error('Failed to save your message. Please check your connection and try again.');
         return;
       }
@@ -175,10 +192,14 @@ export const useMessageSender = ({
       // Check if this is still the current request
       if (currentRequestId.current !== requestId) {
         if (isDev) console.log('Request superseded, ignoring response');
+        clearTimeout(timeoutId);
+        clearProcessingState();
         return;
       }
 
       if (!chatResponse) {
+        clearTimeout(timeoutId);
+        clearProcessingState();
         toast.error('Failed to get response from AI. Please try again.');
         setErrorMessage('Failed to get AI response. Please try again.');
         return;
@@ -186,6 +207,8 @@ export const useMessageSender = ({
 
       if (chatResponse?.error) {
         if (isDev) console.error('Chat function returned error:', chatResponse.error);
+        clearTimeout(timeoutId);
+        clearProcessingState();
         toast.error('AI returned an error');
         setErrorMessage(chatResponse.error);
         return;
@@ -193,6 +216,8 @@ export const useMessageSender = ({
 
       if (!chatResponse?.response) {
         if (isDev) console.error('No response from chat function');
+        clearTimeout(timeoutId);
+        clearProcessingState();
         toast.error('No response received');
         setErrorMessage('No response received from AI');
         return;
@@ -216,6 +241,8 @@ export const useMessageSender = ({
       );
 
       if (!assistantMessages) {
+        clearTimeout(timeoutId);
+        clearProcessingState();
         toast.error('Failed to retrieve AI response. Please try again.');
         return;
       }
@@ -271,10 +298,10 @@ export const useMessageSender = ({
       toast.error('An unexpected error occurred');
       setErrorMessage('An unexpected error occurred. Please try again.');
     } finally {
+      clearTimeout(timeoutId);
       // Only clear processing if this is still the current request
       if (currentRequestId.current === requestId) {
-        setIsProcessing(false);
-        isThinkingRef.current = false;
+        clearProcessingState();
       }
     }
   };
