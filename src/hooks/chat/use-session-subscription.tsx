@@ -124,7 +124,8 @@ export const useSessionSubscription = (
           // Only react to feedback for this session
           if (payload.new.session_id === sessionId) {
             if (isDev) console.log('Feedback added for current session');
-            await checkFeedbackExists(sessionId);
+            setHasFeedback(true);
+            setDialogDismissed(true);
           }
         }
       )
