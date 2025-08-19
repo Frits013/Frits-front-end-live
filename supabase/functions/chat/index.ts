@@ -347,72 +347,33 @@ serve(async (req) => {
       );
     }
     
-    // Option B: Use the error field from the backend.
-    // If the backend indicates an error, log it and pass the original message through.
+    // Check if backend returned an error
     if (data.error) {
       console.warn('Backend reported an error:', data.response);
       return new Response(
         JSON.stringify({
           error: data.error,
-          message: data.response,
+          response: data.response,
           session_id: data.session_id,
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
     
-    // Process phase information from FastAPI response
-    if (data.phase_info) {
-      console.log('Processing phase info:', data.phase_info);
-      
-      // Update session phase data if phase transition occurred
-      if (data.phase_info.current_phase && data.phase_info.current_phase !== currentPhaseData?.current_phase) {
-        console.log(`Phase transition detected: ${currentPhaseData?.current_phase} -> ${data.phase_info.current_phase}`);
-        await updateSessionPhase(session_id, {
-          current_phase: data.phase_info.current_phase,
-          phase_metadata: data.phase_info.phase_metadata || currentPhaseData?.phase_metadata || {},
-          phase_question_counts: data.phase_info.phase_question_counts || currentPhaseData?.phase_question_counts || {},
-          updated_at: new Date().toISOString()
-        });
-      }
-
-      // Update interview progress
-      if (data.phase_info.current_phase) {
-        await updateInterviewProgress(session_id, userId, data.phase_info.current_phase, {
-          questions_asked: data.phase_info.questions_in_phase || 0,
-          completion_confidence: data.phase_info.completion_confidence || 0,
-          selected_themes: data.phase_info.selected_themes || [],
-          insights: data.phase_info.insights || {}
-        });
-      }
-    }
-
-    // Handle different response structures from FastAPI
-    let aiResponse;
-    let phaseInfo = data.phase_info;
-
-    // If FastAPI returns no response field but has phase_info, handle gracefully
-    if (!data.response && phaseInfo) {
-      console.log('FastAPI returned only phase_info, generating fallback response');
-      aiResponse = "I understand. Let me process that and continue our conversation.";
-    } else {
-      aiResponse = data.response;
-    }
-
-    // Save the AI response to database (use fallback if needed)
-    if (aiResponse) {
-      const saveSuccess = await saveAIResponse(session_id, userId, aiResponse);
+    // Backend returned success - save the AI response
+    if (data.response) {
+      const saveSuccess = await saveAIResponse(session_id, userId, data.response);
       if (!saveSuccess) {
         console.error('Failed to save AI response to database');
       }
     }
 
-    // For successful responses, return enhanced data with phase information
+    // Return the response from FastAPI (no phase_info processing since backend doesn't send it)
     return new Response(
       JSON.stringify({
-        response: aiResponse || "I received your message and am processing it.",
-        session_id: session_id,
-        phase_info: phaseInfo || {
+        response: data.response || "I received your message and am processing it.",
+        session_id: data.session_id || session_id,
+        phase_info: {
           current_phase: currentPhaseData?.current_phase || 'introduction',
           progress_percent: 0,
           questions_in_phase: 0,
