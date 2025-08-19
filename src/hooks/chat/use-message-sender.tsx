@@ -294,6 +294,13 @@ export const useMessageSender = ({
       }
 
     } catch (error) {
+      console.error('FULL ERROR DETAILS:', error);
+      console.error('Error message:', error?.message);
+      console.error('Error stack:', error?.stack);
+      console.error('Error type:', typeof error);
+      console.error('Request ID when error occurred:', requestId);
+      console.error('Current chat ID:', currentChatId);
+      
       if (isDev) console.error('Unexpected error sending message:', error);
       toast.error('An unexpected error occurred');
       setErrorMessage('An unexpected error occurred. Please try again.');
