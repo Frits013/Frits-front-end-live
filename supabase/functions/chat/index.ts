@@ -221,7 +221,7 @@ serve(async (req) => {
         role: 'user',
         created_at: new Date().toISOString()
       })
-      .select('id')
+      .select('message_id')
       .single();
 
     if (saveError || !savedMessage) {
@@ -232,7 +232,7 @@ serve(async (req) => {
       );
     }
 
-    const message_id = savedMessage.id;
+    const message_id = savedMessage.message_id;
     console.log('Saved user message with ID:', message_id);
 
     // Extract the token for debugging.
