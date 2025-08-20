@@ -182,7 +182,7 @@ export const useMessageFetcher = (sessionId: string | null) => {
         id: msg.message_id,
         content: msg.content,
         role: msg.role === 'writer' ? 'assistant' : msg.role, // Map 'writer' role to 'assistant' for UI consistency
-        created_at: new Date(msg.content ? msg.created_at : null),
+        created_at: new Date(msg.created_at),
       }));
 
     return processed;
