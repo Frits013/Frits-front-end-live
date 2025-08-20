@@ -204,12 +204,22 @@ serve(async (req) => {
       );
     }
 
-    // Create phase identification prompt
-    const phasePrompt = currentPhaseData?.current_phase 
-      ? `The next question you will ask will be from the ${currentPhaseData.current_phase} phase. You are in that part of the interview process KEEP THIS INTO ACCOUNT. "This was the user's last answer: ${message}."`
-      : `"This was the user's last answer: ${message}."`;
+    // Check if message is already enhanced to prevent recursive enhancement
+    const isAlreadyEnhanced = message.includes('User\'s answer:') || message.includes('phase. You are in that part');
     
-    const enhancedMessage = `${phasePrompt}\n\nUser's answer: ${message}`;
+    if (isAlreadyEnhanced) {
+      console.log('Message appears to be already enhanced, using as-is');
+      var enhancedMessage = message;
+    } else {
+      // Create phase identification prompt (without including the user message)
+      const phasePrompt = currentPhaseData?.current_phase 
+        ? `The next question you will ask will be from the ${currentPhaseData.current_phase} phase. You are in that part of the interview process KEEP THIS INTO ACCOUNT.`
+        : '';
+      
+      const enhancedMessage = phasePrompt 
+        ? `${phasePrompt}\n\nUser's answer: ${message}`
+        : `User's answer: ${message}`;
+    }
     
     // Save the enhanced user message to database
     const { data: savedMessage, error: saveError } = await supabase
