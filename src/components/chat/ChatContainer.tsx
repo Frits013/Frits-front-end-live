@@ -127,22 +127,23 @@ const ChatContainer = ({
     // Note: We do NOT call onConsultFinish here - session stays active
   };
 
-  // Helper function to get max questions for a phase
+  // Helper function to get max questions for a phase - aligned with use-demo-phase-management
   const getMaxQuestionsForPhase = (phase: string) => {
     const phaseMaxQuestions = {
       'introduction': 3,
-      'theme_selection': 5,
-      'deep_dive': 8,
-      'summary': 3,
-      'recommendations': 2
+      'theme_selection': 4,
+      'deep_dive': 10,
+      'summary': 1,
+      'recommendations': 1
     };
-    return phaseMaxQuestions[phase as keyof typeof phaseMaxQuestions] || 5;
+    return phaseMaxQuestions[phase as keyof typeof phaseMaxQuestions] || 3;
   };
 
   // Calculate interview progress using demo phase data if available
-  const userMessages = messages.filter(msg => msg.role === 'user');
-  const totalQuestions = 21; // Total across all phases (3+5+8+3+2)
-  const answeredQuestions = userMessages.length;
+  // Count AI messages (assistant + writer) for progress tracking
+  const aiMessages = messages.filter(msg => msg.role === 'assistant' || msg.role === 'writer');
+  const totalQuestions = 19; // Total across all phases (3+4+10+1+1)
+  const answeredQuestions = aiMessages.length;
   
   // Use demo phase data if available, otherwise fall back to session data
   const currentPhase = demoPhaseData?.currentPhase || sessionData?.current_phase;

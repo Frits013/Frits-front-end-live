@@ -25,13 +25,13 @@ const InterviewProgress = ({
   estimatedTimeLeft,
   demoPhaseData
 }: InterviewProgressProps) => {
-  // Define the correct phases with proper names and order
+  // Define the correct phases with proper names and order - aligned with use-demo-phase-management
   const phaseDefinitions = [
     { id: 'introduction', name: 'Introduction', maxQuestions: 3 },
-    { id: 'theme_selection', name: 'Theme Selection', maxQuestions: 5 },
-    { id: 'deep_dive', name: 'Deep Dive', maxQuestions: 8 },
-    { id: 'summary', name: 'Summary', maxQuestions: 3 },
-    { id: 'recommendations', name: 'Recommendations', maxQuestions: 2 }
+    { id: 'theme_selection', name: 'Theme Selection', maxQuestions: 4 },
+    { id: 'deep_dive', name: 'Deep Dive', maxQuestions: 10 },
+    { id: 'summary', name: 'Summary', maxQuestions: 1 },
+    { id: 'recommendations', name: 'Recommendations', maxQuestions: 1 }
   ];
 
   // Calculate total progress across all phases
