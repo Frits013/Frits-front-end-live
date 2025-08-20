@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ChatMessage, ChatSession, InterviewPhase, InterviewProgress, PhaseConfig } from "@/types/chat";
+import { ChatMessage, ChatSession, InterviewPhase } from "@/types/chat";
 import { supabase } from "@/integrations/supabase/client";
 
 const isDev = process.env.NODE_ENV !== 'production';
@@ -8,16 +8,12 @@ interface DemoPhaseManagementProps {
   sessionId: string | null;
   messages: ChatMessage[];
   sessionData: ChatSession | null;
-  currentProgress: InterviewProgress | null;
-  phaseConfigs: PhaseConfig[] | null;
 }
 
 export const useDemoPhaseManagement = ({
   sessionId,
   messages,
-  sessionData,
-  currentProgress,
-  phaseConfigs
+  sessionData
 }: DemoPhaseManagementProps) => {
   const [localPhaseData, setLocalPhaseData] = useState<{
     phase: InterviewPhase;
@@ -26,33 +22,30 @@ export const useDemoPhaseManagement = ({
     phaseStartMessageCount: number; // Track messages at phase start
   } | null>(null);
 
-  // Get max questions for current phase from database config
+  // Hardcoded phase limits - frontend controlled
   const getMaxQuestions = (phase: InterviewPhase): number => {
-    if (!phaseConfigs) {
-      // Fallback to hardcoded values if configs not loaded
-      const fallback = {
-        'introduction': 3,
-        'theme_selection': 4,
-        'deep_dive': 10,
-        'summary': 1,
-        'recommendations': 1
-      };
-      return fallback[phase] || 3;
-    }
-    
-    const config = phaseConfigs.find(c => c.phase === phase);
-    return config?.max_questions || 3;
+    const phaseConfig = {
+      'introduction': 3,
+      'theme_selection': 4,
+      'deep_dive': 10,
+      'summary': 1,
+      'recommendations': 1
+    };
+    return phaseConfig[phase] || 3;
   };
 
   // Initialize local phase data when session starts
   useEffect(() => {
     if (sessionData && !localPhaseData) {
-      const assistantMessages = messages.filter(msg => msg.role === 'assistant');
+      // Count both assistant and writer messages (AI responses)
+      const aiMessages = messages.filter(msg => msg.role === 'assistant' || msg.role === 'writer');
+      if (isDev) console.log('🔧 Initializing phase data. AI messages found:', aiMessages.length);
+      
       setLocalPhaseData({
         phase: sessionData.current_phase || 'introduction',
         questionCount: 0,
         lastBackendPhase: sessionData.current_phase || null,
-        phaseStartMessageCount: assistantMessages.length
+        phaseStartMessageCount: aiMessages.length
       });
     }
   }, [sessionData, localPhaseData, messages]);
@@ -62,15 +55,15 @@ export const useDemoPhaseManagement = ({
     if (sessionData?.current_phase && localPhaseData) {
       // If backend phase changed, update our local tracking
       if (sessionData.current_phase !== localPhaseData.lastBackendPhase) {
-        if (isDev) console.log('Backend phase changed to:', sessionData.current_phase);
+        if (isDev) console.log('🔄 Backend phase changed to:', sessionData.current_phase);
         
-        const assistantMessages = messages.filter(msg => msg.role === 'assistant');
+        const aiMessages = messages.filter(msg => msg.role === 'assistant' || msg.role === 'writer');
         setLocalPhaseData(prev => ({
           ...prev!,
           phase: sessionData.current_phase!,
           lastBackendPhase: sessionData.current_phase!,
           questionCount: 0, // Reset question count when phase changes
-          phaseStartMessageCount: assistantMessages.length // Track where this phase started
+          phaseStartMessageCount: aiMessages.length // Track where this phase started
         }));
       }
     }
@@ -80,9 +73,11 @@ export const useDemoPhaseManagement = ({
   useEffect(() => {
     if (!localPhaseData || !sessionId) return;
 
-    // Count assistant questions since the current phase started
-    const assistantQuestions = messages.filter(msg => msg.role === 'assistant');
-    const currentPhaseQuestionCount = assistantQuestions.length - localPhaseData.phaseStartMessageCount;
+    // Count AI questions (both assistant and writer) since the current phase started
+    const aiQuestions = messages.filter(msg => msg.role === 'assistant' || msg.role === 'writer');
+    const currentPhaseQuestionCount = aiQuestions.length - localPhaseData.phaseStartMessageCount;
+    
+    if (isDev) console.log(`📊 Phase: ${localPhaseData.phase}, Questions: ${currentPhaseQuestionCount}/${getMaxQuestions(localPhaseData.phase)}`);
     
     // Update question count if it changed
     if (currentPhaseQuestionCount !== localPhaseData.questionCount) {
@@ -113,13 +108,13 @@ export const useDemoPhaseManagement = ({
           }
 
           if (nextPhase) {
-            if (isDev) console.log(`Auto-advancing from ${localPhaseData.phase} to ${nextPhase} after ${currentPhaseQuestionCount} questions`);
+            if (isDev) console.log(`🚀 Auto-advancing from ${localPhaseData.phase} to ${nextPhase} after ${currentPhaseQuestionCount} questions`);
             updateSessionPhase(nextPhase);
           }
         }
       }
     }
-  }, [messages, localPhaseData, sessionId, sessionData?.current_phase, phaseConfigs]);
+  }, [messages, localPhaseData, sessionId, sessionData?.current_phase]);
 
   const updateSessionPhase = async (newPhase: InterviewPhase) => {
     if (!sessionId) return;

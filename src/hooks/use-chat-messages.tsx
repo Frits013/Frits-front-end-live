@@ -49,9 +49,7 @@ export const useChatMessages = (sessionId: string | null) => {
   const demoPhaseData = useDemoPhaseManagement({
     sessionId,
     messages,
-    sessionData,
-    currentProgress,
-    phaseConfigs
+    sessionData
   });
 
   return {
