@@ -176,8 +176,8 @@ serve(async (req) => {
       );
     }
 
-    const { message, session_id, message_id } = await req.json();
-    console.log('Received request:', { session_id, message_id });
+    const { message, session_id, message_id: providedMessageId } = await req.json();
+    console.log('Received request:', { session_id, message_id: providedMessageId });
     console.log('Message content:', message);
 
     // Extract user ID from token
@@ -194,6 +194,46 @@ serve(async (req) => {
     // Get current session phase data
     const currentPhaseData = await getSessionPhaseData(session_id);
     console.log('Current phase data:', currentPhaseData);
+
+    // Save user message to database with phase prompt and get the message_id
+    if (!message) {
+      console.error('No message provided in request');
+      return new Response(
+        JSON.stringify({ error: 'Message is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Create phase identification prompt
+    const phasePrompt = currentPhaseData?.current_phase 
+      ? `The next question you will ask will be from the ${currentPhaseData.current_phase} phase. You are in that part of the interview process KEEP THIS INTO ACCOUNT. "This was the user's last answer: ${message}."`
+      : `"This was the user's last answer: ${message}."`;
+    
+    const enhancedMessage = `${phasePrompt}\n\nUser's answer: ${message}`;
+    
+    // Save the enhanced user message to database
+    const { data: savedMessage, error: saveError } = await supabase
+      .from('chat_messages')
+      .insert({
+        session_id: session_id,
+        user_id: userId,
+        content: enhancedMessage,
+        role: 'user',
+        created_at: new Date().toISOString()
+      })
+      .select('id')
+      .single();
+
+    if (saveError || !savedMessage) {
+      console.error('Error saving user message to database:', saveError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to save message to database' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const message_id = savedMessage.id;
+    console.log('Saved user message with ID:', message_id);
 
     // Extract the token for debugging.
     const supabaseToken = authHeader.split(' ')[1];
