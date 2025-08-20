@@ -286,13 +286,12 @@ serve(async (req) => {
     // Call the FastAPI chat endpoint using the new token.
     console.log(`Calling FastAPI chat endpoint at: ${fastApiUrl}/chat/send_message`);
     
-    // Simple request body - backend expects only session_id, message_id, and message
+    // Request body - backend expects only session_id and message_id (gets message content from DB)
     const requestBody = JSON.stringify({ 
       session_id, 
-      message_id, 
-      message
+      message_id
     });
-    console.log('Simple chat request body:', requestBody);
+    console.log('Chat request body:', requestBody);
     
     const response = await fetch(`${fastApiUrl}/chat/send_message`, {
       method: 'POST',
