@@ -105,7 +105,7 @@ export const useSessionCreation = (
       const message_id = crypto.randomUUID();
 
       // Save the invisible initial message to the database
-      const { error } = await supabase
+      const { error: insertError } = await supabase
         .from('chat_messages')
         .insert({
           message_id,
@@ -115,8 +115,8 @@ export const useSessionCreation = (
           session_id: sessionId,
         });
 
-      if (error) {
-        console.error('Error sending automatic message:', error);
+      if (insertError) {
+        console.error('Error sending automatic message:', insertError);
         return;
       }
 
@@ -125,7 +125,7 @@ export const useSessionCreation = (
       if (!session) return;
 
       // Call the edge function with the JWT token to process the message
-      await supabase.functions.invoke('chat', {
+      const { data, error: invokeError } = await supabase.functions.invoke('chat', {
         body: {
           session_id: sessionId,
           message_id,
@@ -135,6 +135,12 @@ export const useSessionCreation = (
           Authorization: `Bearer ${session.access_token}`,
         },
       });
+
+      if (invokeError) {
+        console.error('Error calling chat edge function:', invokeError);
+      } else {
+        console.log('Chat edge function called successfully:', data);
+      }
     } catch (error) {
       console.error('Error in sendAutomaticHeyMessage:', error);
     }
