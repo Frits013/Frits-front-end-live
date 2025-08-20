@@ -4,7 +4,7 @@ import { ChatMessage } from "@/types/chat";
 import { supabase } from "@/integrations/supabase/client";
 import { INITIAL_MESSAGE } from "@/hooks/chat-sessions/use-session-creation";
 
-const isDev = process.env.NODE_ENV !== 'production';
+const isDev = true; // Always log for debugging
 
 export const useMessageSubscription = (
   sessionId: string | null,
