@@ -400,13 +400,8 @@ serve(async (req) => {
       );
     }
     
-    // Backend returned success - save the AI response
-    if (data.response) {
-      const saveSuccess = await saveAIResponse(session_id, userId, data.response);
-      if (!saveSuccess) {
-        console.error('Failed to save AI response to database');
-      }
-    }
+    // Backend handles saving the AI response, no need to duplicate it here
+    console.log('FastAPI backend processed message successfully');
 
     // Return the response from FastAPI (no phase_info processing since backend doesn't send it)
     return new Response(
