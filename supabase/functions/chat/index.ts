@@ -207,16 +207,17 @@ serve(async (req) => {
     // Check if message is already enhanced to prevent recursive enhancement
     const isAlreadyEnhanced = message.includes('User\'s answer:') || message.includes('phase. You are in that part');
     
+    let enhancedMessage;
     if (isAlreadyEnhanced) {
       console.log('Message appears to be already enhanced, using as-is');
-      var enhancedMessage = message;
+      enhancedMessage = message;
     } else {
       // Create phase identification prompt (without including the user message)
       const phasePrompt = currentPhaseData?.current_phase 
         ? `The next question you will ask will be from the ${currentPhaseData.current_phase} phase. You are in that part of the interview process KEEP THIS INTO ACCOUNT.`
         : '';
       
-      const enhancedMessage = phasePrompt 
+      enhancedMessage = phasePrompt 
         ? `${phasePrompt}\n\nUser's answer: ${message}`
         : `User's answer: ${message}`;
     }
