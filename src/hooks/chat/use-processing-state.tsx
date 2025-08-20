@@ -72,35 +72,9 @@ export const useProcessingState = (sessionId: string | null) => {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && sessionId) {
-        // When coming back to the tab, check if we should still be in processing state
-        const checkProcessingStatus = async () => {
-          try {
-            const { data, error } = await supabase
-              .from('chat_messages')
-              .select('*')
-              .eq('session_id', sessionId)
-              .order('created_at', { ascending: true });
-              
-            if (error) {
-              console.error('Error checking processing status:', error);
-              return;
-            }
-            
-            if (data) {
-              const userMessages = data.filter(msg => msg.role === 'user');
-              const assistantMessages = data.filter(msg => 
-                msg.role === 'writer' || msg.role === 'assistant'
-              );
-              
-              // If we have more user messages than assistant messages, we're still processing
-              setIsProcessing(userMessages.length > assistantMessages.length);
-            }
-          } catch (error) {
-            console.error('Error in visibility change handler:', error);
-          }
-        };
-        
-        checkProcessingStatus();
+        // When coming back to the tab, preserve existing processing state
+        // The regular interval check will handle updating the state properly
+        console.log('Tab became visible, preserving current processing state');
       }
     };
     

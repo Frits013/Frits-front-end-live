@@ -46,6 +46,24 @@ const InterviewModeSwitcher = ({
     .reverse()
     .find(msg => msg.role === 'assistant') || null;
 
+  // Debug logging for tab switching issues
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('Tab became visible - Current state:', {
+          messagesCount: messages.length,
+          currentQuestionId: currentQuestion?.id,
+          answerFlow,
+          isProcessing,
+          lockedQuestionId: lockedQuestion?.id
+        });
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [messages.length, currentQuestion?.id, answerFlow, isProcessing, lockedQuestion?.id]);
+
   // Check if there's any history
   const hasHistory = messages.length > 1;
 
@@ -84,6 +102,22 @@ const InterviewModeSwitcher = ({
       }, 300);
     }
   }, [currentQuestion?.id, lockedQuestion?.id, answerFlow]);
+
+  // Maintain thinking state when tab becomes visible during processing
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isProcessing && answerFlow !== 'thinking') {
+        console.log('Tab became visible during processing, ensuring thinking state');
+        setAnswerFlow('thinking');
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isProcessing, answerFlow]);
 
   return (
     <div className="relative h-full">
