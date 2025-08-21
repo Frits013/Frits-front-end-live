@@ -212,9 +212,80 @@ serve(async (req) => {
       console.log('Message appears to be already enhanced, using as-is');
       enhancedMessage = message;
     } else {
-      // Create phase identification prompt (without including the user message)
-      const phasePrompt = currentPhaseData?.current_phase 
-        ? `The next question you will ask will be from the ${currentPhaseData.current_phase} phase. You are in that part of the interview process KEEP THIS INTO ACCOUNT.`
+      // Helper function to determine next phase based on current phase and question count
+      const getNextPhasePrompt = async (sessionId: string, currentPhase: string) => {
+        // Phase definitions (must match frontend)
+        const phaseDefinitions = {
+          'introduction': { maxQuestions: 3, order: 0 },
+          'theme_selection': { maxQuestions: 4, order: 1 },
+          'deep_dive': { maxQuestions: 8, order: 2 },
+          'summary': { maxQuestions: 3, order: 3 },
+          'recommendations': { maxQuestions: 2, order: 4 }
+        };
+
+        const phases = Object.keys(phaseDefinitions);
+        
+        // Get current assistant message count to determine question number
+        const { data: assistantMessages, error } = await supabase
+          .from('chat_messages')
+          .select('*')
+          .eq('session_id', sessionId)
+          .eq('role', 'writer')
+          .order('created_at', { ascending: true });
+        
+        if (error || !assistantMessages) {
+          console.error('Error fetching assistant messages:', error);
+          return currentPhase; // fallback to current phase
+        }
+
+        const assistantCount = assistantMessages.length;
+        console.log(`Assistant message count: ${assistantCount}`);
+
+        // Calculate which phase we should be in based on message count
+        let messagesSoFar = 0;
+        let calculatedCurrentPhase = 'introduction';
+        let questionsInCurrentPhase = 0;
+
+        for (const phase of phases) {
+          const maxQuestions = phaseDefinitions[phase].maxQuestions;
+          
+          if (assistantCount >= messagesSoFar && assistantCount < messagesSoFar + maxQuestions) {
+            calculatedCurrentPhase = phase;
+            questionsInCurrentPhase = assistantCount - messagesSoFar + 1; // +1 because we're about to ask the next question
+            break;
+          } else if (assistantCount >= messagesSoFar + maxQuestions) {
+            messagesSoFar += maxQuestions;
+          } else {
+            break;
+          }
+        }
+
+        console.log(`Calculated phase: ${calculatedCurrentPhase}, Question ${questionsInCurrentPhase}/${phaseDefinitions[calculatedCurrentPhase]?.maxQuestions}`);
+
+        // Check if this will be the last question of the current phase
+        const maxQuestionsInPhase = phaseDefinitions[calculatedCurrentPhase]?.maxQuestions || 3;
+        const isLastQuestion = questionsInCurrentPhase >= maxQuestionsInPhase;
+
+        if (isLastQuestion) {
+          // Find next phase
+          const currentIndex = phases.indexOf(calculatedCurrentPhase);
+          if (currentIndex !== -1 && currentIndex < phases.length - 1) {
+            const nextPhase = phases[currentIndex + 1];
+            console.log(`Last question of ${calculatedCurrentPhase}, applying ${nextPhase} phase prompt`);
+            return nextPhase;
+          }
+        }
+
+        // Default to current phase
+        return calculatedCurrentPhase;
+      };
+
+      // Get the appropriate phase for prompting
+      const phaseForPrompt = await getNextPhasePrompt(session_id, currentPhaseData?.current_phase || 'introduction');
+      
+      // Create phase identification prompt
+      const phasePrompt = phaseForPrompt 
+        ? `The next question you will ask will be from the ${phaseForPrompt} phase. You are in that part of the interview process KEEP THIS INTO ACCOUNT.`
         : '';
       
       enhancedMessage = phasePrompt 

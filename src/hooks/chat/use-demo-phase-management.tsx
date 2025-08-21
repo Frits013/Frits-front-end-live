@@ -13,7 +13,7 @@ interface DemoPhaseManagementProps {
 // Phase definitions with max questions per phase
 const phaseDefinitions = {
   'introduction': { maxQuestions: 3, order: 0 },
-  'theme_selection': { maxQuestions: 5, order: 1 },
+  'theme_selection': { maxQuestions: 4, order: 1 },
   'deep_dive': { maxQuestions: 8, order: 2 },
   'summary': { maxQuestions: 3, order: 3 },
   'recommendations': { maxQuestions: 2, order: 4 }
