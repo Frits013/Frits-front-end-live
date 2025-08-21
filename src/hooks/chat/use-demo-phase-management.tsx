@@ -24,7 +24,13 @@ export const useDemoPhaseManagement = ({
   messages,
   sessionData
 }: DemoPhaseManagementProps) => {
-  const writerMessages = messages.filter(msg => msg.role === 'writer');
+  // Filter for assistant messages (converted from 'writer' in useMessageFetcher)
+  const assistantMessages = messages.filter(msg => msg.role === 'assistant');
+  
+  if (isDev) {
+    console.log(`📊 Total messages: ${messages.length}, Assistant messages: ${assistantMessages.length}`);
+    console.log(`📊 Message roles:`, messages.map(m => m.role));
+  }
   const currentPhase = (sessionData?.current_phase || 'introduction') as InterviewPhase;
   
   // Calculate phase question counts from messages
@@ -34,7 +40,7 @@ export const useDemoPhaseManagement = ({
     let currentPhaseIndex = 0;
     let questionsInCurrentPhase = 0;
     
-    if (isDev) console.log(`📊 Calculating phase counts for ${messages.length} writer messages`);
+    if (isDev) console.log(`📊 Calculating phase counts for ${messages.length} assistant messages`);
     
     // Allocate messages to phases sequentially
     messages.forEach((_, messageIndex) => {
@@ -107,7 +113,7 @@ export const useDemoPhaseManagement = ({
     return 'introduction';
   };
 
-  const phaseQuestionCounts = calculatePhaseQuestionCounts(writerMessages);
+  const phaseQuestionCounts = calculatePhaseQuestionCounts(assistantMessages);
   const correctPhase = determineCorrectPhase(phaseQuestionCounts);
   
   // Get current phase question number and max
@@ -193,7 +199,7 @@ export const useDemoPhaseManagement = ({
     currentPhase: correctPhase,
     questionCount: currentPhaseQuestionCount, // Current phase question number
     maxQuestions: currentPhaseMaxQuestions, // Max questions for current phase
-    totalQuestions: writerMessages.length, // Total questions across all phases
+    totalQuestions: assistantMessages.length, // Total questions across all phases
     phaseQuestionCounts, // Questions per phase breakdown
     triggerNextPhase,
     canTriggerNextPhase: correctPhase === 'summary'
