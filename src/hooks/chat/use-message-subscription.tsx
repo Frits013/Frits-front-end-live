@@ -111,7 +111,7 @@ export const useMessageSubscription = (
                     .from('chat_messages')
                     .select('message_id, content, role, created_at')
                     .eq('session_id', sessionId)
-                    .neq('role', 'user') // Don't include user messages in polling
+                    .in('role', ['writer', 'assistant']) // Only fetch displayable messages
                     .order('created_at', { ascending: true });
 
                   if (error) {
