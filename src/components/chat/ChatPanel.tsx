@@ -75,9 +75,8 @@ const ChatPanel = ({
     setTimeout(() => setShowFeedbackDialog(true), 1000);
   }
 
-  // Calculate current question number for interview mode
-  const assistantMessages = messages.filter(msg => msg.role === 'assistant');
-  const currentQuestionNumber = assistantMessages.length;
+  // Use phase-specific question numbers from demoPhaseData
+  const currentQuestionNumber = demoPhaseData?.questionCount || 0;
   const maxQuestionsInPhase = demoPhaseData?.maxQuestions || 3;
 
   // Check if we should show summary/recommendations display
