@@ -7,6 +7,7 @@ import { useSessionSubscription } from "./chat/use-session-subscription";
 import { useMessageSubscription } from "./chat/use-message-subscription";
 import { usePhaseSubscription } from "./chat/use-phase-subscription";
 import { useDemoPhaseManagement } from "./chat/use-demo-phase-management";
+import { useNewSessionPolling } from "./chat/use-new-session-polling";
 
 export const useChatMessages = (sessionId: string | null) => {
   const [dialogDismissed, setDialogDismissed] = useState(false);
@@ -50,6 +51,15 @@ export const useChatMessages = (sessionId: string | null) => {
     sessionId,
     messages,
     sessionData
+  });
+
+  // Poll for new session messages when needed
+  useNewSessionPolling({
+    sessionId,
+    messages,
+    autoMessageSent,
+    sessionData,
+    onMessagesUpdate: setMessages
   });
 
   return {

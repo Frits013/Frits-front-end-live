@@ -246,11 +246,27 @@ const InterviewQuestionDisplay = ({
             animate={{ opacity: 1 }}
             className="text-center"
           >
+            <div className="flex flex-col items-center gap-4 mb-6">
+              <div className="flex gap-2">
+                {[...Array(3)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    animate={{ y: [0, -8, 0] }}
+                    transition={{ 
+                      duration: 1.2, 
+                      repeat: Infinity, 
+                      delay: i * 0.3 
+                    }}
+                    className="w-2 h-2 bg-primary/60 rounded-full"
+                  />
+                ))}
+              </div>
+            </div>
             <p className="text-xl text-muted-foreground mb-4">
-              Ready to begin your interview
+              Waiting for your first question
             </p>
             <p className="text-sm text-muted-foreground">
-              Your first question will appear here shortly
+              Our AI is preparing a personalized question for you...
             </p>
           </motion.div>
         )}
