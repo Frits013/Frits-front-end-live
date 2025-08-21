@@ -30,31 +30,44 @@ export const useDemoPhaseManagement = ({
   // Calculate phase question counts from messages
   const calculatePhaseQuestionCounts = (messages: ChatMessage[]): Record<string, number> => {
     const phaseQuestionCounts: Record<string, number> = {};
-    let currentPhaseTracker: InterviewPhase = 'introduction';
+    const phases = Object.keys(phaseDefinitions) as InterviewPhase[];
+    let currentPhaseIndex = 0;
     let questionsInCurrentPhase = 0;
     
-    // Track transitions through phases based on message count
-    messages.forEach((_, index) => {
+    if (isDev) console.log(`📊 Calculating phase counts for ${messages.length} writer messages`);
+    
+    // Allocate messages to phases sequentially
+    messages.forEach((_, messageIndex) => {
+      const currentPhase = phases[currentPhaseIndex];
+      const maxQuestionsForPhase = phaseDefinitions[currentPhase].maxQuestions;
+      
       questionsInCurrentPhase++;
       
-      // Check if we should transition to next phase
-      const currentPhaseDef = phaseDefinitions[currentPhaseTracker];
-      if (questionsInCurrentPhase >= currentPhaseDef.maxQuestions) {
-        phaseQuestionCounts[currentPhaseTracker] = currentPhaseDef.maxQuestions;
+      if (isDev) {
+        console.log(`📊 Message ${messageIndex + 1}: Phase ${currentPhase} (${questionsInCurrentPhase}/${maxQuestionsForPhase})`);
+      }
+      
+      // If we've reached the max questions for this phase, finalize it and move to next
+      if (questionsInCurrentPhase >= maxQuestionsForPhase) {
+        phaseQuestionCounts[currentPhase] = maxQuestionsForPhase;
+        
+        if (isDev) {
+          console.log(`📊 Phase ${currentPhase} completed with ${maxQuestionsForPhase} questions`);
+        }
         
         // Move to next phase if available
-        const phases = Object.keys(phaseDefinitions) as InterviewPhase[];
-        const currentIndex = phases.findIndex(p => p === currentPhaseTracker);
-        if (currentIndex < phases.length - 1) {
-          currentPhaseTracker = phases[currentIndex + 1];
+        if (currentPhaseIndex < phases.length - 1) {
+          currentPhaseIndex++;
           questionsInCurrentPhase = 0;
         }
+      } else {
+        // Update count for current phase
+        phaseQuestionCounts[currentPhase] = questionsInCurrentPhase;
       }
     });
     
-    // Set count for current phase
-    if (questionsInCurrentPhase > 0) {
-      phaseQuestionCounts[currentPhaseTracker] = questionsInCurrentPhase;
+    if (isDev) {
+      console.log(`📊 Final phase question counts:`, phaseQuestionCounts);
     }
     
     return phaseQuestionCounts;
@@ -64,19 +77,33 @@ export const useDemoPhaseManagement = ({
   const determineCorrectPhase = (phaseQuestionCounts: Record<string, number>): InterviewPhase => {
     const phases = Object.keys(phaseDefinitions) as InterviewPhase[];
     
+    // Find the last phase that has questions
     for (let i = phases.length - 1; i >= 0; i--) {
       const phase = phases[i];
       const questionsInPhase = phaseQuestionCounts[phase] || 0;
       
       if (questionsInPhase > 0) {
-        // If phase is complete, move to next phase (if available)
-        if (questionsInPhase >= phaseDefinitions[phase].maxQuestions && i < phases.length - 1) {
-          return phases[i + 1];
+        const maxQuestionsForPhase = phaseDefinitions[phase].maxQuestions;
+        
+        if (isDev) {
+          console.log(`📊 Phase ${phase}: ${questionsInPhase}/${maxQuestionsForPhase} questions`);
         }
+        
+        // If phase is complete and there's a next phase, return next phase
+        if (questionsInPhase >= maxQuestionsForPhase && i < phases.length - 1) {
+          const nextPhase = phases[i + 1];
+          if (isDev) {
+            console.log(`📊 Phase ${phase} complete, moving to ${nextPhase}`);
+          }
+          return nextPhase;
+        }
+        
+        // Otherwise return current phase
         return phase;
       }
     }
     
+    // Fallback to introduction if no questions found
     return 'introduction';
   };
 
@@ -86,6 +113,11 @@ export const useDemoPhaseManagement = ({
   // Get current phase question number and max
   const currentPhaseQuestionCount = phaseQuestionCounts[correctPhase] || 0;
   const currentPhaseMaxQuestions = phaseDefinitions[correctPhase]?.maxQuestions || 3;
+
+  if (isDev) {
+    console.log(`📊 Current phase: ${correctPhase} (${currentPhaseQuestionCount}/${currentPhaseMaxQuestions})`);
+    console.log(`📊 Database phase: ${currentPhase}`);
+  }
 
   // Update database when phase or question counts change
   useEffect(() => {
@@ -98,6 +130,12 @@ export const useDemoPhaseManagement = ({
     if (needsUpdate) {
       const updateSession = async () => {
         try {
+          if (isDev) {
+            console.log(`📊 Updating session: ${currentPhase} → ${correctPhase}`);
+            console.log(`📊 Old phase counts:`, sessionData?.phase_question_counts || {});
+            console.log(`📊 New phase counts:`, phaseQuestionCounts);
+          }
+
           const { error } = await supabase
             .from('chat_sessions')
             .update({ 
@@ -107,16 +145,15 @@ export const useDemoPhaseManagement = ({
             .eq('id', sessionId);
 
           if (error) {
-            if (isDev) console.error('Error updating session:', error);
+            if (isDev) console.error('❌ Error updating session:', error);
           } else {
             if (isDev) {
-              console.log(`📊 Session updated: ${currentPhase} → ${correctPhase}`);
-              console.log(`📊 Phase question counts:`, phaseQuestionCounts);
+              console.log(`✅ Session updated successfully`);
               console.log(`📊 Current phase: ${correctPhase} (${currentPhaseQuestionCount}/${currentPhaseMaxQuestions})`);
             }
           }
         } catch (error) {
-          if (isDev) console.error('Failed to update session:', error);
+          if (isDev) console.error('❌ Failed to update session:', error);
         }
       };
       updateSession();
