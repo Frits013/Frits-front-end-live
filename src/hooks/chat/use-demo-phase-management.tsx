@@ -14,7 +14,7 @@ interface DemoPhaseManagementProps {
 const phaseDefinitions = {
   'introduction': { maxQuestions: 3, order: 0 },
   'theme_selection': { maxQuestions: 4, order: 1 },
-  'deep_dive': { maxQuestions: 8, order: 2 },
+  'deep_dive': { maxQuestions: 10, order: 2 },
   'summary': { maxQuestions: 3, order: 3 },
   'recommendations': { maxQuestions: 2, order: 4 }
 };
@@ -80,7 +80,7 @@ export const useDemoPhaseManagement = ({
   };
 
   // Determine correct phase based on completed phases
-  const determineCorrectPhase = (phaseQuestionCounts: Record<string, number>): InterviewPhase => {
+  const determineCorrectPhase = (phaseQuestionCounts: Record<string, number>, isUserAnswering: boolean = false): InterviewPhase => {
     const phases = Object.keys(phaseDefinitions) as InterviewPhase[];
     
     // Find the last phase that has questions
@@ -95,13 +95,19 @@ export const useDemoPhaseManagement = ({
           console.log(`📊 Phase ${phase}: ${questionsInPhase}/${maxQuestionsForPhase} questions`);
         }
         
-        // If phase is complete and there's a next phase, return next phase
+        // If phase is complete and there's a next phase
         if (questionsInPhase >= maxQuestionsForPhase && i < phases.length - 1) {
           const nextPhase = phases[i + 1];
           if (isDev) {
-            console.log(`📊 Phase ${phase} complete, moving to ${nextPhase}`);
+            console.log(`📊 Phase ${phase} complete, next would be ${nextPhase}`);
           }
-          return nextPhase;
+          
+          // If user is answering, stay in current phase until they submit
+          if (isUserAnswering) {
+            return phase;
+          } else {
+            return nextPhase;
+          }
         }
         
         // Otherwise return current phase
@@ -114,7 +120,12 @@ export const useDemoPhaseManagement = ({
   };
 
   const phaseQuestionCounts = calculatePhaseQuestionCounts(assistantMessages);
-  const correctPhase = determineCorrectPhase(phaseQuestionCounts);
+  
+  // Determine if user is currently answering (last message was from assistant)
+  const lastMessage = messages[messages.length - 1];
+  const isUserAnswering = lastMessage?.role === 'assistant';
+  
+  const correctPhase = determineCorrectPhase(phaseQuestionCounts, isUserAnswering);
   
   // Get current phase question number and max
   const currentPhaseQuestionCount = phaseQuestionCounts[correctPhase] || 0;

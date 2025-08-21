@@ -218,7 +218,7 @@ serve(async (req) => {
         const phaseDefinitions = {
           'introduction': { maxQuestions: 3, order: 0 },
           'theme_selection': { maxQuestions: 4, order: 1 },
-          'deep_dive': { maxQuestions: 8, order: 2 },
+          'deep_dive': { maxQuestions: 10, order: 2 },
           'summary': { maxQuestions: 3, order: 3 },
           'recommendations': { maxQuestions: 2, order: 4 }
         };
