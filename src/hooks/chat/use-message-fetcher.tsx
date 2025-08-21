@@ -114,8 +114,11 @@ export const useMessageFetcher = (sessionId: string | null) => {
         }
 
         if (data) {
+          console.log('📨 Raw messages fetched:', data.length, 'messages');
+          console.log('📨 Message roles:', data.map(m => m.role));
           // Process the messages - filter out automatic initialization messages and keep only user messages and writer (assistant) responses
           const validMessages = processMessages(data);
+          console.log('📨 Valid messages after processing:', validMessages.length);
           setMessages(validMessages);
           
           // Check if an automatic message was sent in this session
@@ -148,6 +151,7 @@ export const useMessageFetcher = (sessionId: string | null) => {
 
     // Always reset ALL state first when session changes, then fetch new data
     if (sessionId) {
+      console.log('🔄 Session changed to:', sessionId, '- resetting all state');
       // Reset all state immediately when session changes
       setMessages([]);
       setIsConsultComplete(false);
@@ -155,6 +159,7 @@ export const useMessageFetcher = (sessionId: string | null) => {
       setAutoMessageSent(false);
       setSessionData(null);
       setCurrentProgress(null);
+      console.log('🔄 Fetching messages for new session');
       fetchMessages();
     } else {
       // Reset all state when no session

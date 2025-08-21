@@ -68,8 +68,10 @@ export const useSessionCreation = (
       }
 
       // Immediately update the UI state before doing anything else
+      console.log('🎯 New session created:', newSession.id);
       setCurrentSessionId(newSession.id);
       setChatSessions([newSession, ...chatSessions]);
+      console.log('🎯 UI state updated with new session ID');
 
       // Add a system message to identify the new chat session
       const { error: messageError } = await supabase
@@ -86,7 +88,9 @@ export const useSessionCreation = (
       }
 
       // Send an automatic message to initiate the conversation
+      console.log('🎯 Sending automatic message for session:', newSession.id);
       await sendAutomaticHeyMessage(newSession.id, session.user.id);
+      console.log('🎯 Automatic message sent');
       
     } catch (error) {
       console.error('Error in createNewChat:', error);
@@ -137,9 +141,10 @@ export const useSessionCreation = (
       });
 
       if (invokeError) {
-        console.error('Error calling chat edge function:', invokeError);
+        console.error('🚨 Error calling chat edge function:', invokeError);
       } else {
-        console.log('Chat edge function called successfully:', data);
+        console.log('✅ Chat edge function called successfully:', data);
+        console.log('🎯 Edge function should have created a writer response');
       }
     } catch (error) {
       console.error('Error in sendAutomaticHeyMessage:', error);
