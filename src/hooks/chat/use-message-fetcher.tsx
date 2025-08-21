@@ -115,11 +115,13 @@ export const useMessageFetcher = (sessionId: string | null) => {
 
         if (data) {
           console.log('📨 Raw messages fetched:', data.length, 'messages');
-          console.log('📨 Message roles:', data.map(m => m.role));
+          console.log('📨 Message roles:', data.map(m => `${m.role}:${m.message_id.slice(0,8)}`));
           // Process the messages - filter out automatic initialization messages and keep only user messages and writer (assistant) responses
           const validMessages = processMessages(data);
           console.log('📨 Valid messages after processing:', validMessages.length);
+          console.log('📨 Setting messages in state...');
           setMessages(validMessages);
+          console.log('📨 Messages set in state successfully');
           
           // Check if an automatic message was sent in this session
           const hasAutoMessage = data.some(msg => 

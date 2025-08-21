@@ -120,7 +120,7 @@ export const useMessageSubscription = (
                   }
 
                   if (data && data.length > 0) {
-                    if (isDev) console.log('Found messages via polling:', data);
+                    if (isDev) console.log('🎯 Found messages via polling:', data.length, 'messages for session', sessionId);
                     
                     const newMessages = data
                       .filter(msg => msg.content !== INITIAL_MESSAGE)
@@ -137,13 +137,16 @@ export const useMessageSubscription = (
                       );
                       
                       if (messagesToAdd.length > 0) {
+                        if (isDev) console.log('🎯 Adding messages to UI state:', messagesToAdd.length, 'messages');
                         // Clean up polling when we find messages
                         if (fallbackPollingRef.current) {
                           clearInterval(fallbackPollingRef.current);
                           fallbackPollingRef.current = null;
                         }
                         setIsProcessing(false);
-                        return [...currentMessages, ...messagesToAdd];
+                        const updatedMessages = [...currentMessages, ...messagesToAdd];
+                        if (isDev) console.log('🎯 New total messages:', updatedMessages.length);
+                        return updatedMessages;
                       }
                       return currentMessages;
                     });
@@ -153,7 +156,8 @@ export const useMessageSubscription = (
                 }
               };
 
-              // Start polling every 1 second for up to 10 seconds
+              // Start immediate polling and then set interval
+              pollForMessages(); // Run immediately
               fallbackPollingRef.current = setInterval(pollForMessages, 1000);
               
               // Clean up polling after 10 seconds
