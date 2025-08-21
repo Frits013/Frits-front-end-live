@@ -146,10 +146,15 @@ export const useMessageFetcher = (sessionId: string | null) => {
       }
     };
 
-    // Always reset state first when session changes, then fetch new data
+    // Always reset ALL state first when session changes, then fetch new data
     if (sessionId) {
-      // Only reset messages initially, keep other state until we fetch new data
+      // Reset all state immediately when session changes
       setMessages([]);
+      setIsConsultComplete(false);
+      setHasFeedback(false);
+      setAutoMessageSent(false);
+      setSessionData(null);
+      setCurrentProgress(null);
       fetchMessages();
     } else {
       // Reset all state when no session
