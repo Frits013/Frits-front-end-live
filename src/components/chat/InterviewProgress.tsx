@@ -39,8 +39,23 @@ const InterviewProgress = ({
   const totalProgress = Math.min((answeredQuestions / totalMaxQuestions) * 100, 100);
 
   // Calculate current phase progress - use demo data for accurate tracking
-  const currentPhaseQuestions = demoPhaseData?.questionCount || phaseInfo?.questions_in_phase || 0;
-  const currentPhaseMaxQuestions = demoPhaseData?.maxQuestions || phaseInfo?.max_questions_in_phase || 5;
+  const currentPhaseDefinition = phaseDefinitions.find(p => p.id === currentPhase);
+  const currentPhaseMaxQuestions = currentPhaseDefinition?.maxQuestions || 5;
+  
+  // Calculate questions within current phase
+  const getCurrentPhaseQuestionCount = () => {
+    const currentIndex = phaseDefinitions.findIndex(p => p.id === currentPhase);
+    if (currentIndex === -1) return 0;
+    
+    const questionsBeforeCurrentPhase = phaseDefinitions
+      .slice(0, currentIndex)
+      .reduce((sum, phase) => sum + phase.maxQuestions, 0);
+    
+    const questionsInCurrentPhase = Math.max(0, answeredQuestions - questionsBeforeCurrentPhase);
+    return Math.min(questionsInCurrentPhase, currentPhaseMaxQuestions);
+  };
+  
+  const currentPhaseQuestions = getCurrentPhaseQuestionCount();
   const currentPhaseProgress = currentPhaseMaxQuestions > 0 ? 
     Math.min((currentPhaseQuestions / currentPhaseMaxQuestions) * 100, 100) : 0;
 
@@ -92,6 +107,20 @@ const InterviewProgress = ({
           </div>
         </div>
 
+        {/* Current Phase Progress */}
+        {currentPhase && (
+          <div className="mb-4 p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg border">
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-medium text-gray-900 dark:text-white">
+                {currentPhaseDefinition?.name} - Question {currentPhaseQuestions + 1}/{currentPhaseMaxQuestions}
+              </span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                {Math.round(currentPhaseProgress)}%
+              </span>
+            </div>
+            <Progress value={currentPhaseProgress} className="h-2" />
+          </div>
+        )}
 
         {/* Phase indicators */}
         <div className="flex items-center justify-center gap-3 overflow-x-auto pb-2">
