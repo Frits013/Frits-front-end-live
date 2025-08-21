@@ -15,12 +15,46 @@ export const useDemoPhaseManagement = ({
   messages,
   sessionData
 }: DemoPhaseManagementProps) => {
-  // Simple approach: just count writer messages and reflect backend phase
+  // Count writer messages and update database phase based on thresholds
   const writerMessages = messages.filter(msg => msg.role === 'writer');
   const currentPhase = (sessionData?.current_phase || 'introduction') as InterviewPhase;
   
+  // Phase thresholds based on writer message count
+  const getPhaseFromCount = (count: number): InterviewPhase => {
+    if (count >= 19) return 'recommendations';
+    if (count >= 18) return 'summary';
+    if (count >= 8) return 'deep_dive';
+    if (count >= 4) return 'theme_selection';
+    return 'introduction';
+  };
+
+  const expectedPhase = getPhaseFromCount(writerMessages.length);
+
+  // Update database phase when it doesn't match expected phase
+  useEffect(() => {
+    if (sessionId && expectedPhase !== currentPhase) {
+      const updatePhase = async () => {
+        try {
+          const { error } = await supabase
+            .from('chat_sessions')
+            .update({ current_phase: expectedPhase })
+            .eq('id', sessionId);
+
+          if (error) {
+            if (isDev) console.error('Error updating phase:', error);
+          } else {
+            if (isDev) console.log(`📊 Phase updated: ${currentPhase} → ${expectedPhase} (${writerMessages.length} messages)`);
+          }
+        } catch (error) {
+          if (isDev) console.error('Failed to update phase:', error);
+        }
+      };
+      updatePhase();
+    }
+  }, [sessionId, expectedPhase, currentPhase, writerMessages.length]);
+
   if (isDev) {
-    console.log(`📊 Simple Phase Management - Phase: ${currentPhase}, Writer messages: ${writerMessages.length}`);
+    console.log(`📊 Phase Management - Current: ${currentPhase}, Expected: ${expectedPhase}, Writer messages: ${writerMessages.length}`);
   }
 
   // Function to trigger summary -> recommendations transition
