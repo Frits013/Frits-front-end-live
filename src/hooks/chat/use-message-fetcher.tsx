@@ -114,14 +114,20 @@ export const useMessageFetcher = (sessionId: string | null) => {
         }
 
         if (data) {
-          console.log('📨 Raw messages fetched:', data.length, 'messages');
-          console.log('📨 Message roles:', data.map(m => `${m.role}:${m.message_id.slice(0,8)}`));
-          // Process the messages - filter out automatic initialization messages and keep only user messages and writer (assistant) responses
+          console.log('📥 Raw messages fetched:', data.length, 'messages');
+          console.log('📥 All message roles:', data.map(m => `${m.role}:${m.message_id?.slice(0,8) || 'no-id'}`));
+          console.log('📥 Writer messages found:', data.filter(m => m.role === 'writer').length);
+          
+          // Process the messages
           const validMessages = processMessages(data);
-          console.log('📨 Valid messages after processing:', validMessages.length);
-          console.log('📨 Setting messages in state...');
+          console.log('📥 Final processed messages for UI:', validMessages.length);
           setMessages(validMessages);
-          console.log('📨 Messages set in state successfully');
+          
+          if (validMessages.length > 0) {
+            console.log('✅ Messages successfully set in state');
+          } else {
+            console.log('⚠️ No valid messages to display');
+          }
           
           // Check if an automatic message was sent in this session
           const hasAutoMessage = data.some(msg => 
@@ -179,12 +185,16 @@ export const useMessageFetcher = (sessionId: string | null) => {
       .filter(msg => {
         // Keep user messages that aren't the automatic initialization message
         if (msg.role === 'user') {
-          // Only filter out the specific initial message, but keep "hey" messages
           return msg.content !== INITIAL_MESSAGE;
         }
         
-        // Keep writer messages (assistant messages for the user)
-        if (msg.role === 'writer' || msg.role === 'assistant') {
+        // Keep ALL writer messages - they are the AI responses we want to show
+        if (msg.role === 'writer') {
+          return true;
+        }
+        
+        // Keep assistant messages too
+        if (msg.role === 'assistant') {
           return true;
         }
         
@@ -193,10 +203,12 @@ export const useMessageFetcher = (sessionId: string | null) => {
       .map(msg => ({
         id: msg.message_id,
         content: msg.content,
-        role: msg.role === 'writer' ? 'assistant' : msg.role, // Map 'writer' role to 'assistant' for UI consistency
+        role: msg.role === 'writer' ? 'assistant' : msg.role,
         created_at: new Date(msg.created_at),
       }));
 
+    console.log('🔄 Processed messages:', processed.length, 'from', data.length, 'raw messages');
+    console.log('🔄 Processed message details:', processed.map(m => ({ role: m.role, id: m.id.slice(0,8), content: m.content.slice(0, 50) + '...' })));
     return processed;
   };
 
