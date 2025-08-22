@@ -80,43 +80,41 @@ export const useDemoPhaseManagement = ({
   };
 
   // Determine correct phase based on completed phases
-  const determineCorrectPhase = (phaseQuestionCounts: Record<string, number>, isUserAnswering: boolean = false): InterviewPhase => {
+  const determineCorrectPhase = (
+    phaseQuestionCounts: Record<string, number>, 
+    isUserAnswering: boolean = false, 
+    userJustFinishedAnswering: boolean = false,
+    regularUserMessages: ChatMessage[] = []
+  ): InterviewPhase => {
     const phases = Object.keys(phaseDefinitions) as InterviewPhase[];
     
-    // Find the last phase that has questions
-    for (let i = phases.length - 1; i >= 0; i--) {
-      const phase = phases[i];
-      const questionsInPhase = phaseQuestionCounts[phase] || 0;
-      
-      if (questionsInPhase > 0) {
-        const maxQuestionsForPhase = phaseDefinitions[phase].maxQuestions;
-        
-        if (isDev) {
-          console.log(`📊 Phase ${phase}: ${questionsInPhase}/${maxQuestionsForPhase} questions`);
-        }
-        
-        // If phase is complete and there's a next phase
-        if (questionsInPhase >= maxQuestionsForPhase && i < phases.length - 1) {
-          const nextPhase = phases[i + 1];
-          if (isDev) {
-            console.log(`📊 Phase ${phase} complete, next would be ${nextPhase}`);
-          }
-          
-          // If user is answering, stay in current phase until they submit
-          if (isUserAnswering) {
-            return phase;
-          } else {
-            return nextPhase;
-          }
-        }
-        
-        // Otherwise return current phase
-        return phase;
-      }
+    // Calculate how many answers we have so far
+    const totalAnswers = regularUserMessages.length;
+    
+    if (isDev) {
+      console.log(`📊 Total answers: ${totalAnswers}, Assistant messages: ${assistantMessages.length}`);
     }
     
-    // Fallback to introduction if no questions found
-    return 'introduction';
+    // Determine which phase we should be in based on answers completed
+    let answersUsed = 0;
+    for (let i = 0; i < phases.length; i++) {
+      const phase = phases[i];
+      const maxQuestionsForPhase = phaseDefinitions[phase].maxQuestions;
+      
+      if (totalAnswers <= answersUsed + maxQuestionsForPhase) {
+        // We're in this phase
+        if (isDev) {
+          const answersInThisPhase = totalAnswers - answersUsed;
+          console.log(`📊 User is in ${phase} phase with ${answersInThisPhase}/${maxQuestionsForPhase} answers`);
+        }
+        return phase;
+      }
+      
+      answersUsed += maxQuestionsForPhase;
+    }
+    
+    // If we've answered all questions, we're in the final phase
+    return phases[phases.length - 1];
   };
 
   const phaseQuestionCounts = calculatePhaseQuestionCounts(assistantMessages);
@@ -129,14 +127,37 @@ export const useDemoPhaseManagement = ({
     !msg.content.includes('The next question you will ask will be from the')
   );
   
-  // Determine if user is currently answering (last message was from assistant and there are more user messages than assistant responses)
+  // Determine if user is currently answering
+  // User is answering if the last message is from assistant AND there are fewer regular user answers than assistant questions
   const lastMessage = messages[messages.length - 1];
-  const isUserAnswering = lastMessage?.role === 'assistant' && regularUserMessages.length > assistantMessages.length;
+  const isUserAnswering = lastMessage?.role === 'assistant' && regularUserMessages.length < assistantMessages.length;
   
-  const correctPhase = determineCorrectPhase(phaseQuestionCounts, isUserAnswering);
+  // Enhanced logic: also check if we're at the exact moment of a phase boundary
+  // If we have equal assistant questions and regular user answers, the user has just finished answering
+  const userJustFinishedAnswering = regularUserMessages.length === assistantMessages.length;
+  
+  const correctPhase = determineCorrectPhase(phaseQuestionCounts, isUserAnswering, userJustFinishedAnswering, regularUserMessages);
   
   // Get current phase question number and max
-  const currentPhaseQuestionCount = phaseQuestionCounts[correctPhase] || 0;
+  // Calculate the question number within the current phase based on answers
+  const phases = Object.keys(phaseDefinitions) as InterviewPhase[];
+  const totalAnswers = regularUserMessages.length;
+  
+  let answersUsed = 0;
+  let currentPhaseQuestionCount = 0;
+  
+  for (let i = 0; i < phases.length; i++) {
+    const phase = phases[i];
+    const maxQuestionsForPhase = phaseDefinitions[phase].maxQuestions;
+    
+    if (phase === correctPhase) {
+      currentPhaseQuestionCount = totalAnswers - answersUsed;
+      break;
+    }
+    
+    answersUsed += maxQuestionsForPhase;
+  }
+  
   const currentPhaseMaxQuestions = phaseDefinitions[correctPhase]?.maxQuestions || 3;
 
   if (isDev) {
