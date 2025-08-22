@@ -29,18 +29,65 @@ export const useMessageSender = ({
   const currentRequestId = useRef<string | null>(null);
   const { validateSession } = useSessionValidation();
 
-  const getPhaseContextMessage = (userAnswer: string, phase: InterviewPhase): string => {
+  const getPhaseContextMessage = (userAnswer: string, nextPhase: InterviewPhase): string => {
     // Special hardcoded prompts for summary and recommendations phases
-    if (phase === 'summary') {
+    if (nextPhase === 'summary') {
       return "YOU ARE NOW IN THE SUMMARY PHASE I WANT YOU TO WRITE A SUMMARY FOR THE USER ABOUT THE AI READINESS CONVERSATION YOU JUST HAD WITH INTERESTING FINDINGS AND TOPICS YOU THOUGHT WERE UNIQUE/INTERESTING.";
     }
     
-    if (phase === 'recommendations') {
+    if (nextPhase === 'recommendations') {
       return "PROVIDE ACTIONABLE RECOMMENDATIONS BASED ON THE CONVERSATION...";
     }
     
     // Standard phase context for other phases
-    return `The next question you will ask will be from the ${phase} phase. You are in that part of the interview process KEEP THIS INTO ACCOUNT. "This was the user's last answer: ${userAnswer}."`;
+    return `The next question you will ask will be from the ${nextPhase} phase. You are in that part of the interview process KEEP THIS INTO ACCOUNT. "This was the user's last answer: ${userAnswer}."`;
+  };
+
+  const predictNextPhase = (currentPhase: InterviewPhase, messages: ChatMessage[]): InterviewPhase => {
+    const phaseDefinitions = {
+      'introduction': { maxQuestions: 3, order: 0 },
+      'theme_selection': { maxQuestions: 4, order: 1 },
+      'deep_dive': { maxQuestions: 10, order: 2 },
+      'summary': { maxQuestions: 3, order: 3 },
+      'recommendations': { maxQuestions: 2, order: 4 }
+    };
+
+    // Count only regular user messages (not enhanced ones)
+    const regularUserMessages = messages.filter(msg => 
+      msg.role === 'user' && 
+      !msg.content.includes('YOU ARE NOW IN THE') && 
+      !msg.content.includes('The next question you will ask will be from the')
+    );
+    
+    // Count assistant messages
+    const assistantMessages = messages.filter(msg => msg.role === 'assistant' || msg.role === 'writer');
+    
+    // Calculate how many questions have been asked in each phase
+    let questionCount = 0;
+    const phases = Object.keys(phaseDefinitions) as InterviewPhase[];
+    
+    for (const phase of phases) {
+      const maxQuestions = phaseDefinitions[phase].maxQuestions;
+      
+      if (phase === currentPhase) {
+        // For current phase, check if we're about to complete it
+        const questionsInCurrentPhase = Math.min(assistantMessages.length - questionCount, maxQuestions);
+        const userAnswersInCurrentPhase = Math.min(regularUserMessages.length - questionCount, maxQuestions);
+        
+        // If user is about to answer the last question of this phase, return next phase
+        if (userAnswersInCurrentPhase >= maxQuestions - 1 && questionsInCurrentPhase >= maxQuestions - 1) {
+          const currentPhaseIndex = phases.indexOf(currentPhase);
+          if (currentPhaseIndex < phases.length - 1) {
+            return phases[currentPhaseIndex + 1];
+          }
+        }
+        break;
+      }
+      
+      questionCount += maxQuestions;
+    }
+    
+    return currentPhase;
   };
 
   const executeWithRetry = async <T,>(
@@ -167,10 +214,11 @@ export const useMessageSender = ({
         return;
       }
 
-      // Prepare the message with phase context
+      // Prepare the message with phase context - use NEXT phase for context
       let messageToSend = inputMessage;
       if (currentPhase) {
-        const phaseContext = getPhaseContextMessage(inputMessage, currentPhase);
+        const nextPhase = predictNextPhase(currentPhase, messages);
+        const phaseContext = getPhaseContextMessage(inputMessage, nextPhase);
         messageToSend = `${phaseContext}\n\nUser's answer: ${inputMessage}`;
       }
 

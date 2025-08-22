@@ -121,9 +121,17 @@ export const useDemoPhaseManagement = ({
 
   const phaseQuestionCounts = calculatePhaseQuestionCounts(assistantMessages);
   
-  // Determine if user is currently answering (last message was from assistant)
+  // Count only regular user messages (not enhanced ones) for progress calculation
+  // Filter out enhanced messages by excluding messages that contain phase context
+  const regularUserMessages = messages.filter(msg => 
+    msg.role === 'user' && 
+    !msg.content.includes('YOU ARE NOW IN THE') && 
+    !msg.content.includes('The next question you will ask will be from the')
+  );
+  
+  // Determine if user is currently answering (last message was from assistant and there are more user messages than assistant responses)
   const lastMessage = messages[messages.length - 1];
-  const isUserAnswering = lastMessage?.role === 'assistant';
+  const isUserAnswering = lastMessage?.role === 'assistant' && regularUserMessages.length > assistantMessages.length;
   
   const correctPhase = determineCorrectPhase(phaseQuestionCounts, isUserAnswering);
   

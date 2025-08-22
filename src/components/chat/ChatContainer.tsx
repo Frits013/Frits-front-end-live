@@ -140,10 +140,14 @@ const ChatContainer = ({
   };
 
   // Calculate interview progress using demo phase data if available
-  // Count AI messages (assistant + writer) for progress tracking
-  const aiMessages = messages.filter(msg => msg.role === 'assistant' || msg.role === 'writer');
-  const totalQuestions = 19; // Total across all phases (3+4+10+1+1)
-  const answeredQuestions = aiMessages.length;
+  // Count only regular user messages for progress tracking (answers given by user)
+  const regularUserMessages = messages.filter(msg => 
+    msg.role === 'user' && 
+    !msg.content.includes('YOU ARE NOW IN THE') && 
+    !msg.content.includes('The next question you will ask will be from the')
+  );
+  const totalQuestions = 21; // Total across all phases (3+4+10+3+1)
+  const answeredQuestions = regularUserMessages.length;
   
   // Use demo phase data if available, otherwise fall back to session data
   const currentPhase = demoPhaseData?.currentPhase || sessionData?.current_phase;
