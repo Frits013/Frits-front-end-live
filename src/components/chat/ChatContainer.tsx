@@ -133,8 +133,8 @@ const ChatContainer = ({
       'introduction': 3,
       'theme_selection': 4,
       'deep_dive': 10,
-      'summary': 1,
-      'recommendations': 1
+      'summary': 3,
+      'recommendations': 2
     };
     return phaseMaxQuestions[phase as keyof typeof phaseMaxQuestions] || 3;
   };
@@ -146,7 +146,7 @@ const ChatContainer = ({
     !msg.content.includes('YOU ARE NOW IN THE') && 
     !msg.content.includes('The next question you will ask will be from the')
   );
-  const totalQuestions = 21; // Total across all phases (3+4+10+3+1)
+  const totalQuestions = 22; // Total across all phases (3+4+10+3+2)
   const answeredQuestions = regularUserMessages.length;
   
   // Use demo phase data if available, otherwise fall back to session data

@@ -30,8 +30,8 @@ const InterviewProgress = ({
     { id: 'introduction', name: 'Introduction', maxQuestions: 3 },
     { id: 'theme_selection', name: 'Theme Selection', maxQuestions: 4 },
     { id: 'deep_dive', name: 'Deep Dive', maxQuestions: 10 },
-    { id: 'summary', name: 'Summary', maxQuestions: 1 },
-    { id: 'recommendations', name: 'Recommendations', maxQuestions: 1 }
+    { id: 'summary', name: 'Summary', maxQuestions: 3 },
+    { id: 'recommendations', name: 'Recommendations', maxQuestions: 2 }
   ];
 
   // Calculate total progress across all phases
@@ -42,20 +42,8 @@ const InterviewProgress = ({
   const currentPhaseDefinition = phaseDefinitions.find(p => p.id === currentPhase);
   const currentPhaseMaxQuestions = currentPhaseDefinition?.maxQuestions || 5;
   
-  // Calculate questions within current phase
-  const getCurrentPhaseQuestionCount = () => {
-    const currentIndex = phaseDefinitions.findIndex(p => p.id === currentPhase);
-    if (currentIndex === -1) return 0;
-    
-    const questionsBeforeCurrentPhase = phaseDefinitions
-      .slice(0, currentIndex)
-      .reduce((sum, phase) => sum + phase.maxQuestions, 0);
-    
-    const questionsInCurrentPhase = Math.max(0, answeredQuestions - questionsBeforeCurrentPhase);
-    return Math.min(questionsInCurrentPhase, currentPhaseMaxQuestions);
-  };
-  
-  const currentPhaseQuestions = getCurrentPhaseQuestionCount();
+  // Use demo phase data if available for accurate current phase tracking
+  const currentPhaseQuestions = demoPhaseData?.questionCount ?? 0;
   const currentPhaseProgress = currentPhaseMaxQuestions > 0 ? 
     Math.min((currentPhaseQuestions / currentPhaseMaxQuestions) * 100, 100) : 0;
 

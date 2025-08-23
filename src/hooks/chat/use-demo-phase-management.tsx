@@ -138,11 +138,11 @@ export const useDemoPhaseManagement = ({
   
   const correctPhase = determineCorrectPhase(phaseQuestionCounts, isUserAnswering, userJustFinishedAnswering, regularUserMessages);
   
-  // Get current phase question number and max
   // Calculate the question number within the current phase based on answers
   const phases = Object.keys(phaseDefinitions) as InterviewPhase[];
   const totalAnswers = regularUserMessages.length;
   
+  // Calculate which question number we're on within the current phase
   let answersUsed = 0;
   let currentPhaseQuestionCount = 0;
   
@@ -151,7 +151,8 @@ export const useDemoPhaseManagement = ({
     const maxQuestionsForPhase = phaseDefinitions[phase].maxQuestions;
     
     if (phase === correctPhase) {
-      currentPhaseQuestionCount = totalAnswers - answersUsed;
+      // This is the number of answers completed in this phase
+      currentPhaseQuestionCount = Math.max(0, totalAnswers - answersUsed);
       break;
     }
     
@@ -237,9 +238,9 @@ export const useDemoPhaseManagement = ({
 
   return {
     currentPhase: correctPhase,
-    questionCount: currentPhaseQuestionCount, // Current phase question number
+    questionCount: currentPhaseQuestionCount, // Number of answers completed in current phase
     maxQuestions: currentPhaseMaxQuestions, // Max questions for current phase
-    totalQuestions: assistantMessages.length, // Total questions across all phases
+    totalQuestions: totalAnswers, // Total answers given (for overall progress)
     phaseQuestionCounts, // Questions per phase breakdown
     triggerNextPhase,
     canTriggerNextPhase: correctPhase === 'summary'
