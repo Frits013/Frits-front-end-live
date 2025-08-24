@@ -28,6 +28,7 @@ interface ChatPanelProps {
   demoPhaseData?: {
     currentPhase: InterviewPhase;
     questionCount: number;
+    currentQuestionNumber: number;
     maxQuestions: number;
     triggerNextPhase?: () => void;
     canTriggerNextPhase?: boolean;
@@ -76,7 +77,7 @@ const ChatPanel = ({
   }
 
   // Use phase-specific question numbers from demoPhaseData
-  const currentQuestionNumber = demoPhaseData?.questionCount || 0;
+  const currentQuestionNumber = demoPhaseData?.currentQuestionNumber || 1;
   const maxQuestionsInPhase = demoPhaseData?.maxQuestions || 3;
 
   // Check if we should show summary/recommendations display

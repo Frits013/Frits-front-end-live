@@ -29,6 +29,7 @@ interface ChatContainerProps {
   demoPhaseData?: {
     currentPhase: InterviewPhase;
     questionCount: number;
+    currentQuestionNumber: number;
     maxQuestions: number;
     triggerNextPhase?: () => void;
     canTriggerNextPhase?: boolean;
