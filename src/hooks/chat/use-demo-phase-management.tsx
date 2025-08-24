@@ -15,8 +15,8 @@ const phaseDefinitions = {
   'introduction': { maxQuestions: 3, order: 0 },
   'theme_selection': { maxQuestions: 4, order: 1 },
   'deep_dive': { maxQuestions: 10, order: 2 },
-  'summary': { maxQuestions: 3, order: 3 },
-  'recommendations': { maxQuestions: 2, order: 4 }
+  'summary': { maxQuestions: 1, order: 3 },
+  'recommendations': { maxQuestions: 1, order: 4 }
 };
 
 export const useDemoPhaseManagement = ({
@@ -239,6 +239,7 @@ export const useDemoPhaseManagement = ({
   return {
     currentPhase: correctPhase,
     questionCount: currentPhaseQuestionCount, // Number of answers completed in current phase
+    currentQuestionNumber: currentPhaseQuestionCount + 1, // Current question being asked (for display)
     maxQuestions: currentPhaseMaxQuestions, // Max questions for current phase
     totalQuestions: totalAnswers, // Total answers given (for overall progress)
     phaseQuestionCounts, // Questions per phase breakdown

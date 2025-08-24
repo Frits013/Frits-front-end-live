@@ -30,8 +30,8 @@ const InterviewProgress = ({
     { id: 'introduction', name: 'Introduction', maxQuestions: 3 },
     { id: 'theme_selection', name: 'Theme Selection', maxQuestions: 4 },
     { id: 'deep_dive', name: 'Deep Dive', maxQuestions: 10 },
-    { id: 'summary', name: 'Summary', maxQuestions: 3 },
-    { id: 'recommendations', name: 'Recommendations', maxQuestions: 2 }
+    { id: 'summary', name: 'Summary', maxQuestions: 1 },
+    { id: 'recommendations', name: 'Recommendations', maxQuestions: 1 }
   ];
 
   // Calculate total progress across all phases
