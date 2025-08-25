@@ -79,7 +79,7 @@ export const useDemoPhaseManagement = ({
     return phaseQuestionCounts;
   };
 
-  // Determine correct phase based on completed phases
+  // Determine correct phase based on assistant messages (predictive) and user answers (progress)
   const determineCorrectPhase = (
     phaseQuestionCounts: Record<string, number>, 
     isUserAnswering: boolean = false, 
@@ -90,30 +90,34 @@ export const useDemoPhaseManagement = ({
     
     // Calculate how many answers we have so far
     const totalAnswers = regularUserMessages.length;
+    const totalAssistantMessages = assistantMessages.length;
     
     if (isDev) {
-      console.log(`📊 Total answers: ${totalAnswers}, Assistant messages: ${assistantMessages.length}`);
+      console.log(`📊 Total answers: ${totalAnswers}, Assistant messages: ${totalAssistantMessages}`);
     }
     
-    // Determine which phase we should be in based on answers completed
-    let answersUsed = 0;
+    // PREDICTIVE PHASE DETECTION: If we have more assistant messages than the current phase allows,
+    // we should immediately transition to the next phase to prevent "X+1/X" displays
+    let messagesUsed = 0;
     for (let i = 0; i < phases.length; i++) {
       const phase = phases[i];
       const maxQuestionsForPhase = phaseDefinitions[phase].maxQuestions;
       
-      if (totalAnswers <= answersUsed + maxQuestionsForPhase) {
-        // We're in this phase
-        if (isDev) {
-          const answersInThisPhase = totalAnswers - answersUsed;
-          console.log(`📊 User is in ${phase} phase with ${answersInThisPhase}/${maxQuestionsForPhase} answers`);
-        }
-        return phase;
+      // If we have enough assistant messages to exceed this phase, continue to next phase
+      if (totalAssistantMessages > messagesUsed + maxQuestionsForPhase) {
+        messagesUsed += maxQuestionsForPhase;
+        continue;
       }
       
-      answersUsed += maxQuestionsForPhase;
+      // We're in this phase based on assistant messages
+      if (isDev) {
+        const messagesInThisPhase = totalAssistantMessages - messagesUsed;
+        console.log(`📊 Phase determined by assistant messages: ${phase} (${messagesInThisPhase}/${maxQuestionsForPhase})`);
+      }
+      return phase;
     }
     
-    // If we've answered all questions, we're in the final phase
+    // If we've processed all assistant messages, we're in the final phase
     return phases[phases.length - 1];
   };
 
