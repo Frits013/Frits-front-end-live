@@ -55,6 +55,7 @@ const ChatPanel = ({
   const inputContainerRef = useRef<HTMLDivElement>(null);
   const [useInterviewMode, setUseInterviewMode] = useState(true);
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+  const [isGettingRecommendations, setIsGettingRecommendations] = useState(false);
   
   // Message sender hook for interview mode
   const { sendMessage } = useMessageSender({
@@ -82,9 +83,15 @@ const ChatPanel = ({
 
   // Handle getting recommendations by sending a phase transition message
   const handleGetRecommendations = async () => {
-    if (demoPhaseData?.currentPhase === 'summary') {
-      // Send a placeholder message to trigger the recommendations phase
-      await sendMessage("Please provide my personalized recommendations.");
+    if (demoPhaseData?.currentPhase === 'summary' && !isGettingRecommendations) {
+      setIsGettingRecommendations(true);
+      try {
+        // Send a placeholder message to trigger the recommendations phase
+        await sendMessage("Please provide my personalized recommendations.");
+      } finally {
+        // Reset loading state after a delay (message sending process will handle the phase transition)
+        setTimeout(() => setIsGettingRecommendations(false), 2000);
+      }
     }
   };
 
@@ -102,6 +109,7 @@ const ChatPanel = ({
               currentPhase={demoPhaseData.currentPhase}
               onGetRecommendations={handleGetRecommendations}
               canTriggerRecommendations={demoPhaseData?.canTriggerNextPhase || false}
+              isLoading={isGettingRecommendations}
             />
           ) : (
             <InterviewModeSwitcher

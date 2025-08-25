@@ -1,7 +1,7 @@
 import { ChatMessage, InterviewPhase } from "@/types/chat";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, ArrowRight, Lightbulb } from "lucide-react";
+import { FileText, ArrowRight, Lightbulb, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface SummaryRecommendationsDisplayProps {
@@ -9,13 +9,15 @@ interface SummaryRecommendationsDisplayProps {
   currentPhase: InterviewPhase;
   onGetRecommendations: () => void;
   canTriggerRecommendations: boolean;
+  isLoading?: boolean;
 }
 
 const SummaryRecommendationsDisplay = ({
   messages,
   currentPhase,
   onGetRecommendations,
-  canTriggerRecommendations
+  canTriggerRecommendations,
+  isLoading = false
 }: SummaryRecommendationsDisplayProps) => {
   // Get the latest assistant message for display
   const latestAssistantMessage = messages
@@ -76,10 +78,15 @@ const SummaryRecommendationsDisplay = ({
             >
               <Button
                 onClick={onGetRecommendations}
-                className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-primary/30 transition-all duration-300 transform hover:scale-[1.02]"
+                disabled={isLoading}
+                className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 disabled:from-primary/50 disabled:to-primary/40 text-primary-foreground py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-primary/30 transition-all duration-300 transform hover:scale-[1.02] disabled:hover:scale-100 disabled:cursor-not-allowed"
               >
-                <span>Get My Recommendations!</span>
-                <ArrowRight className="w-5 h-5 ml-2" />
+                <span>{isLoading ? 'Generating Recommendations...' : 'Get My Recommendations!'}</span>
+                {isLoading ? (
+                  <Loader2 className="w-5 h-5 ml-2 animate-spin" />
+                ) : (
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                )}
               </Button>
             </motion.div>
           </div>
