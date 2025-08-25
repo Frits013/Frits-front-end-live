@@ -80,6 +80,14 @@ const ChatPanel = ({
   const currentQuestionNumber = demoPhaseData?.currentQuestionNumber || 1;
   const maxQuestionsInPhase = demoPhaseData?.maxQuestions || 3;
 
+  // Handle getting recommendations by sending a phase transition message
+  const handleGetRecommendations = async () => {
+    if (demoPhaseData?.currentPhase === 'summary') {
+      // Send a placeholder message to trigger the recommendations phase
+      await sendMessage("Please provide my personalized recommendations.");
+    }
+  };
+
   // Check if we should show summary/recommendations display
   const showSummaryRecommendations = demoPhaseData?.currentPhase === 'summary' || demoPhaseData?.currentPhase === 'recommendations';
 
@@ -92,7 +100,7 @@ const ChatPanel = ({
             <SummaryRecommendationsDisplay
               messages={messages}
               currentPhase={demoPhaseData.currentPhase}
-              onGetRecommendations={demoPhaseData?.triggerNextPhase || (() => {})}
+              onGetRecommendations={handleGetRecommendations}
               canTriggerRecommendations={demoPhaseData?.canTriggerNextPhase || false}
             />
           ) : (
