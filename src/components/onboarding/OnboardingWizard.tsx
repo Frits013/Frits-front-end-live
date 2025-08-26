@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,48 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  // Load saved onboarding state from localStorage
+  useEffect(() => {
+    if (open) {
+      const savedStep = localStorage.getItem('onboarding_step');
+      const savedCompanyCode = localStorage.getItem('onboarding_company_code');
+      const savedUserDescription = localStorage.getItem('onboarding_user_description');
+      
+      if (savedStep) setStep(parseInt(savedStep));
+      if (savedCompanyCode) setCompanyCode(savedCompanyCode);
+      if (savedUserDescription) setUserDescription(savedUserDescription);
+    }
+  }, [open]);
+
+  // Save step to localStorage
+  useEffect(() => {
+    if (open) {
+      localStorage.setItem('onboarding_step', step.toString());
+    }
+  }, [step, open]);
+
+  // Save company code to localStorage
+  useEffect(() => {
+    if (open) {
+      if (companyCode) {
+        localStorage.setItem('onboarding_company_code', companyCode);
+      } else {
+        localStorage.removeItem('onboarding_company_code');
+      }
+    }
+  }, [companyCode, open]);
+
+  // Save user description to localStorage
+  useEffect(() => {
+    if (open) {
+      if (userDescription) {
+        localStorage.setItem('onboarding_user_description', userDescription);
+      } else {
+        localStorage.removeItem('onboarding_user_description');
+      }
+    }
+  }, [userDescription, open]);
 
   const handleNext = () => {
     setError("");
@@ -106,6 +148,11 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
         title: "Profile Updated",
         description: "Your profile has been successfully updated.",
       });
+      
+      // Clear saved onboarding state
+      localStorage.removeItem('onboarding_step');
+      localStorage.removeItem('onboarding_company_code');
+      localStorage.removeItem('onboarding_user_description');
       
       onComplete();
     } catch (error) {

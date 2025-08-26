@@ -28,6 +28,14 @@ const InterviewInput = ({
   const isSubmittingRef = useRef<boolean>(false);
   const [isRecording, setIsRecording] = useState(false);
   
+  // Load draft from localStorage on component mount
+  useEffect(() => {
+    const savedDraft = localStorage.getItem('interview_input_draft');
+    if (savedDraft && !inputMessage) {
+      setInputMessage(savedDraft);
+    }
+  }, [setInputMessage, inputMessage]);
+  
   // Auto-resize the textarea as content changes
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -54,6 +62,9 @@ const InterviewInput = ({
     isSubmittingRef.current = true;
     
     handleSendMessage(e);
+    
+    // Clear draft from localStorage when message is sent
+    localStorage.removeItem('interview_input_draft');
     
     // Reset submission flag after a delay
     setTimeout(() => {
@@ -90,6 +101,13 @@ const InterviewInput = ({
       setInputMessage(value.slice(0, -lastLine.length) + `${nextNumber}. `);
     } else {
       setInputMessage(value);
+    }
+    
+    // Save draft to localStorage
+    if (value.trim()) {
+      localStorage.setItem('interview_input_draft', value);
+    } else {
+      localStorage.removeItem('interview_input_draft');
     }
   };
 
