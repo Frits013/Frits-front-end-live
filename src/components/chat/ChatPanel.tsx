@@ -68,14 +68,11 @@ const ChatPanel = ({
     currentPhase: demoPhaseData?.currentPhase,
   });
 
-  // Auto-trigger recommendations completion dialog
-  const isRecommendationsComplete = demoPhaseData?.currentPhase === 'recommendations' && 
-    demoPhaseData?.questionCount >= demoPhaseData?.maxQuestions;
-
-  // Show feedback dialog when recommendations phase is complete
-  if (isRecommendationsComplete && !showFeedbackDialog) {
-    setTimeout(() => setShowFeedbackDialog(true), 1000);
-  }
+  // Manual trigger for feedback dialog
+  const handleEndInterview = () => {
+    console.log('User clicked End Interview - triggering feedback dialog');
+    setShowFeedbackDialog(true);
+  };
 
   // Use phase-specific question numbers from demoPhaseData
   const currentQuestionNumber = demoPhaseData?.currentQuestionNumber || 1;
@@ -110,6 +107,7 @@ const ChatPanel = ({
               onGetRecommendations={handleGetRecommendations}
               canTriggerRecommendations={demoPhaseData?.canTriggerNextPhase || false}
               isLoading={isGettingRecommendations}
+              onEndInterview={handleEndInterview}
             />
           ) : (
             <InterviewModeSwitcher

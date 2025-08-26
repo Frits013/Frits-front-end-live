@@ -34,8 +34,9 @@ const InterviewProgress = ({
     { id: 'recommendations', name: 'Recommendations', maxQuestions: 1 }
   ];
 
-  // Calculate total progress across all phases
-  const totalMaxQuestions = phaseDefinitions.reduce((sum, phase) => sum + phase.maxQuestions, 0);
+  // Calculate total progress only for interview phases (exclude summary and recommendations)
+  const interviewPhases = phaseDefinitions.slice(0, 3); // Only introduction, theme_selection, deep_dive
+  const totalMaxQuestions = interviewPhases.reduce((sum, phase) => sum + phase.maxQuestions, 0); // = 17
   const totalProgress = Math.min((answeredQuestions / totalMaxQuestions) * 100, 100);
 
   // Calculate current phase progress - use demo data for accurate tracking

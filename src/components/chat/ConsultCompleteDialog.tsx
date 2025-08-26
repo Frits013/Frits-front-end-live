@@ -132,6 +132,9 @@ const ConsultCompleteDialog = ({
 
   return (
     <>
+      {/* Full-screen Confetti Animation */}
+      <Confetti active={showConfetti} />
+      
       <Dialog 
         open={open && !isExiting} 
         onOpenChange={(isOpen) => {
@@ -141,7 +144,6 @@ const ConsultCompleteDialog = ({
         }}
       >
         <DialogContent className="sm:max-w-[425px] z-50" hideCloseButton={true}>
-          <Confetti active={showConfetti} />
           <DialogHeader>
             <DialogTitle>Consult Session Complete</DialogTitle>
             <DialogDescription>

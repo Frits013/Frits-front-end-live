@@ -10,6 +10,7 @@ interface SummaryRecommendationsDisplayProps {
   onGetRecommendations: () => void;
   canTriggerRecommendations: boolean;
   isLoading?: boolean;
+  onEndInterview?: () => void;
 }
 
 const SummaryRecommendationsDisplay = ({
@@ -17,7 +18,8 @@ const SummaryRecommendationsDisplay = ({
   currentPhase,
   onGetRecommendations,
   canTriggerRecommendations,
-  isLoading = false
+  isLoading = false,
+  onEndInterview
 }: SummaryRecommendationsDisplayProps) => {
   // Get the latest assistant message for display
   const latestAssistantMessage = messages
@@ -92,15 +94,22 @@ const SummaryRecommendationsDisplay = ({
           </div>
         )}
 
-        {/* Completion indicator for Recommendations Phase */}
-        {isRecommendationsPhase && (
-          <div className="p-6 border-t border-border/50">
-            <div className="text-center">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/10 text-green-600 rounded-full border border-green-500/20">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium">Interview Complete</span>
-              </div>
-            </div>
+        {/* End Interview Button for Recommendations Phase */}
+        {currentPhase === 'recommendations' && onEndInterview && (
+          <div className="mt-6 text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <Button
+                onClick={onEndInterview}
+                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-4 px-8 text-lg font-semibold rounded-xl shadow-lg hover:shadow-green-500/30 transition-all duration-300 transform hover:scale-[1.02]"
+              >
+                <Lightbulb className="w-5 h-5 mr-2" />
+                <span>End Interview & Provide Feedback</span>
+              </Button>
+            </motion.div>
           </div>
         )}
       </Card>
