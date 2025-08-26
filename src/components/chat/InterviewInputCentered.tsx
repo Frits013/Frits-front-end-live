@@ -21,11 +21,19 @@ const InterviewInputCentered = ({
   const [isRecording, setIsRecording] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Load draft from localStorage on component mount
+  useEffect(() => {
+    const savedDraft = localStorage.getItem("interview_centered_input_draft");
+    if (savedDraft && !inputValue) {
+      setInputValue(savedDraft);
+    }
+  }, [inputValue]);
+
   // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
     }
   }, [inputValue]);
 
@@ -34,6 +42,8 @@ const InterviewInputCentered = ({
     if (inputValue.trim() && !isProcessing && !disabled) {
       onSubmit(inputValue.trim());
       setInputValue("");
+      // Clear draft from localStorage when message is sent
+      localStorage.removeItem("interview_centered_input_draft");
     }
   };
 
@@ -65,11 +75,20 @@ const InterviewInputCentered = ({
             <Textarea
               ref={textareaRef}
               value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setInputValue(value);
+                // Save draft to localStorage
+                if (value.trim()) {
+                  localStorage.setItem("interview_centered_input_draft", value);
+                } else {
+                  localStorage.removeItem("interview_centered_input_draft");
+                }
+              }}
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
               disabled={disabled || isProcessing}
-              className="border-0 bg-transparent resize-none min-h-[60px] max-h-[200px] text-lg leading-relaxed focus-visible:ring-0 focus-visible:ring-offset-0 pr-20 py-5 px-6"
+              className="border-0 bg-transparent resize-none min-h-[60px] max-h-[200px] text-lg leading-relaxed focus-visible:ring-0 focus-visible:ring-offset-0 pr-28 py-5 px-6"
               rows={1}
             />
 
