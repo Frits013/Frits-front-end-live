@@ -88,16 +88,18 @@ const InterviewProgress = ({
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             Interview Progress
           </h3>
+          {estimatedTimeLeft}
         </div>
 
         {/* Total Progress */}
-        <div className="mb-4">
+        <div className="mb-4 text-2xl">
           <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300 mb-1">
             <span>Total Interview Progress</span>
+            <span>{Math.round(totalProgress)}%</span>
           </div>
           <Progress value={totalProgress} className="h-2 mb-2" />
           <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-            <span>{answeredQuestions} of {totalMaxQuestions} total questions - {Math.round(totalProgress)}%</span>
+            
           </div>
         </div>
 
