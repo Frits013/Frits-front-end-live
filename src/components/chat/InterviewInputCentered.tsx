@@ -70,64 +70,69 @@ const InterviewInputCentered = ({
     >
       <div className="max-w-4xl mx-auto p-6">
         <form onSubmit={handleSubmit} className="relative">
-          <div className="relative bg-background/80 backdrop-blur-sm rounded-2xl border border-border/50 shadow-lg hover:shadow-xl transition-all duration-300 focus-within:border-primary/50 focus-within:shadow-primary/10">
-            {/* Textarea */}
-            <Textarea
-              ref={textareaRef}
-              value={inputValue}
-              onChange={(e) => {
-                const value = e.target.value;
-                setInputValue(value);
-                // Save draft to localStorage
-                if (value.trim()) {
-                  localStorage.setItem("interview_centered_input_draft", value);
-                } else {
-                  localStorage.removeItem("interview_centered_input_draft");
-                }
-              }}
-              onKeyDown={handleKeyDown}
-              placeholder={placeholder}
-              disabled={disabled || isProcessing}
-              className="border-0 bg-transparent resize-none min-h-[60px] max-h-[200px] text-lg leading-relaxed focus-visible:ring-0 focus-visible:ring-offset-0 pr-36 py-5 px-6"
-              rows={1}
-            />
+          <div className="bg-background/80 backdrop-blur-sm rounded-2xl border border-border/50 shadow-lg hover:shadow-xl transition-all duration-300 focus-within:border-primary/50 focus-within:shadow-primary/10">
+            {/* Input Container with Flex Layout */}
+            <div className="flex items-end gap-3 p-3">
+              {/* Textarea */}
+              <div className="flex-1">
+                <Textarea
+                  ref={textareaRef}
+                  value={inputValue}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setInputValue(value);
+                    // Save draft to localStorage
+                    if (value.trim()) {
+                      localStorage.setItem("interview_centered_input_draft", value);
+                    } else {
+                      localStorage.removeItem("interview_centered_input_draft");
+                    }
+                  }}
+                  onKeyDown={handleKeyDown}
+                  placeholder={placeholder}
+                  disabled={disabled || isProcessing}
+                  className="border-0 bg-transparent resize-none min-h-[54px] max-h-[200px] text-lg leading-relaxed focus-visible:ring-0 focus-visible:ring-offset-0 py-3 px-3"
+                  rows={1}
+                />
+              </div>
 
-            {/* Action Buttons */}
-            <div className="absolute right-3 bottom-3 flex items-center gap-2">
-              {/* Voice Recording Button */}
-              <Button
-                type="button"
-                onClick={toggleRecording}
-                variant="ghost"
-                size="sm"
-                className={`rounded-full w-10 h-10 p-0 ${
-                  isRecording ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' : ''
-                }`}
-                disabled={disabled || isProcessing}
-              >
-                {isRecording ? (
-                  <MicOff className="w-4 h-4" />
-                ) : (
-                  <Mic className="w-4 h-4" />
-                )}
-              </Button>
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 pb-1">
+                {/* Voice Recording Button */}
+                <Button
+                  type="button"
+                  onClick={toggleRecording}
+                  variant="ghost"
+                  size="sm"
+                  className={`rounded-full w-10 h-10 p-0 ${
+                    isRecording ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' : ''
+                  }`}
+                  disabled={disabled || isProcessing}
+                >
+                  {isRecording ? (
+                    <MicOff className="w-4 h-4" />
+                  ) : (
+                    <Mic className="w-4 h-4" />
+                  )}
+                </Button>
 
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                disabled={isSubmitDisabled}
-                className="rounded-full w-10 h-10 p-0 hover:scale-105 transition-transform"
-              >
-                {isProcessing ? (
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    className="w-4 h-4 border-2 border-background border-t-transparent rounded-full"
-                  />
-                ) : (
-                  <Send className="w-4 h-4" />
-                )}
-              </Button>
+                {/* Submit Button */}
+                <Button
+                  type="submit"
+                  disabled={isSubmitDisabled}
+                  className="rounded-full w-10 h-10 p-0 hover:scale-105 transition-transform"
+                >
+                  {isProcessing ? (
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      className="w-4 h-4 border-2 border-background border-t-transparent rounded-full"
+                    />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
 
