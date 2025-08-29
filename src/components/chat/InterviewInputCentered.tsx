@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Mic, MicOff } from "lucide-react";
+import { Send, Mic, MicOff, CornerDownLeft } from "lucide-react";
 
 interface InterviewInputCenteredProps {
   onSubmit: (message: string) => void;
@@ -147,6 +147,15 @@ const InterviewInputCentered = ({
             </motion.div>
           )}
         </form>
+
+        {/* Keyboard Shortcut Hint */}
+        <div className="text-xs text-muted-foreground mt-2 text-center">
+          <div className="inline-flex items-center gap-1">
+            <span>CTRL +</span>
+            <CornerDownLeft className="w-3 h-3" />
+            <span>to send</span>
+          </div>
+        </div>
 
         {/* Processing Indicator */}
         {isProcessing && (
