@@ -167,7 +167,7 @@ const InterviewQuestionDisplay = ({
           onClick={onShowHistory}
           variant="outline"
           size="sm"
-          className="absolute top-6 right-6 gap-2 hover:scale-105 transition-transform"
+          className="absolute top-6 right-6 gap-2 hover:scale-105 transition-transform z-50"
         >
           <History className="w-4 h-4" />
           View History
