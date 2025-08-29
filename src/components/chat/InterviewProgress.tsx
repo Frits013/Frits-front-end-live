@@ -88,7 +88,6 @@ const InterviewProgress = ({
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             Interview Progress
           </h3>
-          {estimatedTimeLeft}
         </div>
 
         {/* Total Progress */}
