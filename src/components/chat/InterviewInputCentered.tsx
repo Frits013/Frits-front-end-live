@@ -88,7 +88,7 @@ const InterviewInputCentered = ({
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
               disabled={disabled || isProcessing}
-              className="border-0 bg-transparent resize-none min-h-[60px] max-h-[200px] text-lg leading-relaxed focus-visible:ring-0 focus-visible:ring-offset-0 pr-32 py-5 px-6"
+              className="border-0 bg-transparent resize-none min-h-[60px] max-h-[200px] text-lg leading-relaxed focus-visible:ring-0 focus-visible:ring-offset-0 pr-36 py-5 px-6"
               rows={1}
             />
 
