@@ -149,7 +149,7 @@ const InterviewInputCentered = ({
         </form>
 
         {/* Keyboard Shortcut Hint */}
-        <div className="text-xs text-muted-foreground mt-2 text-center">
+        <div className="text-xs text-muted-foreground mt-2 text-right">
           <div className="inline-flex items-center gap-1">
             <span>CTRL +</span>
             <CornerDownLeft className="w-3 h-3" />
