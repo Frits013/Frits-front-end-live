@@ -48,10 +48,11 @@ const InterviewInputCentered = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && e.ctrlKey) {
       e.preventDefault();
       handleSubmit(e);
     }
+    // Let Enter go through normally for new lines
   };
 
   const toggleRecording = () => {
