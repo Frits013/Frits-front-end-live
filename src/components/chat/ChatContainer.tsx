@@ -11,6 +11,7 @@ import ChatPanel from "./ChatPanel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessionAnimations } from "@/hooks/chat/use-session-animations";
+import { INITIAL_MESSAGE } from "@/hooks/chat-sessions/use-session-creation";
 
 interface ChatContainerProps {
   messages: ChatMessage[];
@@ -145,7 +146,8 @@ const ChatContainer = ({
   const regularUserMessages = messages.filter(msg => 
     msg.role === 'user' && 
     !msg.content.includes('YOU ARE NOW IN THE') && 
-    !msg.content.includes('The next question you will ask will be from the')
+    !msg.content.includes('The next question you will ask will be from the') &&
+    msg.content.trim() !== INITIAL_MESSAGE.trim()
   );
   const totalQuestions = 19; // Total across all phases (3+4+10+1+1)
   const answeredQuestions = regularUserMessages.length;
