@@ -284,143 +284,6 @@ export type Database = {
         }
         Relationships: []
       }
-      session_theme_selections: {
-        Row: {
-          created_at: string
-          id: string
-          priority_order: number | null
-          selection_confidence: number | null
-          selection_method: string | null
-          session_context: Json | null
-          session_id: string
-          theme_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          priority_order?: number | null
-          selection_confidence?: number | null
-          selection_method?: string | null
-          session_context?: Json | null
-          session_id: string
-          theme_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          priority_order?: number | null
-          selection_confidence?: number | null
-          selection_method?: string | null
-          session_context?: Json | null
-          session_id?: string
-          theme_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "session_theme_selections_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "chat_sessions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "session_theme_selections_theme_id_fkey"
-            columns: ["theme_id"]
-            isOneToOne: false
-            referencedRelation: "themes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      themes: {
-        Row: {
-          category: string
-          created_at: string
-          description: string | null
-          difficulty_level: string | null
-          id: string
-          industry_tags: string[] | null
-          is_active: boolean
-          keywords: string[] | null
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          category: string
-          created_at?: string
-          description?: string | null
-          difficulty_level?: string | null
-          id?: string
-          industry_tags?: string[] | null
-          is_active?: boolean
-          keywords?: string[] | null
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          category?: string
-          created_at?: string
-          description?: string | null
-          difficulty_level?: string | null
-          id?: string
-          industry_tags?: string[] | null
-          is_active?: boolean
-          keywords?: string[] | null
-          name?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      user_theme_profiles: {
-        Row: {
-          created_at: string
-          expertise_level: string | null
-          frequency_discussed: number | null
-          id: string
-          interest_level: number | null
-          last_discussed_at: string | null
-          theme_id: string
-          updated_at: string
-          user_id: string
-          user_notes: string | null
-        }
-        Insert: {
-          created_at?: string
-          expertise_level?: string | null
-          frequency_discussed?: number | null
-          id?: string
-          interest_level?: number | null
-          last_discussed_at?: string | null
-          theme_id: string
-          updated_at?: string
-          user_id: string
-          user_notes?: string | null
-        }
-        Update: {
-          created_at?: string
-          expertise_level?: string | null
-          frequency_discussed?: number | null
-          id?: string
-          interest_level?: number | null
-          last_discussed_at?: string | null
-          theme_id?: string
-          updated_at?: string
-          user_id?: string
-          user_notes?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_theme_profiles_theme_id_fkey"
-            columns: ["theme_id"]
-            isOneToOne: false
-            referencedRelation: "themes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       users: {
         Row: {
           company_id: string | null
@@ -479,24 +342,10 @@ export type Database = {
       }
     }
     Views: {
-      company_codes: {
-        Row: {
-          code: number | null
-        }
-        Insert: {
-          code?: number | null
-        }
-        Update: {
-          code?: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
-      set_user_company: {
-        Args: { company_code: string; user_uuid: string }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
       interview_phase:
