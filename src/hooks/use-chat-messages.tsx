@@ -22,7 +22,6 @@ export const useChatMessages = (sessionId: string | null) => {
     setHasFeedback,
     autoMessageSent,
     sessionData,
-    currentProgress,
     phaseConfigs
   } = useMessageFetcher(sessionId);
   
@@ -42,8 +41,7 @@ export const useChatMessages = (sessionId: string | null) => {
   
   // Set up subscription to phase changes
   usePhaseSubscription(sessionId, 
-    (data) => { /* sessionData is managed by useMessageFetcher */ }, 
-    (progress) => { /* currentProgress is managed by useMessageFetcher */ }
+    (data) => { /* sessionData is managed by useMessageFetcher */ }
   );
 
   // Demo phase management with client-side logic
@@ -74,7 +72,6 @@ export const useChatMessages = (sessionId: string | null) => {
     isProcessing,
     setIsProcessing,
     sessionData,
-    currentProgress,
     phaseConfigs,
     demoPhaseData
   };

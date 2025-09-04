@@ -34,7 +34,6 @@ const Chat = () => {
     setDialogDismissed,
     hasFeedback,
     sessionData,
-    currentProgress,
     demoPhaseData
   } = useChatMessages(currentSessionId);
   
@@ -143,7 +142,6 @@ const Chat = () => {
         hasFeedback={hasFeedback}
         onSessionAnimation={handleSessionAnimation}
         sessionData={sessionData}
-        currentProgress={currentProgress}
         demoPhaseData={demoPhaseData}
         createNewChat={handleCreateNewChat}
       />

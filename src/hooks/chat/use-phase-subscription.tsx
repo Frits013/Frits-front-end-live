@@ -1,11 +1,10 @@
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ChatSession, InterviewProgress } from "@/types/chat";
+import { ChatSession } from "@/types/chat";
 
 export const usePhaseSubscription = (
   sessionId: string | null,
-  setSessionData: (data: ChatSession | null) => void,
-  setCurrentProgress: (progress: InterviewProgress | null) => void
+  setSessionData: (data: ChatSession | null) => void
 ) => {
   useEffect(() => {
     if (!sessionId) return;
@@ -28,31 +27,9 @@ export const usePhaseSubscription = (
       )
       .subscribe();
 
-    // Subscribe to interview progress changes
-    const progressChannel = supabase
-      .channel(`progress_${sessionId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'interview_progress',
-          filter: `session_id=eq.${sessionId}`
-        },
-        (payload) => {
-          console.log('Interview progress updated:', payload);
-          if (payload.eventType === 'DELETE') {
-            setCurrentProgress(null);
-          } else {
-            setCurrentProgress(payload.new as InterviewProgress);
-          }
-        }
-      )
-      .subscribe();
 
     return () => {
       supabase.removeChannel(sessionChannel);
-      supabase.removeChannel(progressChannel);
     };
-  }, [sessionId, setSessionData, setCurrentProgress]);
+  }, [sessionId, setSessionData]);
 };

@@ -2,7 +2,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import InterviewProgress from "./InterviewProgress";
-import { ChatMessage, ChatSession, InterviewProgress as InterviewProgressType, InterviewPhase } from "@/types/chat";
+import { ChatMessage, ChatSession, InterviewPhase } from "@/types/chat";
 import ConsultCompleteDialog from "@/components/chat/ConsultCompleteDialog";
 import { useToast } from "@/hooks/use-toast";
 import ChatPanelLayout from "./ChatPanelLayout";
@@ -26,7 +26,6 @@ interface ChatContainerProps {
   hasFeedback?: boolean;
   onSessionAnimation?: (shouldAnimate: boolean, sessionId?: string) => void;
   sessionData?: ChatSession | null;
-  currentProgress?: InterviewProgressType | null;
   demoPhaseData?: {
     currentPhase: InterviewPhase;
     questionCount: number;
@@ -51,7 +50,6 @@ const ChatContainer = ({
   hasFeedback = false,
   onSessionAnimation,
   sessionData,
-  currentProgress,
   demoPhaseData,
   createNewChat
 }: ChatContainerProps) => {
@@ -164,10 +162,7 @@ const ChatContainer = ({
     questions_in_phase: currentQuestionCount,
     max_questions_in_phase: maxQuestionsInPhase,
     should_transition: currentQuestionCount >= maxQuestionsInPhase,
-    selected_themes: currentProgress ? (Array.isArray(currentProgress.selected_themes) ? 
-      currentProgress.selected_themes : 
-      (currentProgress.selected_themes as any)?.themes || []) : [],
-    completion_confidence: currentProgress?.completion_confidence || 0
+    completion_confidence: 0
   };
   
   const estimatedTimeLeft = answeredQuestions < totalQuestions ? 
@@ -207,7 +202,6 @@ const ChatContainer = ({
               showCompleteButton={showCompleteButton}
               onCompleteButtonClick={handleCompleteButtonClick}
               sessionData={sessionData}
-              currentProgress={currentProgress}
               demoPhaseData={demoPhaseData}
             />
           </div>

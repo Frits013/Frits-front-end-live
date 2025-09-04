@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChatMessage, ChatSession, InterviewProgress, PhaseConfig } from "@/types/chat";
+import { ChatMessage, ChatSession, PhaseConfig } from "@/types/chat";
 import { supabase } from "@/integrations/supabase/client";
 import { INITIAL_MESSAGE } from "@/hooks/chat-sessions/use-session-creation";
 
@@ -11,7 +11,6 @@ export const useMessageFetcher = (sessionId: string | null) => {
   const [hasFeedback, setHasFeedback] = useState(false);
   const [autoMessageSent, setAutoMessageSent] = useState(false);
   const [sessionData, setSessionData] = useState<ChatSession | null>(null);
-  const [currentProgress, setCurrentProgress] = useState<InterviewProgress | null>(null);
   const [phaseConfigs, setPhaseConfigs] = useState<PhaseConfig[]>([]);
 
   useEffect(() => {
@@ -49,21 +48,6 @@ export const useMessageFetcher = (sessionId: string | null) => {
           // Update session data and consult complete state
           setSessionData(sessionResult);
           setIsConsultComplete(sessionResult.finished);
-          
-          // Fetch current interview progress
-          const { data: progressData, error: progressError } = await supabase
-            .from('interview_progress')
-            .select('*')
-            .eq('session_id', sessionId)
-            .order('updated_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-          if (progressError && progressError.code !== 'PGRST116') {
-            if (isDev) console.error('Error fetching interview progress:', progressError);
-          } else {
-            setCurrentProgress(progressData);
-          }
 
           // Fetch phase configurations (only once)
           if (phaseConfigs.length === 0) {
@@ -153,7 +137,6 @@ export const useMessageFetcher = (sessionId: string | null) => {
         setHasFeedback(false);
         setAutoMessageSent(false);
         setSessionData(null);
-        setCurrentProgress(null);
       }
     };
 
@@ -166,7 +149,6 @@ export const useMessageFetcher = (sessionId: string | null) => {
       setHasFeedback(false);
       setAutoMessageSent(false);
       setSessionData(null);
-      setCurrentProgress(null);
       console.log('🔄 Fetching messages for new session');
       fetchMessages();
     } else {
@@ -176,7 +158,6 @@ export const useMessageFetcher = (sessionId: string | null) => {
       setHasFeedback(false);
       setAutoMessageSent(false);
       setSessionData(null);
-      setCurrentProgress(null);
     }
   }, [sessionId]); // Only depend on sessionId
 
@@ -221,7 +202,6 @@ export const useMessageFetcher = (sessionId: string | null) => {
     setHasFeedback,
     autoMessageSent,
     sessionData,
-    currentProgress,
     phaseConfigs
   };
 };

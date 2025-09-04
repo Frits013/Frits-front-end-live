@@ -39,11 +39,9 @@ serve(async (req) => {
         return await transitionPhase(req);
       case 'config':
         return await getPhaseConfig(req);
-      case 'progress':
-        return await getInterviewProgress(req);
       default:
         return new Response(
-          JSON.stringify({ error: "Invalid action. Use: status, transition, config, or progress" }),
+          JSON.stringify({ error: "Invalid action. Use: status, transition, or config" }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
     }
@@ -76,7 +74,7 @@ async function getPhaseStatus(req: Request) {
       phase_metadata,
       phase_question_counts,
       phase_max_questions,
-      phase_completion_criteria
+      selected_themes
     `)
     .eq('id', session_id)
     .single();
@@ -111,7 +109,7 @@ async function getPhaseStatus(req: Request) {
         questions_in_phase: questionsInPhase,
         max_questions_in_phase: maxQuestions,
         should_transition: questionsInPhase >= maxQuestions,
-        selected_themes: sessionData.phase_metadata?.selected_themes || [],
+        selected_themes: sessionData.selected_themes || {},
         completion_confidence: sessionData.phase_metadata?.completion_confidence || 0,
         phase_metadata: sessionData.phase_metadata || {},
         insights: sessionData.phase_metadata?.insights || {}
@@ -159,23 +157,6 @@ async function transitionPhase(req: Request) {
     );
   }
 
-  // Create interview progress entry for new phase
-  if (user_id) {
-    await supabase
-      .from('interview_progress')
-      .upsert({
-        session_id,
-        user_id,
-        phase: new_phase,
-        questions_asked: 0,
-        completion_confidence: 0,
-        selected_themes: [],
-        insights: {},
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'session_id,user_id,phase'
-      });
-  }
 
   return new Response(
     JSON.stringify({
@@ -205,37 +186,6 @@ async function getPhaseConfig(req: Request) {
     console.error('Error fetching phase config:', error);
     return new Response(
       JSON.stringify({ error: "Failed to fetch phase configuration" }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  }
-
-  return new Response(
-    JSON.stringify({ data }),
-    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  );
-}
-
-// Get interview progress for a session
-async function getInterviewProgress(req: Request) {
-  const { session_id } = await req.json();
-  
-  if (!session_id) {
-    return new Response(
-      JSON.stringify({ error: "session_id is required" }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  }
-
-  const { data, error } = await supabase
-    .from('interview_progress')
-    .select('*')
-    .eq('session_id', session_id)
-    .order('created_at', { ascending: true });
-
-  if (error) {
-    console.error('Error fetching interview progress:', error);
-    return new Response(
-      JSON.stringify({ error: "Failed to fetch interview progress" }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

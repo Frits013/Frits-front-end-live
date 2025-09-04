@@ -1,4 +1,4 @@
-import { ChatMessage, InterviewPhase, InterviewProgress } from "@/types/chat";
+import { ChatMessage, InterviewPhase } from "@/types/chat";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";

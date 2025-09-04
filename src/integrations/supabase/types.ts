@@ -69,14 +69,11 @@ export type Database = {
           current_phase: Database["public"]["Enums"]["interview_phase"] | null
           finished: boolean
           id: string
-          phase_completion_criteria: Json | null
           phase_max_questions: Json | null
           phase_metadata: Json | null
           phase_question_counts: Json | null
-          selected_themes: string[] | null
-          session_context: Json | null
+          selected_themes: Json | null
           session_name: string
-          theme_selection_confidence: Json | null
           user_id: string
         }
         Insert: {
@@ -84,14 +81,11 @@ export type Database = {
           current_phase?: Database["public"]["Enums"]["interview_phase"] | null
           finished?: boolean
           id?: string
-          phase_completion_criteria?: Json | null
           phase_max_questions?: Json | null
           phase_metadata?: Json | null
           phase_question_counts?: Json | null
-          selected_themes?: string[] | null
-          session_context?: Json | null
+          selected_themes?: Json | null
           session_name?: string
-          theme_selection_confidence?: Json | null
           user_id: string
         }
         Update: {
@@ -99,14 +93,11 @@ export type Database = {
           current_phase?: Database["public"]["Enums"]["interview_phase"] | null
           finished?: boolean
           id?: string
-          phase_completion_criteria?: Json | null
           phase_max_questions?: Json | null
           phase_metadata?: Json | null
           phase_question_counts?: Json | null
-          selected_themes?: string[] | null
-          session_context?: Json | null
+          selected_themes?: Json | null
           session_name?: string
-          theme_selection_confidence?: Json | null
           user_id?: string
         }
         Relationships: []
@@ -242,45 +233,6 @@ export type Database = {
           phase_description?: string | null
           system_prompt?: string
           updated_at?: string | null
-        }
-        Relationships: []
-      }
-      interview_progress: {
-        Row: {
-          completion_confidence: number | null
-          created_at: string | null
-          id: string
-          insights: Json | null
-          phase: Database["public"]["Enums"]["interview_phase"]
-          questions_asked: number | null
-          selected_themes: Json | null
-          session_id: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          completion_confidence?: number | null
-          created_at?: string | null
-          id?: string
-          insights?: Json | null
-          phase: Database["public"]["Enums"]["interview_phase"]
-          questions_asked?: number | null
-          selected_themes?: Json | null
-          session_id: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          completion_confidence?: number | null
-          created_at?: string | null
-          id?: string
-          insights?: Json | null
-          phase?: Database["public"]["Enums"]["interview_phase"]
-          questions_asked?: number | null
-          selected_themes?: Json | null
-          session_id?: string
-          updated_at?: string | null
-          user_id?: string
         }
         Relationships: []
       }
