@@ -179,6 +179,11 @@ export const useMessageFetcher = (sessionId: string | null) => {
           return true;
         }
         
+        // Exclude system messages (they are internal phase prompts)
+        if (msg.role === 'system') {
+          return false;
+        }
+        
         return false;
       })
       .map(msg => ({

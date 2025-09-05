@@ -214,25 +214,40 @@ export const useMessageSender = ({
         return;
       }
 
-      // Prepare the message with phase context - use NEXT phase for context
-      let messageToSend = inputMessage;
+      // Save phase context as a separate system message if we have a current phase
       if (currentPhase) {
         const nextPhase = predictNextPhase(currentPhase, messages);
         const phaseContext = getPhaseContextMessage(inputMessage, nextPhase);
-        messageToSend = `${phaseContext}\n\nUser's answer: ${inputMessage}`;
+        
+        await executeWithRetry(
+          async () => {
+            const { error } = await supabase
+              .from('chat_messages')
+              .insert({
+                session_id: currentChatId,
+                content: phaseContext,
+                role: 'system',
+                user_id: session.user.id,
+              });
+
+            if (error) throw error;
+            return true;
+          },
+          'Save system message'
+        );
       }
 
-      // Call the chat function with phase context and retry logic
+      // Call the chat function with original user message (no phase context)
       const chatResponse = await executeWithRetry(
         async () => {
           console.log('About to call chat function with:', {
-            messageToSend,
+            message: inputMessage,
             session_id: currentChatId
           });
           
           const { data, error } = await supabase.functions.invoke('chat', {
             body: {
-              message: messageToSend,
+              message: inputMessage,
               session_id: currentChatId,
             },
           });
@@ -336,6 +351,11 @@ export const useMessageSender = ({
               // Keep writer messages (assistant messages for the user)
               if (msg.role === 'writer' || msg.role === 'assistant') {
                 return true;
+              }
+              
+              // Exclude system messages (they are internal phase prompts)
+              if (msg.role === 'system') {
+                return false;
               }
               
               return false;

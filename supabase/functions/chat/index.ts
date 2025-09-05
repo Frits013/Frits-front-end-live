@@ -195,7 +195,7 @@ serve(async (req) => {
     const currentPhaseData = await getSessionPhaseData(session_id);
     console.log('Current phase data:', currentPhaseData);
 
-    // Save user message to database with phase prompt and get the message_id
+    // Validate message
     if (!message) {
       console.error('No message provided in request');
       return new Response(
@@ -204,106 +204,17 @@ serve(async (req) => {
       );
     }
 
-    // Check if message is already enhanced to prevent recursive enhancement
-    const isAlreadyEnhanced = message.includes('User\'s answer:') || message.includes('phase. You are in that part');
-    
-    let enhancedMessage;
-    if (isAlreadyEnhanced) {
-      console.log('Message appears to be already enhanced, using as-is');
-      enhancedMessage = message;
-    } else {
-      // Helper function to determine next phase based on current phase and question count
-      const getNextPhasePrompt = async (sessionId: string, currentPhase: string) => {
-        // Phase definitions (must match frontend)
-        const phaseDefinitions = {
-          'introduction': { maxQuestions: 3, order: 0 },
-          'theme_selection': { maxQuestions: 4, order: 1 },
-          'deep_dive': { maxQuestions: 10, order: 2 },
-          'summary': { maxQuestions: 3, order: 3 },
-          'recommendations': { maxQuestions: 2, order: 4 }
-        };
-
-        const phases = Object.keys(phaseDefinitions);
-        
-        // Get current assistant message count to determine question number
-        const { data: assistantMessages, error } = await supabase
-          .from('chat_messages')
-          .select('*')
-          .eq('session_id', sessionId)
-          .eq('role', 'writer')
-          .order('created_at', { ascending: true });
-        
-        if (error || !assistantMessages) {
-          console.error('Error fetching assistant messages:', error);
-          return currentPhase; // fallback to current phase
-        }
-
-        const assistantCount = assistantMessages.length;
-        console.log(`Assistant message count: ${assistantCount}`);
-
-        // Calculate which phase we should be in based on message count
-        let messagesSoFar = 0;
-        let calculatedCurrentPhase = 'introduction';
-        let questionsInCurrentPhase = 0;
-
-        for (const phase of phases) {
-          const maxQuestions = phaseDefinitions[phase].maxQuestions;
-          
-          if (assistantCount >= messagesSoFar && assistantCount < messagesSoFar + maxQuestions) {
-            calculatedCurrentPhase = phase;
-            questionsInCurrentPhase = assistantCount - messagesSoFar + 1; // +1 because we're about to ask the next question
-            break;
-          } else if (assistantCount >= messagesSoFar + maxQuestions) {
-            messagesSoFar += maxQuestions;
-          } else {
-            break;
-          }
-        }
-
-        console.log(`Calculated phase: ${calculatedCurrentPhase}, Question ${questionsInCurrentPhase}/${phaseDefinitions[calculatedCurrentPhase]?.maxQuestions}`);
-
-        // Check if this will be the last question of the current phase
-        const maxQuestionsInPhase = phaseDefinitions[calculatedCurrentPhase]?.maxQuestions || 3;
-        const isLastQuestion = questionsInCurrentPhase >= maxQuestionsInPhase;
-
-        if (isLastQuestion) {
-          // Find next phase
-          const currentIndex = phases.indexOf(calculatedCurrentPhase);
-          if (currentIndex !== -1 && currentIndex < phases.length - 1) {
-            const nextPhase = phases[currentIndex + 1];
-            console.log(`Last question of ${calculatedCurrentPhase}, applying ${nextPhase} phase prompt`);
-            return nextPhase;
-          }
-        }
-
-        // Default to current phase
-        return calculatedCurrentPhase;
-      };
-
-      // Get the appropriate phase for prompting
-      const phaseForPrompt = await getNextPhasePrompt(session_id, currentPhaseData?.current_phase || 'introduction');
-      
-      // Create phase identification prompt
-      const phasePrompt = phaseForPrompt 
-        ? `The next question you will ask will be from the ${phaseForPrompt} phase. You are in that part of the interview process KEEP THIS INTO ACCOUNT.`
-        : '';
-      
-      enhancedMessage = phasePrompt 
-        ? `${phasePrompt}\n\nUser's answer: ${message}`
-        : `User's answer: ${message}`;
-    }
-    
-    // Save the enhanced user message to database
+    // Save the original user message to database (frontend already saved user and system messages)
+    // We need the message_id to pass to FastAPI
     const { data: savedMessage, error: saveError } = await supabase
       .from('chat_messages')
-      .insert({
-        session_id: session_id,
-        user_id: userId,
-        content: enhancedMessage,
-        role: 'user',
-        created_at: new Date().toISOString()
-      })
       .select('message_id')
+      .eq('session_id', session_id)
+      .eq('user_id', userId)
+      .eq('content', message)
+      .eq('role', 'user')
+      .order('created_at', { ascending: false })
+      .limit(1)
       .single();
 
     if (saveError || !savedMessage) {
