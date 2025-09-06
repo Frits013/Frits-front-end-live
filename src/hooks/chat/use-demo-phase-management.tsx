@@ -84,12 +84,12 @@ export const useDemoPhaseManagement = ({
     phaseQuestionCounts: Record<string, number>, 
     isUserAnswering: boolean = false, 
     userJustFinishedAnswering: boolean = false,
-    regularUserMessages: ChatMessage[] = []
+    userAnswerCount: number = 0
   ): InterviewPhase => {
     const phases = Object.keys(phaseDefinitions) as InterviewPhase[];
     
     // Calculate how many answers we have so far
-    const totalAnswers = regularUserMessages.length;
+    const totalAnswers = userAnswerCount;
     const totalAssistantMessages = assistantMessages.length;
     
     if (isDev) {
@@ -123,28 +123,26 @@ export const useDemoPhaseManagement = ({
 
   const phaseQuestionCounts = calculatePhaseQuestionCounts(assistantMessages);
   
-  // Count only regular user messages (not enhanced ones) for progress calculation
-  // Filter out enhanced messages by excluding messages that contain phase context
-  const regularUserMessages = messages.filter(msg => 
-    msg.role === 'user' && 
-    !msg.content.includes('YOU ARE NOW IN THE') && 
-    !msg.content.includes('The next question you will ask will be from the')
-  );
+  // Get all user messages (including initial message)
+  const allUserMessages = messages.filter(msg => msg.role === 'user');
+  
+  // Calculate actual user answers by subtracting 1 for the initial message
+  const userAnswerCount = Math.max(0, allUserMessages.length - 1);
   
   // Determine if user is currently answering
-  // User is answering if the last message is from assistant AND there are fewer regular user answers than assistant questions
+  // User is answering if the last message is from assistant AND there are fewer user answers than assistant questions
   const lastMessage = messages[messages.length - 1];
-  const isUserAnswering = lastMessage?.role === 'assistant' && regularUserMessages.length < assistantMessages.length;
+  const isUserAnswering = lastMessage?.role === 'assistant' && userAnswerCount < assistantMessages.length;
   
   // Enhanced logic: also check if we're at the exact moment of a phase boundary
-  // If we have equal assistant questions and regular user answers, the user has just finished answering
-  const userJustFinishedAnswering = regularUserMessages.length === assistantMessages.length;
+  // If we have equal assistant questions and user answers, the user has just finished answering
+  const userJustFinishedAnswering = userAnswerCount === assistantMessages.length;
   
-  const correctPhase = determineCorrectPhase(phaseQuestionCounts, isUserAnswering, userJustFinishedAnswering, regularUserMessages);
+  const correctPhase = determineCorrectPhase(phaseQuestionCounts, isUserAnswering, userJustFinishedAnswering, userAnswerCount);
   
   // Calculate the question number within the current phase based on answers
   const phases = Object.keys(phaseDefinitions) as InterviewPhase[];
-  const totalAnswers = regularUserMessages.length;
+  const totalAnswers = userAnswerCount;
   
   // Calculate which question number we're on within the current phase
   let answersUsed = 0;
