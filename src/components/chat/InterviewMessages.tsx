@@ -12,7 +12,7 @@ interface InterviewMessagesProps {
   currentProgress?: any;
   demoPhaseData?: {
     currentPhase: InterviewPhase;
-    questionCount: number;
+    answerCount: number;
     maxQuestions: number;
   };
 }
@@ -42,7 +42,7 @@ const InterviewMessages = ({
     Number(sessionData?.phase_max_questions?.[currentSessionPhase]) || 5;
   
   // Calculate current phase questions - use demo data if available
-  const currentPhaseQuestions = demoPhaseData?.questionCount || 
+  const currentPhaseQuestions = demoPhaseData?.answerCount || 
     Math.max(
       Number(currentProgress?.questions_asked) || 0,
       userMessages.length // Use actual user message count as fallback

@@ -240,7 +240,7 @@ export const useDemoPhaseManagement = ({
 
   return {
     currentPhase: correctPhase,
-    questionCount: currentPhaseQuestionCount, // Number of answers completed in current phase
+    answerCount: currentPhaseQuestionCount, // Number of answers completed in current phase
     currentQuestionNumber: currentPhaseQuestionCount + 1, // Current question being asked (for display)
     maxQuestions: currentPhaseMaxQuestions, // Max questions for current phase
     totalQuestions: totalAnswers, // Total answers given (for overall progress)

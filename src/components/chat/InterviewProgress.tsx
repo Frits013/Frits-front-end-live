@@ -11,7 +11,7 @@ interface InterviewProgressProps {
   estimatedTimeLeft?: string;
   demoPhaseData?: {
     currentPhase: InterviewPhase;
-    questionCount: number;
+    answerCount: number;
     maxQuestions: number;
   };
 }
@@ -56,7 +56,7 @@ const InterviewProgress = ({
   const currentPhaseMaxQuestions = currentPhaseDefinition?.maxQuestions || 5;
 
   // Use demo phase data if available for accurate current phase tracking
-  const currentPhaseQuestions = demoPhaseData?.questionCount ?? 0;
+  const currentPhaseQuestions = demoPhaseData?.answerCount ?? 0;
   const currentPhaseProgress = currentPhaseMaxQuestions > 0 ? Math.min(currentPhaseQuestions / currentPhaseMaxQuestions * 100, 100) : 0;
   const getPhaseStatus = (phaseId: string) => {
     if (!currentPhase) return {

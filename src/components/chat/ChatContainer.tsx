@@ -28,7 +28,7 @@ interface ChatContainerProps {
   sessionData?: ChatSession | null;
   demoPhaseData?: {
     currentPhase: InterviewPhase;
-    questionCount: number;
+    answerCount: number;
     currentQuestionNumber: number;
     maxQuestions: number;
     triggerNextPhase?: () => void;
@@ -152,7 +152,7 @@ const ChatContainer = ({
   
   // Use demo phase data if available, otherwise fall back to session data
   const currentPhase = demoPhaseData?.currentPhase || sessionData?.current_phase;
-  const currentQuestionCount = demoPhaseData?.questionCount || answeredQuestions;
+  const currentQuestionCount = demoPhaseData?.answerCount || answeredQuestions;
   const maxQuestionsInPhase = demoPhaseData?.maxQuestions || getMaxQuestionsForPhase(currentPhase || 'introduction');
   
   // Create phase info from current progress data, enhanced with demo data

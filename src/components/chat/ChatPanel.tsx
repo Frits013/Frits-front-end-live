@@ -27,7 +27,7 @@ interface ChatPanelProps {
   currentProgress?: any;
   demoPhaseData?: {
     currentPhase: InterviewPhase;
-    questionCount: number;
+    answerCount: number;
     currentQuestionNumber: number;
     maxQuestions: number;
     triggerNextPhase?: () => void;

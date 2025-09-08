@@ -14,7 +14,7 @@ interface ChatMessagesContainerProps {
   currentProgress?: any;
   demoPhaseData?: {
     currentPhase: InterviewPhase;
-    questionCount: number;
+    answerCount: number;
     maxQuestions: number;
   };
 }
