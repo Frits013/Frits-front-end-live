@@ -24,11 +24,6 @@ export const useDemoPhaseManagement = ({
   messages,
   sessionData
 }: DemoPhaseManagementProps) => {
-  // State to prevent progress regression during rapid re-renders
-  const [lastValidProgress, setLastValidProgress] = useState<{
-    userAnswerCount: number;
-    currentPhaseQuestionCount: number;
-  } | null>(null);
 
   // Filter for assistant messages (converted from 'writer' in useMessageFetcher)
   const assistantMessages = messages.filter(msg => msg.role === 'assistant');
@@ -133,19 +128,10 @@ export const useDemoPhaseManagement = ({
   const allUserMessages = messages.filter(msg => msg.role === 'user');
   
   // Calculate actual user answers by subtracting 1 for the initial message
-  const rawUserAnswerCount = Math.max(0, allUserMessages.length - 1);
-  
-  // Defensive logic: prevent progress from going backwards during rapid re-renders
-  let userAnswerCount = rawUserAnswerCount;
-  if (lastValidProgress && rawUserAnswerCount < lastValidProgress.userAnswerCount) {
-    if (isDev) {
-      console.log(`🛡️ Preventing regression: ${rawUserAnswerCount} → ${lastValidProgress.userAnswerCount}`);
-    }
-    userAnswerCount = lastValidProgress.userAnswerCount;
-  }
+  const userAnswerCount = Math.max(0, allUserMessages.length - 1);
   
   if (isDev) {
-    console.log(`📊 Raw user answer count: ${rawUserAnswerCount}, Protected count: ${userAnswerCount}`);
+    console.log(`📊 User answer count: ${userAnswerCount}`);
   }
   
   // Determine if user is currently answering
@@ -165,7 +151,7 @@ export const useDemoPhaseManagement = ({
   
   // Calculate which question number we're on within the current phase
   let answersUsed = 0;
-  let rawCurrentPhaseQuestionCount = 0;
+  let currentPhaseQuestionCount = 0;
   
   for (let i = 0; i < phases.length; i++) {
     const phase = phases[i];
@@ -173,34 +159,12 @@ export const useDemoPhaseManagement = ({
     
     if (phase === correctPhase) {
       // This is the number of answers completed in this phase
-      rawCurrentPhaseQuestionCount = Math.max(0, totalAnswers - answersUsed);
+      currentPhaseQuestionCount = Math.max(0, totalAnswers - answersUsed);
       break;
     }
     
     answersUsed += maxQuestionsForPhase;
   }
-  
-  // Apply defensive logic to prevent currentPhaseQuestionCount regression
-  let currentPhaseQuestionCount = rawCurrentPhaseQuestionCount;
-  if (lastValidProgress && 
-      correctPhase === sessionData?.current_phase && // Same phase
-      rawCurrentPhaseQuestionCount < lastValidProgress.currentPhaseQuestionCount) {
-    if (isDev) {
-      console.log(`🛡️ Preventing phase progress regression: ${rawCurrentPhaseQuestionCount} → ${lastValidProgress.currentPhaseQuestionCount}`);
-    }
-    currentPhaseQuestionCount = lastValidProgress.currentPhaseQuestionCount;
-  }
-  
-  // Update lastValidProgress when values change (moved to useEffect to prevent infinite re-renders)
-  useEffect(() => {
-    if (userAnswerCount >= (lastValidProgress?.userAnswerCount || 0) && 
-        currentPhaseQuestionCount >= (lastValidProgress?.currentPhaseQuestionCount || 0)) {
-      setLastValidProgress({
-        userAnswerCount,
-        currentPhaseQuestionCount
-      });
-    }
-  }, [userAnswerCount, currentPhaseQuestionCount, lastValidProgress?.userAnswerCount, lastValidProgress?.currentPhaseQuestionCount]);
   
   const currentPhaseMaxQuestions = phaseDefinitions[correctPhase]?.maxQuestions || 3;
 
