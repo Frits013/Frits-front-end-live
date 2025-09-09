@@ -191,14 +191,16 @@ export const useDemoPhaseManagement = ({
     currentPhaseQuestionCount = lastValidProgress.currentPhaseQuestionCount;
   }
   
-  // Update lastValidProgress when we have legitimate progress
-  if (userAnswerCount >= (lastValidProgress?.userAnswerCount || 0) && 
-      currentPhaseQuestionCount >= (lastValidProgress?.currentPhaseQuestionCount || 0)) {
-    setLastValidProgress({
-      userAnswerCount,
-      currentPhaseQuestionCount
-    });
-  }
+  // Update lastValidProgress when values change (moved to useEffect to prevent infinite re-renders)
+  useEffect(() => {
+    if (userAnswerCount >= (lastValidProgress?.userAnswerCount || 0) && 
+        currentPhaseQuestionCount >= (lastValidProgress?.currentPhaseQuestionCount || 0)) {
+      setLastValidProgress({
+        userAnswerCount,
+        currentPhaseQuestionCount
+      });
+    }
+  }, [userAnswerCount, currentPhaseQuestionCount, lastValidProgress?.userAnswerCount, lastValidProgress?.currentPhaseQuestionCount]);
   
   const currentPhaseMaxQuestions = phaseDefinitions[correctPhase]?.maxQuestions || 3;
 
