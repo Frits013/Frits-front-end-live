@@ -24,13 +24,38 @@ export const useDemoPhaseManagement = ({
   messages,
   sessionData
 }: DemoPhaseManagementProps) => {
+  // State to track progress and prevent regression
+  const [lastKnownProgress, setLastKnownProgress] = useState<{
+    sessionId: string | null;
+    userAnswerCount: number;
+    currentPhaseQuestionCount: number;
+    currentPhase: InterviewPhase;
+  } | null>(null);
 
-  // Filter for assistant messages (converted from 'writer' in useMessageFetcher)
-  const assistantMessages = messages.filter(msg => msg.role === 'assistant');
+  // Reset progress tracking when session changes
+  useEffect(() => {
+    if (sessionId !== lastKnownProgress?.sessionId) {
+      setLastKnownProgress(null);
+      if (isDev) {
+        console.log(`📊 Progress tracking reset for new session: ${sessionId}`);
+      }
+    }
+  }, [sessionId, lastKnownProgress?.sessionId]);
+
+  // Filter for assistant messages - include both 'assistant' AND 'writer' roles
+  // since messages might be in 'writer' state during backend processing transition
+  const assistantMessages = messages.filter(msg => msg.role === 'assistant' || msg.role === 'writer');
   
   if (isDev) {
     console.log(`📊 Total messages: ${messages.length}, Assistant messages: ${assistantMessages.length}`);
-    console.log(`📊 Message roles:`, messages.map(m => m.role));
+    console.log(`📊 Message roles:`, messages.map(m => `${m.role}(${m.id?.slice(-4) || 'no-id'})`));
+    
+    // Check for role inconsistencies
+    const writerCount = messages.filter(msg => msg.role === 'writer').length;
+    const assistantCount = messages.filter(msg => msg.role === 'assistant').length;
+    if (writerCount > 0) {
+      console.log(`⚠️ Found ${writerCount} writer messages and ${assistantCount} assistant messages`);
+    }
   }
   const currentPhase = (sessionData?.current_phase || 'introduction') as InterviewPhase;
   
@@ -128,10 +153,21 @@ export const useDemoPhaseManagement = ({
   const allUserMessages = messages.filter(msg => msg.role === 'user');
   
   // Calculate actual user answers by subtracting 1 for the initial message
-  const userAnswerCount = Math.max(0, allUserMessages.length - 1);
+  const rawUserAnswerCount = Math.max(0, allUserMessages.length - 1);
+  
+  // Apply defensive logic: prevent user answer count from going backwards unless it's a new session
+  let userAnswerCount = rawUserAnswerCount;
+  if (lastKnownProgress && 
+      lastKnownProgress.sessionId === sessionId && 
+      rawUserAnswerCount < lastKnownProgress.userAnswerCount) {
+    if (isDev) {
+      console.log(`🛡️ REGRESSION DETECTED - User answers: ${rawUserAnswerCount} → ${lastKnownProgress.userAnswerCount} (prevented)`);
+    }
+    userAnswerCount = lastKnownProgress.userAnswerCount;
+  }
   
   if (isDev) {
-    console.log(`📊 User answer count: ${userAnswerCount}`);
+    console.log(`📊 User answer count: ${rawUserAnswerCount} (raw) → ${userAnswerCount} (final)`);
   }
   
   // Determine if user is currently answering
@@ -151,7 +187,7 @@ export const useDemoPhaseManagement = ({
   
   // Calculate which question number we're on within the current phase
   let answersUsed = 0;
-  let currentPhaseQuestionCount = 0;
+  let rawCurrentPhaseQuestionCount = 0;
   
   for (let i = 0; i < phases.length; i++) {
     const phase = phases[i];
@@ -159,19 +195,47 @@ export const useDemoPhaseManagement = ({
     
     if (phase === correctPhase) {
       // This is the number of answers completed in this phase
-      currentPhaseQuestionCount = Math.max(0, totalAnswers - answersUsed);
+      rawCurrentPhaseQuestionCount = Math.max(0, totalAnswers - answersUsed);
       break;
     }
     
     answersUsed += maxQuestionsForPhase;
   }
   
+  // Apply defensive logic: prevent phase progress from going backwards unless it's a new session or different phase
+  let currentPhaseQuestionCount = rawCurrentPhaseQuestionCount;
+  if (lastKnownProgress && 
+      lastKnownProgress.sessionId === sessionId && 
+      lastKnownProgress.currentPhase === correctPhase &&
+      rawCurrentPhaseQuestionCount < lastKnownProgress.currentPhaseQuestionCount) {
+    if (isDev) {
+      console.log(`🛡️ REGRESSION DETECTED - Phase progress: ${rawCurrentPhaseQuestionCount} → ${lastKnownProgress.currentPhaseQuestionCount} (prevented)`);
+    }
+    currentPhaseQuestionCount = lastKnownProgress.currentPhaseQuestionCount;
+  }
+  
   const currentPhaseMaxQuestions = phaseDefinitions[correctPhase]?.maxQuestions || 3;
 
   if (isDev) {
-    console.log(`📊 Current phase: ${correctPhase} (${currentPhaseQuestionCount}/${currentPhaseMaxQuestions})`);
+    console.log(`📊 Current phase: ${correctPhase} (${rawCurrentPhaseQuestionCount} raw → ${currentPhaseQuestionCount} final / ${currentPhaseMaxQuestions})`);
     console.log(`📊 Database phase: ${currentPhase}`);
   }
+
+  // Update progress tracking when progress advances (prevent infinite re-renders with useEffect)
+  useEffect(() => {
+    if (userAnswerCount >= (lastKnownProgress?.userAnswerCount || 0) && 
+        currentPhaseQuestionCount >= (lastKnownProgress?.currentPhaseQuestionCount || 0)) {
+      setLastKnownProgress({
+        sessionId,
+        userAnswerCount,
+        currentPhaseQuestionCount,
+        currentPhase: correctPhase
+      });
+      if (isDev) {
+        console.log(`📊 Progress tracking updated: answers=${userAnswerCount}, phase=${correctPhase}(${currentPhaseQuestionCount})`);
+      }
+    }
+  }, [sessionId, userAnswerCount, currentPhaseQuestionCount, correctPhase, lastKnownProgress]);
 
   // Update database when phase or question counts change
   useEffect(() => {
