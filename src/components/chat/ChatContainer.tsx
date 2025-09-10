@@ -34,6 +34,8 @@ interface ChatContainerProps {
     triggerNextPhase?: () => void;
     canTriggerNextPhase?: boolean;
   };
+  isProcessing: boolean;
+  setIsProcessing: (isProcessing: boolean) => void;
   createNewChat: () => Promise<void>;
 }
 
@@ -51,11 +53,12 @@ const ChatContainer = ({
   onSessionAnimation,
   sessionData,
   demoPhaseData,
+  isProcessing,
+  setIsProcessing,
   createNewChat
 }: ChatContainerProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const isMobile = useIsMobile();
