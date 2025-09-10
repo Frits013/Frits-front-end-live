@@ -60,44 +60,29 @@ export const useDemoPhaseManagement = ({
   }
   const currentPhase = (sessionData?.current_phase || 'introduction') as InterviewPhase;
   
-  // Calculate phase question counts from messages
-  const calculatePhaseQuestionCounts = (messages: ChatMessage[]): Record<string, number> => {
+  // Calculate phase question counts based on user answers (for database tracking)
+  const calculatePhaseQuestionCounts = (userAnswerCount: number): Record<string, number> => {
     const phaseQuestionCounts: Record<string, number> = {};
     const phases = Object.keys(phaseDefinitions) as InterviewPhase[];
-    let currentPhaseIndex = 0;
-    let questionsInCurrentPhase = 0;
+    let answersUsed = 0;
     
-    if (isDev) console.log(`📊 Calculating phase counts for ${messages.length} assistant messages`);
+    if (isDev) console.log(`📊 Calculating phase counts for ${userAnswerCount} user answers`);
     
-    // Allocate messages to phases sequentially
-    messages.forEach((_, messageIndex) => {
-      const currentPhase = phases[currentPhaseIndex];
-      const maxQuestionsForPhase = phaseDefinitions[currentPhase].maxQuestions;
+    // Allocate user answers to phases sequentially
+    for (let i = 0; i < phases.length && answersUsed < userAnswerCount; i++) {
+      const phase = phases[i];
+      const maxQuestionsForPhase = phaseDefinitions[phase].maxQuestions;
+      const answersInThisPhase = Math.min(userAnswerCount - answersUsed, maxQuestionsForPhase);
       
-      questionsInCurrentPhase++;
-      
-      if (isDev) {
-        console.log(`📊 Message ${messageIndex + 1}: Phase ${currentPhase} (${questionsInCurrentPhase}/${maxQuestionsForPhase})`);
-      }
-      
-      // If we've reached the max questions for this phase, finalize it and move to next
-      if (questionsInCurrentPhase >= maxQuestionsForPhase) {
-        phaseQuestionCounts[currentPhase] = maxQuestionsForPhase;
+      if (answersInThisPhase > 0) {
+        phaseQuestionCounts[phase] = answersInThisPhase;
+        answersUsed += answersInThisPhase;
         
         if (isDev) {
-          console.log(`📊 Phase ${currentPhase} completed with ${maxQuestionsForPhase} questions`);
+          console.log(`📊 Phase ${phase}: ${answersInThisPhase}/${maxQuestionsForPhase} answers`);
         }
-        
-        // Move to next phase if available
-        if (currentPhaseIndex < phases.length - 1) {
-          currentPhaseIndex++;
-          questionsInCurrentPhase = 0;
-        }
-      } else {
-        // Update count for current phase
-        phaseQuestionCounts[currentPhase] = questionsInCurrentPhase;
       }
-    });
+    }
     
     if (isDev) {
       console.log(`📊 Final phase question counts:`, phaseQuestionCounts);
@@ -106,7 +91,7 @@ export const useDemoPhaseManagement = ({
     return phaseQuestionCounts;
   };
 
-  // Determine correct phase based on assistant messages (predictive) and user answers (progress)
+  // Determine correct phase based on USER ANSWERS (not assistant messages)
   const determineCorrectPhase = (
     phaseQuestionCounts: Record<string, number>, 
     isUserAnswering: boolean = false, 
@@ -117,39 +102,35 @@ export const useDemoPhaseManagement = ({
     
     // Calculate how many answers we have so far
     const totalAnswers = userAnswerCount;
-    const totalAssistantMessages = assistantMessages.length;
     
     if (isDev) {
-      console.log(`📊 Total answers: ${totalAnswers}, Assistant messages: ${totalAssistantMessages}`);
+      console.log(`📊 Determining phase based on user answers: ${totalAnswers}`);
     }
     
-    // PREDICTIVE PHASE DETECTION: If we have more assistant messages than the current phase allows,
-    // we should immediately transition to the next phase to prevent "X+1/X" displays
-    let messagesUsed = 0;
+    // PHASE DETECTION based on USER ANSWERS COMPLETED
+    let answersUsed = 0;
     for (let i = 0; i < phases.length; i++) {
       const phase = phases[i];
       const maxQuestionsForPhase = phaseDefinitions[phase].maxQuestions;
       
-      // If we have enough assistant messages to exceed this phase, continue to next phase
-      if (totalAssistantMessages > messagesUsed + maxQuestionsForPhase) {
-        messagesUsed += maxQuestionsForPhase;
+      // If we have enough user answers to complete this phase, continue to next phase
+      if (totalAnswers >= answersUsed + maxQuestionsForPhase) {
+        answersUsed += maxQuestionsForPhase;
         continue;
       }
       
-      // We're in this phase based on assistant messages
+      // We're in this phase based on user answers
       if (isDev) {
-        const messagesInThisPhase = totalAssistantMessages - messagesUsed;
-        console.log(`📊 Phase determined by assistant messages: ${phase} (${messagesInThisPhase}/${maxQuestionsForPhase})`);
+        const answersInThisPhase = totalAnswers - answersUsed;
+        console.log(`📊 Phase determined by user answers: ${phase} (${answersInThisPhase}/${maxQuestionsForPhase} answers completed)`);
       }
       return phase;
     }
     
-    // If we've processed all assistant messages, we're in the final phase
+    // If we've completed all answers, we're in the final phase
     return phases[phases.length - 1];
   };
 
-  const phaseQuestionCounts = calculatePhaseQuestionCounts(assistantMessages);
-  
   // Get all user messages (including initial message)
   const allUserMessages = messages.filter(msg => msg.role === 'user');
   
@@ -177,6 +158,9 @@ export const useDemoPhaseManagement = ({
   if (isDev) {
     console.log(`📊 User answer count: ${rawUserAnswerCount} (raw) → ${userAnswerCount} (final)`);
   }
+
+  // Calculate phase question counts based on user answers
+  const phaseQuestionCounts = calculatePhaseQuestionCounts(userAnswerCount);
   
   // Determine if user is currently answering
   // User is answering if the last message is from assistant AND there are fewer user answers than assistant questions
