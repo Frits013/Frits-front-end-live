@@ -33,7 +33,7 @@ export const useDemoPhaseManagement = ({
   } | null>(null);
 
   // Reset progress tracking when session changes
-  Effect(() => {
+  useEffect(() => {
     if (sessionId && (!lastKnownProgress || sessionId !== lastKnownProgress.sessionId)) {
       setLastKnownProgress(null);
       if (isDev) {
@@ -158,7 +158,7 @@ export const useDemoPhaseManagement = ({
   
   // Apply defensive logic: prevent user answer count from going backwards unless it's a new session
   let userAnswerCount = rawUserAnswerCount;
-   
+  
   // Only apply defensive logic if we're in the SAME session and have valid progress tracking
   const isSameSession = lastKnownProgress && lastKnownProgress.sessionId === sessionId && sessionId;
   if (isSameSession && rawUserAnswerCount < lastKnownProgress.userAnswerCount) {
@@ -212,7 +212,8 @@ export const useDemoPhaseManagement = ({
   
   // Apply defensive logic: prevent phase progress from going backwards unless it's a new session or different phase
   let currentPhaseQuestionCount = rawCurrentPhaseQuestionCount;
-    // Only apply defensive logic for the same session, same phase
+  
+  // Only apply defensive logic for the same session, same phase
   if (isSameSession && 
       lastKnownProgress.currentPhase === correctPhase &&
       rawCurrentPhaseQuestionCount < lastKnownProgress.currentPhaseQuestionCount) {
@@ -227,6 +228,8 @@ export const useDemoPhaseManagement = ({
     }
     currentPhaseQuestionCount = rawCurrentPhaseQuestionCount;
   }
+  
+  const currentPhaseMaxQuestions = phaseDefinitions[correctPhase]?.maxQuestions || 3;
 
   if (isDev) {
     console.log(`📊 Current phase: ${correctPhase} (${rawCurrentPhaseQuestionCount} raw → ${currentPhaseQuestionCount} final / ${currentPhaseMaxQuestions})`);
@@ -298,7 +301,7 @@ export const useDemoPhaseManagement = ({
       };
       updateSession();
     }
-  }, [sessionId, correctPhase, currentPhase, phaseQuestionCounts, currentPhaseQuestionCount, currentPhaseMaxQuestions, sessionData?.phase_question_counts]);
+  }, [sessionId, correctPhase, currentPhase, phaseQuestionCounts, currentPhaseQuestionCount, sessionData?.phase_question_counts]);
 
   // Function to trigger summary -> recommendations transition
   const triggerNextPhase = async () => {
