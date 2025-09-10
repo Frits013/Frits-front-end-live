@@ -15,16 +15,23 @@ export const useSessionsLoader = (
   const loadSessions = async () => {
     setIsLoading(true);
     
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
+    // Add timeout to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      console.warn('Session loading taking too long, forcing completion');
       setIsLoading(false);
-      navigate('/');
-      return;
-    }
-    
-    if (isDev) console.log("Loading chat sessions for user:", session.user.id);
+    }, 15000); // 15 second timeout
     
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        clearTimeout(loadingTimeout);
+        setIsLoading(false);
+        navigate('/');
+        return;
+      }
+      
+      if (isDev) console.log("Loading chat sessions for user:", session.user.id);
+      
       // Query sessions from the chat_sessions table
       const { data: sessions, error } = await supabase
         .from('chat_sessions')
@@ -34,6 +41,7 @@ export const useSessionsLoader = (
 
       if (error) {
         if (isDev) console.error('Error fetching sessions:', error);
+        clearTimeout(loadingTimeout);
         setIsLoading(false);
         return;
       }
@@ -79,6 +87,7 @@ export const useSessionsLoader = (
     } catch (error) {
       if (isDev) console.error('Error in loadSessions:', error);
     } finally {
+      clearTimeout(loadingTimeout);
       setIsLoading(false);
     }
   };

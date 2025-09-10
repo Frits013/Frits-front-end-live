@@ -223,8 +223,18 @@ export const useDemoPhaseManagement = ({
 
   // Update progress tracking when progress advances (prevent infinite re-renders with useEffect)
   useEffect(() => {
-    if (userAnswerCount >= (lastKnownProgress?.userAnswerCount || 0) && 
-        currentPhaseQuestionCount >= (lastKnownProgress?.currentPhaseQuestionCount || 0)) {
+    const shouldUpdate = 
+      userAnswerCount >= (lastKnownProgress?.userAnswerCount || 0) && 
+      currentPhaseQuestionCount >= (lastKnownProgress?.currentPhaseQuestionCount || 0) &&
+      (
+        !lastKnownProgress ||
+        lastKnownProgress.sessionId !== sessionId ||
+        lastKnownProgress.userAnswerCount !== userAnswerCount ||
+        lastKnownProgress.currentPhaseQuestionCount !== currentPhaseQuestionCount ||
+        lastKnownProgress.currentPhase !== correctPhase
+      );
+
+    if (shouldUpdate) {
       setLastKnownProgress({
         sessionId,
         userAnswerCount,
@@ -235,7 +245,7 @@ export const useDemoPhaseManagement = ({
         console.log(`📊 Progress tracking updated: answers=${userAnswerCount}, phase=${correctPhase}(${currentPhaseQuestionCount})`);
       }
     }
-  }, [sessionId, userAnswerCount, currentPhaseQuestionCount, correctPhase, lastKnownProgress]);
+  }, [sessionId, userAnswerCount, currentPhaseQuestionCount, correctPhase]);
 
   // Update database when phase or question counts change
   useEffect(() => {

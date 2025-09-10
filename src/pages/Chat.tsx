@@ -39,56 +39,14 @@ const Chat = () => {
   
   const { handleSignOut } = useAuthOperations();
   const { showOnboarding, setShowOnboarding } = useOnboarding();
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const checkingRef = useRef(false);
   const [sessionAnimationState, setSessionAnimationState] = useState<{
     shouldAnimate: boolean;
     sessionId?: string;
   }>({ shouldAnimate: false });
   const [isCreatingSession, setIsCreatingSession] = useState(false);
 
-  // Check if user is authenticated
+  // Listen for auth state changes only
   useEffect(() => {
-    // Only perform the check if not already checking
-    if (checkingRef.current) return;
-    
-    const checkAuth = async () => {
-      checkingRef.current = true;
-      setIsCheckingAuth(true);
-      
-      try {
-        // Get the current session
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session) {
-          console.log("No active session, navigating to login");
-          navigate('/');
-          return;
-        }
-        
-        // Check if email is confirmed
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user || !user.email_confirmed_at) {
-          console.log("Email not confirmed, navigating to login");
-          await supabase.auth.signOut();
-          navigate('/');
-          return;
-        }
-        
-        console.log("User authenticated and email confirmed");
-      } catch (error) {
-        console.error("Error checking authentication:", error);
-        navigate('/');
-      } finally {
-        setIsCheckingAuth(false);
-        checkingRef.current = false;
-      }
-    };
-    
-    checkAuth();
-    
-    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') {
         navigate('/');
@@ -117,8 +75,8 @@ const Chat = () => {
     }
   };
 
-  // Show loading state while checking auth or loading sessions
-  if (isCheckingAuth || isLoading) {
+  // Show loading state while loading sessions
+  if (isLoading) {
     return (
       <div className="h-screen w-full flex items-center justify-center">
         <LoadingSpinner size="lg" text="Loading your consult sessions..." />
