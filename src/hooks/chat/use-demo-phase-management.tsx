@@ -48,8 +48,10 @@ export const useDemoPhaseManagement = ({
   const assistantMessages = messages.filter(msg => msg.role === 'assistant' || msg.role === 'writer');
   
   if (isDev) {
+    console.log(`📊 === MESSAGE ANALYSIS ===`);
     console.log(`📊 Total messages: ${messages.length}, Assistant messages: ${assistantMessages.length}`);
     console.log(`📊 Message roles:`, messages.map(m => `${m.role}(${m.id?.slice(-4) || 'no-id'})`));
+    console.log(`📊 User messages:`, messages.filter(m => m.role === 'user').map(m => `"${m.content.substring(0, 30)}..."`));
     
     // Check for role inconsistencies
     const writerCount = messages.filter(msg => msg.role === 'writer').length;
