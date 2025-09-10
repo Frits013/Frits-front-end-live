@@ -78,8 +78,19 @@ const ChatPanel = ({
   const currentQuestionNumber = demoPhaseData?.currentQuestionNumber || 1;
   const maxQuestionsInPhase = demoPhaseData?.maxQuestions || 3;
 
-  // Handle getting recommendations by sending a phase transition message
+  // Handle getting recommendations by showing feedback dialog first, then sending message
   const handleGetRecommendations = async () => {
+    if (demoPhaseData?.currentPhase === 'summary' && !isGettingRecommendations) {
+      // Show feedback dialog first
+      setShowFeedbackDialog(true);
+    }
+  };
+
+  // Handle feedback dialog close - send recommendations message after dialog closes
+  const handleFeedbackDialogClose = async () => {
+    setShowFeedbackDialog(false);
+    
+    // Now send the message to get recommendations
     if (demoPhaseData?.currentPhase === 'summary' && !isGettingRecommendations) {
       setIsGettingRecommendations(true);
       try {
@@ -129,8 +140,8 @@ const ChatPanel = ({
           {/* Feedback dialog */}
           <ConsultCompleteDialog
             open={showFeedbackDialog}
-            onClose={() => setShowFeedbackDialog(false)}
-            onFinish={() => setShowFeedbackDialog(false)}
+            onClose={handleFeedbackDialogClose}
+            onFinish={handleFeedbackDialogClose}
             sessionId={currentChatId}
           />
         </div>
