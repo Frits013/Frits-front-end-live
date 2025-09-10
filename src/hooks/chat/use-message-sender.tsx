@@ -166,14 +166,14 @@ export const useMessageSender = ({
     setErrorMessage(null);
     isThinkingRef.current = true;
 
-    // Fail-safe timeout to prevent stuck processing state
+    // Extended timeout for backend processing (2 minutes)
     const timeoutId = setTimeout(() => {
       if (currentRequestId.current === requestId) {
         if (isDev) console.warn('Message processing timeout, clearing state');
         clearProcessingState();
-        toast.error('Request timeout. Please try again.');
+        toast.error('Processing is taking longer than expected. Please try again.');
       }
-    }, 30000); // 30 second timeout
+    }, 120000); // 2 minute timeout to accommodate backend processing time
 
     try {
       // Create user message immediately for UI
@@ -238,30 +238,29 @@ export const useMessageSender = ({
       }
 
       // Call the chat function with original user message (no phase context)
-      const chatResponse = await executeWithRetry(
-        async () => {
-          console.log('About to call chat function with:', {
-            message: inputMessage,
-            session_id: currentChatId
-          });
-          
-          const { data, error } = await supabase.functions.invoke('chat', {
-            body: {
-              message: inputMessage,
-              session_id: currentChatId,
-            },
-          });
-
-          console.log('Chat function response:', { data, error });
-          
-          if (error) {
-            console.error('Chat function error details:', error);
-            throw error;
-          }
-          return data;
+      // NO RETRY LOGIC - send once and wait for response
+      console.log('About to call chat function with:', {
+        message: inputMessage,
+        session_id: currentChatId
+      });
+      
+      const { data: chatResponse, error: chatError } = await supabase.functions.invoke('chat', {
+        body: {
+          message: inputMessage,
+          session_id: currentChatId,
         },
-        'Chat function invocation'
-      );
+      });
+
+      console.log('Chat function response:', { data: chatResponse, error: chatError });
+      
+      if (chatError) {
+        console.error('Chat function error details:', chatError);
+        clearTimeout(timeoutId);
+        clearProcessingState();
+        toast.error('Failed to send message to AI. Please try again.');
+        setErrorMessage(chatError.message || 'Failed to send message');
+        return;
+      }
 
       // Check if this is still the current request
       if (currentRequestId.current !== requestId) {
