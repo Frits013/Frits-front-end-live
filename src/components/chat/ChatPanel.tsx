@@ -9,6 +9,7 @@ import SummaryRecommendationsDisplay from "./SummaryRecommendationsDisplay";
 import { useRef, useState } from "react";
 import { useMessageSender } from "@/hooks/chat/use-message-sender";
 import ConsultCompleteDialog from "./ConsultCompleteDialog";
+import InterviewThankYou from "./InterviewThankYou";
 
 interface ChatPanelProps {
   defaultSize: number;
@@ -56,6 +57,7 @@ const ChatPanel = ({
   const [useInterviewMode, setUseInterviewMode] = useState(true);
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
   const [isGettingRecommendations, setIsGettingRecommendations] = useState(false);
+  const [showThankYou, setShowThankYou] = useState(false);
   
   // Message sender hook for interview mode
   const { sendMessage } = useMessageSender({
@@ -68,10 +70,17 @@ const ChatPanel = ({
     currentPhase: demoPhaseData?.currentPhase,
   });
 
-  // Manual trigger for feedback dialog
+  // Handle end interview - show thank you page and complete session
   const handleEndInterview = () => {
-    console.log('User clicked End Interview - triggering feedback dialog');
-    setShowFeedbackDialog(true);
+    console.log('User clicked End Interview - showing thank you page');
+    setShowThankYou(true);
+    // Complete the session in the background
+    onCompleteButtonClick();
+  };
+
+  // Handle thank you page completion
+  const handleThankYouComplete = () => {
+    setShowThankYou(false);
   };
 
   // Use phase-specific question numbers from demoPhaseData
@@ -189,6 +198,12 @@ const ChatPanel = ({
           </div>
         </div>
       )}
+
+      {/* Thank You Page Overlay */}
+      <InterviewThankYou
+        show={showThankYou}
+        onComplete={handleThankYouComplete}
+      />
     </div>
   );
 };
