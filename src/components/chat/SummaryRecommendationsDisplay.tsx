@@ -124,7 +124,7 @@ const SummaryRecommendationsDisplay = ({
                 className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-4 px-8 text-lg font-semibold rounded-xl shadow-lg hover:shadow-green-500/30 transition-all duration-300 transform hover:scale-[1.02]"
               >
                 <Lightbulb className="w-5 h-5 mr-2" />
-                <span>End Interview & Provide Feedback</span>
+                <span>End Interview</span>
               </Button>
             </motion.div>
           </div>
