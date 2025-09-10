@@ -24,245 +24,87 @@ export const useDemoPhaseManagement = ({
   messages,
   sessionData
 }: DemoPhaseManagementProps) => {
-  // Simple progress tracking without complex state management
-
-  // Filter for assistant messages - include both 'assistant' AND 'writer' roles
-  // since messages might be in 'writer' state during backend processing transition
-  const assistantMessages = messages.filter(msg => msg.role === 'assistant' || msg.role === 'writer');
   
-  if (isDev) {
-    console.log(`📊 === MESSAGE ANALYSIS ===`);
-    console.log(`📊 Total messages: ${messages.length}, Assistant messages: ${assistantMessages.length}`);
-    console.log(`📊 Message roles:`, messages.map(m => `${m.role}(${m.id?.slice(-4) || 'no-id'})`));
-    console.log(`📊 User messages:`, messages.filter(m => m.role === 'user').map(m => `"${m.content.substring(0, 30)}..."`));
-    
-    // Check for role inconsistencies
-    const writerCount = messages.filter(msg => msg.role === 'writer').length;
-    const assistantCount = messages.filter(msg => msg.role === 'assistant').length;
-    if (writerCount > 0) {
-      console.log(`⚠️ Found ${writerCount} writer messages and ${assistantCount} assistant messages`);
-    }
-  }
-  const currentPhase = (sessionData?.current_phase || 'introduction') as InterviewPhase;
+  // Count writer messages (backend has processed these)
+  const writerMessages = messages.filter(msg => msg.role === 'writer');
   
-  // Calculate phase question counts based on user answers (for database tracking)
-  const calculatePhaseQuestionCounts = (userAnswerCount: number): Record<string, number> => {
-    const phaseQuestionCounts: Record<string, number> = {};
-    const phases = Object.keys(phaseDefinitions) as InterviewPhase[];
-    let answersUsed = 0;
-    
-    if (isDev) console.log(`📊 Calculating phase counts for ${userAnswerCount} user answers`);
-    
-    // Allocate user answers to phases sequentially
-    for (let i = 0; i < phases.length && answersUsed < userAnswerCount; i++) {
-      const phase = phases[i];
-      const maxQuestionsForPhase = phaseDefinitions[phase].maxQuestions;
-      const answersInThisPhase = Math.min(userAnswerCount - answersUsed, maxQuestionsForPhase);
-      
-      if (answersInThisPhase > 0) {
-        phaseQuestionCounts[phase] = answersInThisPhase;
-        answersUsed += answersInThisPhase;
-        
-        if (isDev) {
-          console.log(`📊 Phase ${phase}: ${answersInThisPhase}/${maxQuestionsForPhase} answers`);
-        }
-      }
-    }
-    
-    if (isDev) {
-      console.log(`📊 Final phase question counts:`, phaseQuestionCounts);
-    }
-    
-    return phaseQuestionCounts;
-  };
-
-  // Determine correct phase based on USER ANSWERS (not assistant messages)
-  const determineCorrectPhase = (
-    phaseQuestionCounts: Record<string, number>, 
-    isUserAnswering: boolean = false, 
-    userJustFinishedAnswering: boolean = false,
-    userAnswerCount: number = 0
-  ): InterviewPhase => {
-    const phases = Object.keys(phaseDefinitions) as InterviewPhase[];
-    
-    // Calculate how many answers we have so far
-    const totalAnswers = userAnswerCount;
-    
-    if (isDev) {
-      console.log(`📊 Determining phase based on user answers: ${totalAnswers}`);
-    }
-    
-    // PHASE DETECTION based on USER ANSWERS COMPLETED
-    let answersUsed = 0;
-    for (let i = 0; i < phases.length; i++) {
-      const phase = phases[i];
-      const maxQuestionsForPhase = phaseDefinitions[phase].maxQuestions;
-      
-      // If we have enough user answers to complete this phase, continue to next phase
-      if (totalAnswers >= answersUsed + maxQuestionsForPhase) {
-        answersUsed += maxQuestionsForPhase;
-        continue;
-      }
-      
-      // We're in this phase based on user answers
-      if (isDev) {
-        const answersInThisPhase = totalAnswers - answersUsed;
-        console.log(`📊 Phase determined by user answers: ${phase} (${answersInThisPhase}/${maxQuestionsForPhase} answers completed)`);
-      }
-      return phase;
-    }
-    
-    // If we've completed all answers, we're in the final phase
-    return phases[phases.length - 1];
-  };
-
-  // Get all user messages (including initial message)
-  const allUserMessages = messages.filter(msg => msg.role === 'user');
+  // Count user answers (exclude initial message)
+  const userMessages = messages.filter(msg => msg.role === 'user');
+  const userAnswerCount = Math.max(0, userMessages.length - 1);
   
-  // Calculate actual user answers by subtracting 1 for the initial message
-  const rawUserAnswerCount = Math.max(0, allUserMessages.length - 1);
-  
-  // Simple user answer counting - no complex defensive logic
-  let userAnswerCount = rawUserAnswerCount;
-  
-  if (isDev) {
-    console.log(`📊 User answer count: ${rawUserAnswerCount} (raw) → ${userAnswerCount} (final)`);
-  }
-
-  // Calculate phase question counts based on user answers
-  const phaseQuestionCounts = calculatePhaseQuestionCounts(userAnswerCount);
-  
-  // Determine if user is currently answering
-  // User is answering if the last message is from assistant AND there are fewer user answers than assistant questions
-  const lastMessage = messages[messages.length - 1];
-  const isUserAnswering = lastMessage?.role === 'assistant' && userAnswerCount < assistantMessages.length;
-  
-  // Enhanced logic: also check if we're at the exact moment of a phase boundary
-  // If we have equal assistant questions and user answers, the user has just finished answering
-  const userJustFinishedAnswering = userAnswerCount === assistantMessages.length;
-  
-  const correctPhase = determineCorrectPhase(phaseQuestionCounts, isUserAnswering, userJustFinishedAnswering, userAnswerCount);
-  
-  // Calculate the question number within the current phase based on answers
+  // Determine current phase based on user answers
   const phases = Object.keys(phaseDefinitions) as InterviewPhase[];
-  const totalAnswers = userAnswerCount;
+  let currentPhase: InterviewPhase = 'introduction';
+  let totalUsedAnswers = 0;
+  let currentPhaseAnswers = 0;
   
-  // Calculate which question number we're on within the current phase
-  let answersUsed = 0;
-  let rawCurrentPhaseQuestionCount = 0;
-  
-  for (let i = 0; i < phases.length; i++) {
-    const phase = phases[i];
-    const maxQuestionsForPhase = phaseDefinitions[phase].maxQuestions;
+  for (const phase of phases) {
+    const maxForPhase = phaseDefinitions[phase as InterviewPhase].maxQuestions;
     
-    if (phase === correctPhase) {
-      // This is the number of answers completed in this phase
-      rawCurrentPhaseQuestionCount = Math.max(0, totalAnswers - answersUsed);
+    if (userAnswerCount <= totalUsedAnswers + maxForPhase) {
+      currentPhase = phase as InterviewPhase;
+      currentPhaseAnswers = userAnswerCount - totalUsedAnswers;
       break;
     }
     
-    answersUsed += maxQuestionsForPhase;
+    totalUsedAnswers += maxForPhase;
   }
   
-  // Simple phase progress counting - use the calculated value
-  let currentPhaseQuestionCount = rawCurrentPhaseQuestionCount;
+  const maxQuestionsInCurrentPhase = phaseDefinitions[currentPhase].maxQuestions;
   
-  const currentPhaseMaxQuestions = phaseDefinitions[correctPhase]?.maxQuestions || 3;
-
-  if (isDev) {
-    console.log(`📊 ===================`);
-    console.log(`📊 FINAL CALCULATIONS:`);
-    console.log(`📊 User messages total: ${allUserMessages.length} (including initial)`);
-    console.log(`📊 User answers (raw): ${rawUserAnswerCount} (total - 1)`);
-    console.log(`📊 User answers (final): ${userAnswerCount}`);
-    console.log(`📊 Current phase: ${correctPhase} (determined by user answers)`);
-    console.log(`📊 Phase progress: ${rawCurrentPhaseQuestionCount} raw → ${currentPhaseQuestionCount} final / ${currentPhaseMaxQuestions}`);
-    console.log(`📊 Question counter will show: ${currentPhaseQuestionCount + 1}/${currentPhaseMaxQuestions}`);
-    console.log(`📊 Database phase: ${currentPhase}`);
-    console.log(`📊 Assistant messages: ${assistantMessages.length}`);
-    console.log(`📊 ===================`);
+  // Calculate phase question counts
+  const phaseQuestionCounts: Record<string, number> = {};
+  let answersLeft = userAnswerCount;
+  
+  for (const phase of phases) {
+    const maxForPhase = phaseDefinitions[phase as InterviewPhase].maxQuestions;
+    const answersForPhase = Math.min(answersLeft, maxForPhase);
+    
+    if (answersForPhase > 0) {
+      phaseQuestionCounts[phase] = answersForPhase;
+      answersLeft -= answersForPhase;
+    }
+    
+    if (answersLeft <= 0) break;
   }
 
-  // Direct calculation without state tracking
-
-  // Update database when phase or question counts change
+  // Update database when phase changes
   useEffect(() => {
     if (!sessionId) return;
     
-    const needsUpdate = 
-      correctPhase !== currentPhase || 
-      JSON.stringify(phaseQuestionCounts) !== JSON.stringify(sessionData?.phase_question_counts || {});
-    
-    if (needsUpdate) {
-      const updateSession = async () => {
-        try {
-          if (isDev) {
-            console.log(`📊 Updating session: ${currentPhase} → ${correctPhase}`);
-            console.log(`📊 Old phase counts:`, sessionData?.phase_question_counts || {});
-            console.log(`📊 New phase counts:`, phaseQuestionCounts);
-          }
-
-          const { error } = await supabase
-            .from('chat_sessions')
-            .update({ 
-              current_phase: correctPhase,
-              phase_question_counts: phaseQuestionCounts
-            })
-            .eq('id', sessionId);
-
-          if (error) {
-            if (isDev) console.error('❌ Error updating session:', error);
-          } else {
-            if (isDev) {
-              console.log(`✅ Session updated successfully`);
-              console.log(`📊 Current phase: ${correctPhase} (${currentPhaseQuestionCount}/${currentPhaseMaxQuestions})`);
-            }
-          }
-        } catch (error) {
-          if (isDev) console.error('❌ Failed to update session:', error);
-        }
-      };
-      updateSession();
+    const dbCurrentPhase = sessionData?.current_phase || 'introduction';
+    if (currentPhase !== dbCurrentPhase) {
+      supabase
+        .from('chat_sessions')
+        .update({ 
+          current_phase: currentPhase,
+          phase_question_counts: phaseQuestionCounts
+        })
+        .eq('id', sessionId);
     }
-  }, [sessionId, correctPhase, currentPhase, phaseQuestionCounts, currentPhaseQuestionCount, sessionData?.phase_question_counts]);
+  }, [sessionId, currentPhase, sessionData?.current_phase]);
 
-  // Function to trigger summary -> recommendations transition
   const triggerNextPhase = async () => {
-    if (correctPhase === 'summary' && sessionId) {
-      try {
-        const updatedCounts = { ...phaseQuestionCounts, summary: phaseDefinitions.summary.maxQuestions };
-        const { error } = await supabase
-          .from('chat_sessions')
-          .update({ 
-            current_phase: 'recommendations',
-            phase_question_counts: updatedCounts,
-            phase_metadata: {
-              ...sessionData?.phase_metadata,
-              manual_transition: true,
-              transition_reason: 'User requested recommendations'
-            }
-          })
-          .eq('id', sessionId);
-
-        if (error) {
-          if (isDev) console.error('Error updating to recommendations phase:', error);
-        } else {
-          if (isDev) console.log('Successfully updated to recommendations phase');
-        }
-      } catch (error) {
-        if (isDev) console.error('Failed to update to recommendations phase:', error);
-      }
+    if (currentPhase === 'summary' && sessionId) {
+      const updatedCounts = { ...phaseQuestionCounts, summary: phaseDefinitions.summary.maxQuestions };
+      await supabase
+        .from('chat_sessions')
+        .update({ 
+          current_phase: 'recommendations',
+          phase_question_counts: updatedCounts
+        })
+        .eq('id', sessionId);
     }
   };
 
   return {
-    currentPhase: correctPhase,
-    answerCount: currentPhaseQuestionCount, // Number of answers completed in current phase
-    currentQuestionNumber: currentPhaseQuestionCount + 1, // Current question being asked (for display)
-    maxQuestions: currentPhaseMaxQuestions, // Max questions for current phase
-    totalQuestions: totalAnswers, // Total answers given (for overall progress)
-    phaseQuestionCounts, // Questions per phase breakdown
+    currentPhase,
+    answerCount: currentPhaseAnswers,
+    currentQuestionNumber: currentPhaseAnswers + 1,
+    maxQuestions: maxQuestionsInCurrentPhase,
+    totalQuestions: userAnswerCount,
+    phaseQuestionCounts,
     triggerNextPhase,
-    canTriggerNextPhase: correctPhase === 'summary'
+    canTriggerNextPhase: currentPhase === 'summary'
   };
 };
