@@ -106,7 +106,7 @@ const InterviewModeSwitcher = ({
   // Maintain thinking state when tab becomes visible during processing
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && isProcessing && answerFlow !== 'thinking') {
+      if (document.visibilityState === 'visible' && isProcessing) {
         console.log('Tab became visible during processing, ensuring thinking state');
         setAnswerFlow('thinking');
       }
@@ -117,6 +117,13 @@ const InterviewModeSwitcher = ({
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
+  }, [isProcessing]);
+
+  // Ensure thinking state is maintained during processing
+  useEffect(() => {
+    if (isProcessing && answerFlow === 'idle') {
+      setAnswerFlow('thinking');
+    }
   }, [isProcessing, answerFlow]);
 
   return (
