@@ -216,8 +216,17 @@ export const useDemoPhaseManagement = ({
   const currentPhaseMaxQuestions = phaseDefinitions[correctPhase]?.maxQuestions || 3;
 
   if (isDev) {
-    console.log(`📊 Current phase: ${correctPhase} (${rawCurrentPhaseQuestionCount} raw → ${currentPhaseQuestionCount} final / ${currentPhaseMaxQuestions})`);
+    console.log(`📊 ===================`);
+    console.log(`📊 FINAL CALCULATIONS:`);
+    console.log(`📊 User messages total: ${allUserMessages.length} (including initial)`);
+    console.log(`📊 User answers (raw): ${rawUserAnswerCount} (total - 1)`);
+    console.log(`📊 User answers (final): ${userAnswerCount}`);
+    console.log(`📊 Current phase: ${correctPhase} (determined by user answers)`);
+    console.log(`📊 Phase progress: ${rawCurrentPhaseQuestionCount} raw → ${currentPhaseQuestionCount} final / ${currentPhaseMaxQuestions}`);
+    console.log(`📊 Question counter will show: ${currentPhaseQuestionCount + 1}/${currentPhaseMaxQuestions}`);
     console.log(`📊 Database phase: ${currentPhase}`);
+    console.log(`📊 Assistant messages: ${assistantMessages.length}`);
+    console.log(`📊 ===================`);
   }
 
   // Update progress tracking when progress advances (prevent infinite re-renders with useEffect)
