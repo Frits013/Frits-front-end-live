@@ -24,24 +24,7 @@ export const useDemoPhaseManagement = ({
   messages,
   sessionData
 }: DemoPhaseManagementProps) => {
-  // State to track progress and prevent regression
-  const [lastKnownProgress, setLastKnownProgress] = useState<{
-    sessionId: string | null;
-    userAnswerCount: number;
-    currentPhaseQuestionCount: number;
-    currentPhase: InterviewPhase;
-  } | null>(null);
-
-  // Reset progress tracking when session changes
-  useEffect(() => {
-    if (sessionId && (!lastKnownProgress || sessionId !== lastKnownProgress.sessionId)) {
-      setLastKnownProgress(null);
-      if (isDev) {
-        console.log(`📊 Progress tracking COMPLETELY RESET for new session: ${sessionId}`);
-        console.log(`📊 Previous session was: ${lastKnownProgress?.sessionId || 'none'}`);
-      }
-    }
-  }, [sessionId]); // Remove circular dependency
+  // Simple progress tracking without complex state management
 
   // Filter for assistant messages - include both 'assistant' AND 'writer' roles
   // since messages might be in 'writer' state during backend processing transition
@@ -139,30 +122,8 @@ export const useDemoPhaseManagement = ({
   // Calculate actual user answers by subtracting 1 for the initial message
   const rawUserAnswerCount = Math.max(0, allUserMessages.length - 1);
   
-  // Enhanced user answer counting with better defensive logic
+  // Simple user answer counting - no complex defensive logic
   let userAnswerCount = rawUserAnswerCount;
-  
-  // Only apply defensive logic if we're in the SAME session and have valid progress tracking
-  const isSameSession = lastKnownProgress && lastKnownProgress.sessionId === sessionId && sessionId;
-  if (isSameSession && rawUserAnswerCount < lastKnownProgress.userAnswerCount) {
-    if (isDev) {
-      console.log(`🛡️ REGRESSION DETECTED - User answers: ${rawUserAnswerCount} → ${lastKnownProgress.userAnswerCount} (prevented)`);
-    }
-    // Instead of just using the old value, use the MAXIMUM to allow progression
-    userAnswerCount = Math.max(rawUserAnswerCount, lastKnownProgress.userAnswerCount);
-  } else if (lastKnownProgress && lastKnownProgress.sessionId !== sessionId) {
-    // Different session detected - use raw count and ignore stale data
-    if (isDev) {
-      console.log(`🔄 Different session detected - ignoring stale progress data`);
-    }
-    userAnswerCount = rawUserAnswerCount;
-  } else if (isSameSession && rawUserAnswerCount > lastKnownProgress.userAnswerCount) {
-    // Forward progress detected - allow it immediately
-    if (isDev) {
-      console.log(`📈 PROGRESS DETECTED - User answers: ${lastKnownProgress.userAnswerCount} → ${rawUserAnswerCount} (allowed)`);
-    }
-    userAnswerCount = rawUserAnswerCount;
-  }
   
   if (isDev) {
     console.log(`📊 User answer count: ${rawUserAnswerCount} (raw) → ${userAnswerCount} (final)`);
@@ -203,33 +164,8 @@ export const useDemoPhaseManagement = ({
     answersUsed += maxQuestionsForPhase;
   }
   
-  // Enhanced phase progress defensive logic
+  // Simple phase progress counting - use the calculated value
   let currentPhaseQuestionCount = rawCurrentPhaseQuestionCount;
-  
-  // Only apply defensive logic for the same session, same phase
-  if (isSameSession && 
-      lastKnownProgress.currentPhase === correctPhase &&
-      rawCurrentPhaseQuestionCount < lastKnownProgress.currentPhaseQuestionCount) {
-    if (isDev) {
-      console.log(`🛡️ REGRESSION DETECTED - Phase progress: ${rawCurrentPhaseQuestionCount} → ${lastKnownProgress.currentPhaseQuestionCount} (prevented)`);
-    }
-    // Use maximum to allow forward progress while preventing regression
-    currentPhaseQuestionCount = Math.max(rawCurrentPhaseQuestionCount, lastKnownProgress.currentPhaseQuestionCount);
-  } else if (lastKnownProgress && lastKnownProgress.sessionId !== sessionId) {
-    // Different session - use raw count
-    if (isDev) {
-      console.log(`🔄 Different session detected - using raw phase progress: ${rawCurrentPhaseQuestionCount}`);
-    }
-    currentPhaseQuestionCount = rawCurrentPhaseQuestionCount;
-  } else if (isSameSession && 
-             lastKnownProgress.currentPhase === correctPhase &&
-             rawCurrentPhaseQuestionCount > lastKnownProgress.currentPhaseQuestionCount) {
-    // Forward progress in same phase - allow it immediately
-    if (isDev) {
-      console.log(`📈 PHASE PROGRESS DETECTED: ${lastKnownProgress.currentPhaseQuestionCount} → ${rawCurrentPhaseQuestionCount} (allowed)`);
-    }
-    currentPhaseQuestionCount = rawCurrentPhaseQuestionCount;
-  }
   
   const currentPhaseMaxQuestions = phaseDefinitions[correctPhase]?.maxQuestions || 3;
 
@@ -247,31 +183,7 @@ export const useDemoPhaseManagement = ({
     console.log(`📊 ===================`);
   }
 
-  // Update progress tracking when progress advances (prevent infinite re-renders with useEffect)
-  useEffect(() => {
-    const shouldUpdate = 
-      userAnswerCount >= (lastKnownProgress?.userAnswerCount || 0) && 
-      currentPhaseQuestionCount >= (lastKnownProgress?.currentPhaseQuestionCount || 0) &&
-      (
-        !lastKnownProgress ||
-        lastKnownProgress.sessionId !== sessionId ||
-        lastKnownProgress.userAnswerCount !== userAnswerCount ||
-        lastKnownProgress.currentPhaseQuestionCount !== currentPhaseQuestionCount ||
-        lastKnownProgress.currentPhase !== correctPhase
-      );
-
-    if (shouldUpdate) {
-      setLastKnownProgress({
-        sessionId,
-        userAnswerCount,
-        currentPhaseQuestionCount,
-        currentPhase: correctPhase
-      });
-      if (isDev) {
-        console.log(`📊 Progress tracking updated: answers=${userAnswerCount}, phase=${correctPhase}(${currentPhaseQuestionCount})`);
-      }
-    }
-  }, [sessionId, userAnswerCount, currentPhaseQuestionCount, correctPhase]);
+  // Direct calculation without state tracking
 
   // Update database when phase or question counts change
   useEffect(() => {
