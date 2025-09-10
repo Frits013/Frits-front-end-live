@@ -145,10 +145,10 @@ const ConsultCompleteDialog = ({
       >
         <DialogContent className="sm:max-w-[425px] z-50" hideCloseButton={true}>
           <DialogHeader>
-            <DialogTitle>Consult Session Complete</DialogTitle>
+            <DialogTitle>Ready for Recommendations</DialogTitle>
             <DialogDescription>
-              This consult session is marked as complete in the database.
-              How would you rate your experience?
+              If the summary was incorrect or you have feedback, please tell us!
+              How would you rate your experience so far?
             </DialogDescription>
           </DialogHeader>
           
@@ -165,14 +165,14 @@ const ConsultCompleteDialog = ({
               onClick={handleCloseAttempt}
               disabled={isSubmitting || isExiting}
             >
-              Close
+              Skip & Continue
             </Button>
             <Button 
               onClick={handleSubmitFeedback} 
               className="bg-green-600 hover:bg-green-700"
               disabled={isSubmitting || isExiting}
             >
-              {isSubmitting || isExiting ? "Submitting..." : "Submit Feedback"}
+              {isSubmitting || isExiting ? "Processing..." : "Continue to Recommendations"}
             </Button>
           </DialogFooter>
         </DialogContent>
