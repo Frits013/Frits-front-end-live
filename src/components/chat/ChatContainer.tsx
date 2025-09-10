@@ -3,7 +3,6 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import InterviewProgress from "./InterviewProgress";
 import { ChatMessage, ChatSession, InterviewPhase } from "@/types/chat";
-import ConsultCompleteDialog from "@/components/chat/ConsultCompleteDialog";
 import { useToast } from "@/hooks/use-toast";
 import ChatPanelLayout from "./ChatPanelLayout";
 import ChatHeader from "./ChatHeader";
@@ -60,7 +59,6 @@ const ChatContainer = ({
   const { toast } = useToast();
   const navigate = useNavigate();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const isMobile = useIsMobile();
 
   const handleSignOut = async () => {
@@ -103,15 +101,7 @@ const ChatContainer = ({
 
   // Handle when user clicks the finish interview button
   const handleCompleteButtonClick = useCallback(() => {
-    console.log('Complete button clicked - showing dialog');
-    if (currentChatId) {
-      setShowCompleteDialog(true);
-    }
-  }, [currentChatId]);
-
-  // Handle when user confirms finishing the session via the dialog
-  const handleFinishConsult = () => {
-    console.log('User confirmed finishing consult session');
+    console.log('Complete button clicked - finishing session directly');
     if (currentChatId) {
       // Mark the session as finished by the user (this will move it to completed section)
       onConsultFinish(currentChatId);
@@ -120,15 +110,7 @@ const ChatContainer = ({
         description: "Consult session completed successfully",
       });
     }
-    setShowCompleteDialog(false);
-  };
-
-  // Handle when user chooses to continue chatting (closes dialog without ending)
-  const handleContinueChat = () => {
-    console.log('User closed dialog without ending session - session stays active');
-    setShowCompleteDialog(false);
-    // Note: We do NOT call onConsultFinish here - session stays active
-  };
+  }, [currentChatId, onConsultFinish, toast]);
 
   // Helper function to get max questions for a phase - aligned with use-demo-phase-management
   const getMaxQuestionsForPhase = (phase: string) => {
@@ -211,12 +193,6 @@ const ChatContainer = ({
         </div>
       </ChatPanelLayout>
 
-      <ConsultCompleteDialog
-        open={showCompleteDialog}
-        onClose={handleContinueChat}
-        onFinish={handleFinishConsult}
-        sessionId={currentChatId}
-      />
     </>
   );
 };
