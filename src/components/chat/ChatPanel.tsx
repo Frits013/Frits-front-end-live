@@ -107,6 +107,7 @@ const ChatPanel = ({
               onGetRecommendations={handleGetRecommendations}
               canTriggerRecommendations={demoPhaseData?.canTriggerNextPhase || false}
               isLoading={isGettingRecommendations}
+              isProcessing={isProcessing}
               onEndInterview={handleEndInterview}
             />
           ) : (
