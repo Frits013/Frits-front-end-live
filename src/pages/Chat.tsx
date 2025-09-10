@@ -33,6 +33,8 @@ const Chat = () => {
     dialogDismissed, 
     setDialogDismissed,
     hasFeedback,
+    isProcessing,
+    setIsProcessing,
     sessionData,
     demoPhaseData
   } = useChatMessages(currentSessionId);
@@ -101,6 +103,8 @@ const Chat = () => {
         onSessionAnimation={handleSessionAnimation}
         sessionData={sessionData}
         demoPhaseData={demoPhaseData}
+        isProcessing={isProcessing}
+        setIsProcessing={setIsProcessing}
         createNewChat={handleCreateNewChat}
       />
       <OnboardingWizard
