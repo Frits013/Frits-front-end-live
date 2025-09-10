@@ -184,7 +184,7 @@ const InterviewQuestionDisplay = ({
           <div className={`flex items-center gap-3 px-6 py-3 rounded-full bg-white/10 backdrop-blur border border-white/20 ${getPhaseColor(currentPhase)}`}>
             {getPhaseIcon(currentPhase)}
             <span className="text-base font-medium">
-              {getPhaseTitle(currentPhase)} - Question {questionNumber}/{maxQuestions}
+              {getPhaseTitle(currentPhase)} - {isProcessing ? 'Processing...' : `Question ${questionNumber}/${maxQuestions}`}
             </span>
           </div>
         </motion.div>
