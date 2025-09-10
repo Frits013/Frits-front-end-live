@@ -64,6 +64,16 @@ const InterviewModeSwitcher = ({
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [messages.length, currentQuestion?.id, answerFlow, isProcessing, lockedQuestion?.id]);
 
+  // Log render state for debugging
+  console.log('InterviewModeSwitcher render:', {
+    answerFlow,
+    isProcessing,
+    currentQuestionId: currentQuestion?.id,
+    showHistory,
+    renderingQuestionDisplay: !showHistory && answerFlow === 'idle',
+    renderingAnswerFlow: !showHistory && answerFlow !== 'idle'
+  });
+
   // Check if there's any history
   const hasHistory = messages.length > 1;
 
@@ -128,8 +138,8 @@ const InterviewModeSwitcher = ({
 
   return (
     <div className="relative h-full">
-      {/* Main Interview Display */}
-      {!showHistory && answerFlow === 'idle' && (
+      {/* Main Interview Display - only show when not processing and in idle state */}
+      {!showHistory && answerFlow === 'idle' && !isProcessing && (
         <InterviewQuestionDisplay
           currentQuestion={currentQuestion}
           isProcessing={isProcessing}
@@ -141,8 +151,8 @@ const InterviewModeSwitcher = ({
         />
       )}
 
-      {/* Answer Flow States */}
-      {!showHistory && answerFlow !== 'idle' && (
+      {/* Answer Flow States - show when not in idle state OR when processing */}
+      {!showHistory && (answerFlow !== 'idle' || isProcessing) && (
         <div className="h-full flex flex-col items-center justify-center relative bg-gradient-to-br from-background/95 via-background/85 to-accent/10 backdrop-blur-xl">
           <div className="max-w-4xl mx-auto px-8 w-full">
             
@@ -160,9 +170,9 @@ const InterviewModeSwitcher = ({
               )}
             </AnimatePresence>
 
-            {/* Thinking Indicator */}
+            {/* Thinking Indicator - show when thinking or processing */}
             <AnimatePresence>
-              {answerFlow === 'thinking' && (
+              {(answerFlow === 'thinking' || isProcessing) && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -188,8 +198,8 @@ const InterviewModeSwitcher = ({
         )}
       </AnimatePresence>
 
-      {/* Input (only show when not in history mode and in idle state) */}
-      {!showHistory && answerFlow === 'idle' && (
+      {/* Input (only show when not in history mode, in idle state and not processing) */}
+      {!showHistory && answerFlow === 'idle' && !isProcessing && (
         <InterviewInputCentered
           onSubmit={handleSendMessage}
           isProcessing={isProcessing}
