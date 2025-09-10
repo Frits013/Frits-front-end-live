@@ -68,13 +68,43 @@ export const useProcessingState = (sessionId: string | null) => {
     return () => clearInterval(interval);
   }, [sessionId, isAuthenticated]);
 
-  // Track visibility changes to ensure animation continues when tab is backgrounded
+  // Track visibility changes to ensure processing state is checked when tab becomes visible
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && sessionId) {
-        // When coming back to the tab, preserve existing processing state
-        // The regular interval check will handle updating the state properly
-        console.log('Tab became visible, preserving current processing state');
+        // When coming back to the tab, immediately check processing state
+        console.log('Tab became visible, checking processing state immediately');
+        
+        const checkProcessingState = async () => {
+          try {
+            const { data, error } = await supabase
+              .from('chat_messages')
+              .select('*')
+              .eq('session_id', sessionId)
+              .order('created_at', { ascending: true });
+              
+            if (error || !data) return;
+            
+            const userMessages = data.filter(msg => msg.role === 'user');
+            const assistantMessages = data.filter(msg => 
+              msg.role === 'writer' || msg.role === 'assistant'
+            );
+            
+            // If we have more user messages than assistant responses, we're processing
+            const shouldBeProcessing = userMessages.length > assistantMessages.length;
+            setIsProcessing(shouldBeProcessing);
+            
+            console.log('Visibility check - processing state:', {
+              userCount: userMessages.length,
+              assistantCount: assistantMessages.length,
+              isProcessing: shouldBeProcessing
+            });
+          } catch (error) {
+            console.error('Error checking processing state on visibility change:', error);
+          }
+        };
+        
+        checkProcessingState();
       }
     };
     
