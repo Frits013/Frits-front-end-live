@@ -25,47 +25,56 @@ export const useDemoPhaseManagement = ({
   sessionData
 }: DemoPhaseManagementProps) => {
   
-  // Count assistant messages (backend creates 'writer' messages that get converted to 'assistant' by frontend)
-  const assistantMessages = messages.filter(msg => msg.role === 'assistant');
+  // Use SAME logic as working total progress in ChatContainer.tsx
+  // Filter regular user messages (exclude initial message like ChatContainer does)
+  const regularUserMessages = messages.filter(msg => 
+    msg.role === 'user' && 
+    msg.content.trim() !== "I'm looking for guidance on AI readiness for my organization. Can you help me get started with an interview that will assess our current state and provide recommendations?"
+  );
   
-  // Count user answers (exclude initial message)
-  const userMessages = messages.filter(msg => msg.role === 'user');
-  const userAnswerCount = Math.max(0, userMessages.length - 1);
+  // Use the same count that works for total progress
+  const userAnswerCount = regularUserMessages.length;
   
-  // Determine current phase based on user answers
-  const phases = Object.keys(phaseDefinitions) as InterviewPhase[];
+  // Simple phase determination using the same counting logic
   let currentPhase: InterviewPhase = 'introduction';
-  let totalUsedAnswers = 0;
   let currentPhaseAnswers = 0;
   
-  for (const phase of phases) {
-    const maxForPhase = phaseDefinitions[phase as InterviewPhase].maxQuestions;
-    
-    if (userAnswerCount <= totalUsedAnswers + maxForPhase) {
-      currentPhase = phase as InterviewPhase;
-      currentPhaseAnswers = userAnswerCount - totalUsedAnswers;
-      break;
-    }
-    
-    totalUsedAnswers += maxForPhase;
+  if (userAnswerCount <= 3) {
+    currentPhase = 'introduction';
+    currentPhaseAnswers = userAnswerCount;
+  } else if (userAnswerCount <= 7) {
+    currentPhase = 'theme_selection';
+    currentPhaseAnswers = userAnswerCount - 3;
+  } else if (userAnswerCount <= 17) {
+    currentPhase = 'deep_dive';
+    currentPhaseAnswers = userAnswerCount - 7;
+  } else if (userAnswerCount <= 18) {
+    currentPhase = 'summary';
+    currentPhaseAnswers = userAnswerCount - 17;
+  } else {
+    currentPhase = 'recommendations';
+    currentPhaseAnswers = userAnswerCount - 18;
   }
   
   const maxQuestionsInCurrentPhase = phaseDefinitions[currentPhase].maxQuestions;
   
-  // Calculate phase question counts
+  // Simple phase question counts - same logic as above
   const phaseQuestionCounts: Record<string, number> = {};
-  let answersLeft = userAnswerCount;
   
-  for (const phase of phases) {
-    const maxForPhase = phaseDefinitions[phase as InterviewPhase].maxQuestions;
-    const answersForPhase = Math.min(answersLeft, maxForPhase);
-    
-    if (answersForPhase > 0) {
-      phaseQuestionCounts[phase] = answersForPhase;
-      answersLeft -= answersForPhase;
-    }
-    
-    if (answersLeft <= 0) break;
+  if (userAnswerCount > 0) {
+    phaseQuestionCounts.introduction = Math.min(userAnswerCount, 3);
+  }
+  if (userAnswerCount > 3) {
+    phaseQuestionCounts.theme_selection = Math.min(userAnswerCount - 3, 4);
+  }
+  if (userAnswerCount > 7) {
+    phaseQuestionCounts.deep_dive = Math.min(userAnswerCount - 7, 10);
+  }
+  if (userAnswerCount > 17) {
+    phaseQuestionCounts.summary = Math.min(userAnswerCount - 17, 1);
+  }
+  if (userAnswerCount > 18) {
+    phaseQuestionCounts.recommendations = Math.min(userAnswerCount - 18, 1);
   }
 
   // Update database when phase changes
