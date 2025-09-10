@@ -25,8 +25,8 @@ export const useDemoPhaseManagement = ({
   sessionData
 }: DemoPhaseManagementProps) => {
   
-  // Count writer messages (backend has processed these)
-  const writerMessages = messages.filter(msg => msg.role === 'writer');
+  // Count assistant messages (backend creates 'writer' messages that get converted to 'assistant' by frontend)
+  const assistantMessages = messages.filter(msg => msg.role === 'assistant');
   
   // Count user answers (exclude initial message)
   const userMessages = messages.filter(msg => msg.role === 'user');
