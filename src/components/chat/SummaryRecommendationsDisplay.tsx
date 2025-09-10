@@ -10,6 +10,7 @@ interface SummaryRecommendationsDisplayProps {
   onGetRecommendations: () => void;
   canTriggerRecommendations: boolean;
   isLoading?: boolean;
+  isProcessing?: boolean;
   onEndInterview?: () => void;
 }
 
@@ -19,6 +20,7 @@ const SummaryRecommendationsDisplay = ({
   onGetRecommendations,
   canTriggerRecommendations,
   isLoading = false,
+  isProcessing = false,
   onEndInterview
 }: SummaryRecommendationsDisplayProps) => {
   // Get the latest assistant message for display
@@ -26,12 +28,15 @@ const SummaryRecommendationsDisplay = ({
     .filter(msg => msg.role === 'assistant')
     .slice(-1)[0];
 
-  if (!latestAssistantMessage || (currentPhase !== 'summary' && currentPhase !== 'recommendations')) {
+  if (currentPhase !== 'summary' && currentPhase !== 'recommendations') {
     return null;
   }
 
   const isSummaryPhase = currentPhase === 'summary';
   const isRecommendationsPhase = currentPhase === 'recommendations';
+  
+  // Show loading state if we're processing (waiting for next writer message)
+  const shouldShowLoading = isProcessing;
 
   return (
     <motion.div
@@ -50,12 +55,12 @@ const SummaryRecommendationsDisplay = ({
               <Lightbulb className="w-6 h-6 text-secondary" />
             )}
             <h2 className="text-2xl font-bold text-foreground">
-              {isSummaryPhase ? 'Your AI Readiness Summary' : 'Personalized Recommendations'}
+              {isSummaryPhase ? 'Your interview Summary' : 'Personalized Recommendations'}
             </h2>
           </div>
           <p className="text-muted-foreground">
             {isSummaryPhase 
-              ? 'Here\'s a comprehensive summary of your AI readiness interview' 
+              ? 'Here\'s a comprehensive summary of your interview' 
               : 'Based on our conversation, here are actionable recommendations for you'
             }
           </p>
@@ -63,15 +68,27 @@ const SummaryRecommendationsDisplay = ({
 
         {/* Content */}
         <div className="p-6">
-          <div className="prose prose-lg max-w-none text-foreground">
-            <div className="whitespace-pre-wrap leading-relaxed">
-              {latestAssistantMessage.content}
+          {shouldShowLoading ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+              <p className="text-muted-foreground text-center">
+                {isSummaryPhase 
+                  ? "Generating your interview summary..." 
+                  : "We hope you liked this new interview style :)..."
+                }
+              </p>
             </div>
-          </div>
+          ) : latestAssistantMessage ? (
+            <div className="prose prose-lg max-w-none text-foreground">
+              <div className="whitespace-pre-wrap leading-relaxed">
+                {latestAssistantMessage.content}
+              </div>
+            </div>
+          ) : null}
         </div>
 
         {/* Action Button for Summary Phase */}
-        {isSummaryPhase && canTriggerRecommendations && (
+        {isSummaryPhase && canTriggerRecommendations && !shouldShowLoading && latestAssistantMessage && (
           <div className="p-6 border-t border-border/50">
             <motion.div
               initial={{ scale: 0.95 }}
@@ -95,7 +112,7 @@ const SummaryRecommendationsDisplay = ({
         )}
 
         {/* End Interview Button for Recommendations Phase */}
-        {currentPhase === 'recommendations' && onEndInterview && (
+        {currentPhase === 'recommendations' && onEndInterview && !shouldShowLoading && latestAssistantMessage && (
           <div className="mt-6 text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
