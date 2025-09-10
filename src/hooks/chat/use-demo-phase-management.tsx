@@ -39,16 +39,16 @@ export const useDemoPhaseManagement = ({
   let currentPhase: InterviewPhase = 'introduction';
   let currentPhaseAnswers = 0;
   
-  if (userAnswerCount <= 3) {
+  if (userAnswerCount < 3) {
     currentPhase = 'introduction';
     currentPhaseAnswers = userAnswerCount;
-  } else if (userAnswerCount <= 7) {
+  } else if (userAnswerCount < 7) {
     currentPhase = 'theme_selection';
     currentPhaseAnswers = userAnswerCount - 3;
-  } else if (userAnswerCount <= 17) {
+  } else if (userAnswerCount < 17) {
     currentPhase = 'deep_dive';
     currentPhaseAnswers = userAnswerCount - 7;
-  } else if (userAnswerCount <= 18) {
+  } else if (userAnswerCount < 18) {
     currentPhase = 'summary';
     currentPhaseAnswers = userAnswerCount - 17;
   } else {
