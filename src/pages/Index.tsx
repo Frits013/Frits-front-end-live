@@ -1,194 +1,340 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
+import { ChatMessage, ChatSession, InterviewPhase } from "@/types/chat";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
-import { Card } from "@/components/ui/card";
-import { MessageSquare, Sparkles } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { AuthContent } from "@/components/auth/AuthContent";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle } from "lucide-react";
-const Index = () => {
-  const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
-  const [isLoading, setIsLoading] = useState(true);
-  const authCheckingRef = useRef(false);
-  const [emailJustConfirmed, setEmailJustConfirmed] = useState(false);
 
-  // Simplified auth checking that runs once on component mount
+const isDev = process.env.NODE_ENV !== 'production';
+
+interface DemoPhaseManagementProps {
+  sessionId: string | null;
+  messages: ChatMessage[];
+  sessionData: ChatSession | null;
+}
+
+// Phase definitions with max questions per phase
+const phaseDefinitions = {
+  'introduction': { maxQuestions: 3, order: 0 },
+  'theme_selection': { maxQuestions: 4, order: 1 },
+  'deep_dive': { maxQuestions: 10, order: 2 },
+  'summary': { maxQuestions: 1, order: 3 },
+  'recommendations': { maxQuestions: 1, order: 4 }
+};
+
+export const useDemoPhaseManagement = ({
+  sessionId,
+  messages,
+  sessionData
+}: DemoPhaseManagementProps) => {
+  // State to track progress and prevent regression
+  const [lastKnownProgress, setLastKnownProgress] = useState<{
+    sessionId: string | null;
+    userAnswerCount: number;
+    currentPhaseQuestionCount: number;
+    currentPhase: InterviewPhase;
+  } | null>(null);
+
+  // Reset progress tracking when session changes
   useEffect(() => {
-    const checkAuth = async () => {
-      if (authCheckingRef.current) return;
-      authCheckingRef.current = true;
-      try {
-        setIsLoading(true);
-        const {
-          data: {
-            session
-          }
-        } = await supabase.auth.getSession();
+    if (sessionId && (!lastKnownProgress || sessionId !== lastKnownProgress.sessionId)) {
+      setLastKnownProgress(null);
+      if (isDev) {
+        console.log(`📊 Progress tracking COMPLETELY RESET for new session: ${sessionId}`);
+        console.log(`📊 Previous session was: ${lastKnownProgress?.sessionId || 'none'}`);
+      }
+    }
+  }, [sessionId]); // Remove circular dependency
 
-        // Check if we have a hash fragment in the URL that indicates email confirmation
-        const urlHash = window.location.hash;
-        const hasEmailConfirmParam = urlHash.includes('email_confirmed=true') || urlHash.includes('type=signup') || urlHash.includes('type=recovery');
-        if (hasEmailConfirmParam) {
-          console.log("Email confirmation detected in URL");
-          setEmailJustConfirmed(true);
-          toast({
-            title: "Email Confirmed",
-            description: "Your email has been successfully confirmed! You can now sign in."
-          });
-          // Clear the hash fragment from the URL
-          setTimeout(() => {
-            window.history.replaceState(null, '', window.location.pathname);
-          }, 500);
+  // Filter for assistant messages - include both 'assistant' AND 'writer' roles
+  // since messages might be in 'writer' state during backend processing transition
+  const assistantMessages = messages.filter(msg => msg.role === 'assistant' || msg.role === 'writer');
+  
+  if (isDev) {
+    console.log(`📊 === MESSAGE ANALYSIS ===`);
+    console.log(`📊 Total messages: ${messages.length}, Assistant messages: ${assistantMessages.length}`);
+    console.log(`📊 Message roles:`, messages.map(m => `${m.role}(${m.id?.slice(-4) || 'no-id'})`));
+    console.log(`📊 User messages:`, messages.filter(m => m.role === 'user').map(m => `"${m.content.substring(0, 30)}..."`));
+    
+    // Check for role inconsistencies
+    const writerCount = messages.filter(msg => msg.role === 'writer').length;
+    const assistantCount = messages.filter(msg => msg.role === 'assistant').length;
+    if (writerCount > 0) {
+      console.log(`⚠️ Found ${writerCount} writer messages and ${assistantCount} assistant messages`);
+    }
+  }
+  const currentPhase = (sessionData?.current_phase || 'introduction') as InterviewPhase;
+  
+  // Calculate phase question counts based on user answers (for database tracking)
+  const calculatePhaseQuestionCounts = (userAnswerCount: number): Record<string, number> => {
+    const phaseQuestionCounts: Record<string, number> = {};
+    const phases = Object.keys(phaseDefinitions) as InterviewPhase[];
+    let answersUsed = 0;
+    
+    if (isDev) console.log(`📊 Calculating phase counts for ${userAnswerCount} user answers`);
+    
+    // Allocate user answers to phases sequentially
+    for (let i = 0; i < phases.length && answersUsed < userAnswerCount; i++) {
+      const phase = phases[i];
+      const maxQuestionsForPhase = phaseDefinitions[phase].maxQuestions;
+      const answersInThisPhase = Math.min(userAnswerCount - answersUsed, maxQuestionsForPhase);
+      
+      if (answersInThisPhase > 0) {
+        phaseQuestionCounts[phase] = answersInThisPhase;
+        answersUsed += answersInThisPhase;
+        
+        if (isDev) {
+          console.log(`📊 Phase ${phase}: ${answersInThisPhase}/${maxQuestionsForPhase} answers`);
         }
-        if (session) {
-          // If we have a session, let's check if the email is confirmed
-          const {
-            data: {
-              user
-            }
-          } = await supabase.auth.getUser();
-          if (user && user.email_confirmed_at) {
-            // Email is confirmed, navigate to chat
-            navigate('/chat');
-            return; // Exit early
+      }
+    }
+    
+    if (isDev) {
+      console.log(`📊 Final phase question counts:`, phaseQuestionCounts);
+    }
+    
+    return phaseQuestionCounts;
+  };
+
+  // Determine correct phase based on USER ANSWERS (not assistant messages)
+  const determineCorrectPhase = (
+    phaseQuestionCounts: Record<string, number>, 
+    isUserAnswering: boolean = false, 
+    userJustFinishedAnswering: boolean = false,
+    userAnswerCount: number = 0
+  ): InterviewPhase => {
+    const phases = Object.keys(phaseDefinitions) as InterviewPhase[];
+    
+    // Calculate how many answers we have so far
+    const totalAnswers = userAnswerCount;
+    
+    if (isDev) {
+      console.log(`📊 Determining phase based on user answers: ${totalAnswers}`);
+    }
+    
+    // PHASE DETECTION based on USER ANSWERS COMPLETED
+    let answersUsed = 0;
+    for (let i = 0; i < phases.length; i++) {
+      const phase = phases[i];
+      const maxQuestionsForPhase = phaseDefinitions[phase].maxQuestions;
+      
+      // If we have enough user answers to complete this phase, continue to next phase
+      if (totalAnswers >= answersUsed + maxQuestionsForPhase) {
+        answersUsed += maxQuestionsForPhase;
+        continue;
+      }
+      
+      // We're in this phase based on user answers
+      if (isDev) {
+        const answersInThisPhase = totalAnswers - answersUsed;
+        console.log(`📊 Phase determined by user answers: ${phase} (${answersInThisPhase}/${maxQuestionsForPhase} answers completed)`);
+      }
+      return phase;
+    }
+    
+    // If we've completed all answers, we're in the final phase
+    return phases[phases.length - 1];
+  };
+
+  // Get all user messages (including initial message)
+  const allUserMessages = messages.filter(msg => msg.role === 'user');
+  
+  // Calculate actual user answers by subtracting 1 for the initial message
+  const rawUserAnswerCount = Math.max(0, allUserMessages.length - 1);
+  
+  // Apply defensive logic: prevent user answer count from going backwards unless it's a new session
+  let userAnswerCount = rawUserAnswerCount;
+  
+  // Only apply defensive logic if we're in the SAME session and have valid progress tracking
+  const isSameSession = lastKnownProgress && lastKnownProgress.sessionId === sessionId && sessionId;
+  if (isSameSession && rawUserAnswerCount < lastKnownProgress.userAnswerCount) {
+    if (isDev) {
+      console.log(`🛡️ REGRESSION DETECTED - User answers: ${rawUserAnswerCount} → ${lastKnownProgress.userAnswerCount} (prevented)`);
+    }
+    userAnswerCount = lastKnownProgress.userAnswerCount;
+  } else if (lastKnownProgress && lastKnownProgress.sessionId !== sessionId) {
+    // Different session detected - use raw count and ignore stale data
+    if (isDev) {
+      console.log(`🔄 Different session detected - ignoring stale progress data`);
+    }
+    userAnswerCount = rawUserAnswerCount;
+  }
+  
+  if (isDev) {
+    console.log(`📊 User answer count: ${rawUserAnswerCount} (raw) → ${userAnswerCount} (final)`);
+  }
+
+  // Calculate phase question counts based on user answers
+  const phaseQuestionCounts = calculatePhaseQuestionCounts(userAnswerCount);
+  
+  // Determine if user is currently answering
+  // User is answering if the last message is from assistant AND there are fewer user answers than assistant questions
+  const lastMessage = messages[messages.length - 1];
+  const isUserAnswering = lastMessage?.role === 'assistant' && userAnswerCount < assistantMessages.length;
+  
+  // Enhanced logic: also check if we're at the exact moment of a phase boundary
+  // If we have equal assistant questions and user answers, the user has just finished answering
+  const userJustFinishedAnswering = userAnswerCount === assistantMessages.length;
+  
+  const correctPhase = determineCorrectPhase(phaseQuestionCounts, isUserAnswering, userJustFinishedAnswering, userAnswerCount);
+  
+  // Calculate the question number within the current phase based on answers
+  const phases = Object.keys(phaseDefinitions) as InterviewPhase[];
+  const totalAnswers = userAnswerCount;
+  
+  // Calculate which question number we're on within the current phase
+  let answersUsed = 0;
+  let rawCurrentPhaseQuestionCount = 0;
+  
+  for (let i = 0; i < phases.length; i++) {
+    const phase = phases[i];
+    const maxQuestionsForPhase = phaseDefinitions[phase].maxQuestions;
+    
+    if (phase === correctPhase) {
+      // This is the number of answers completed in this phase
+      rawCurrentPhaseQuestionCount = Math.max(0, totalAnswers - answersUsed);
+      break;
+    }
+    
+    answersUsed += maxQuestionsForPhase;
+  }
+  
+  // Apply defensive logic: prevent phase progress from going backwards unless it's a new session or different phase
+  let currentPhaseQuestionCount = rawCurrentPhaseQuestionCount;
+  
+  // Only apply defensive logic for the same session, same phase
+  if (isSameSession && 
+      lastKnownProgress.currentPhase === correctPhase &&
+      rawCurrentPhaseQuestionCount < lastKnownProgress.currentPhaseQuestionCount) {
+    if (isDev) {
+      console.log(`🛡️ REGRESSION DETECTED - Phase progress: ${rawCurrentPhaseQuestionCount} → ${lastKnownProgress.currentPhaseQuestionCount} (prevented)`);
+    }
+    currentPhaseQuestionCount = lastKnownProgress.currentPhaseQuestionCount;
+  } else if (lastKnownProgress && lastKnownProgress.sessionId !== sessionId) {
+    // Different session - use raw count
+    if (isDev) {
+      console.log(`🔄 Different session detected - using raw phase progress: ${rawCurrentPhaseQuestionCount}`);
+    }
+    currentPhaseQuestionCount = rawCurrentPhaseQuestionCount;
+  }
+  
+  const currentPhaseMaxQuestions = phaseDefinitions[correctPhase]?.maxQuestions || 3;
+
+  if (isDev) {
+    console.log(`📊 ===================`);
+    console.log(`📊 FINAL CALCULATIONS:`);
+    console.log(`📊 User messages total: ${allUserMessages.length} (including initial)`);
+    console.log(`📊 User answers (raw): ${rawUserAnswerCount} (total - 1)`);
+    console.log(`📊 User answers (final): ${userAnswerCount}`);
+    console.log(`📊 Current phase: ${correctPhase} (determined by user answers)`);
+    console.log(`📊 Phase progress: ${rawCurrentPhaseQuestionCount} raw → ${currentPhaseQuestionCount} final / ${currentPhaseMaxQuestions}`);
+    console.log(`📊 Question counter will show: ${currentPhaseQuestionCount + 1}/${currentPhaseMaxQuestions}`);
+    console.log(`📊 Database phase: ${currentPhase}`);
+    console.log(`📊 Assistant messages: ${assistantMessages.length}`);
+    console.log(`📊 ===================`);
+  }
+
+  // Update progress tracking when progress advances (prevent infinite re-renders with useEffect)
+  useEffect(() => {
+    const shouldUpdate = 
+      userAnswerCount >= (lastKnownProgress?.userAnswerCount || 0) && 
+      currentPhaseQuestionCount >= (lastKnownProgress?.currentPhaseQuestionCount || 0) &&
+      (
+        !lastKnownProgress ||
+        lastKnownProgress.sessionId !== sessionId ||
+        lastKnownProgress.userAnswerCount !== userAnswerCount ||
+        lastKnownProgress.currentPhaseQuestionCount !== currentPhaseQuestionCount ||
+        lastKnownProgress.currentPhase !== correctPhase
+      );
+
+    if (shouldUpdate) {
+      setLastKnownProgress({
+        sessionId,
+        userAnswerCount,
+        currentPhaseQuestionCount,
+        currentPhase: correctPhase
+      });
+      if (isDev) {
+        console.log(`📊 Progress tracking updated: answers=${userAnswerCount}, phase=${correctPhase}(${currentPhaseQuestionCount})`);
+      }
+    }
+  }, [sessionId, userAnswerCount, currentPhaseQuestionCount, correctPhase]);
+
+  // Update database when phase or question counts change
+  useEffect(() => {
+    if (!sessionId) return;
+    
+    const needsUpdate = 
+      correctPhase !== currentPhase || 
+      JSON.stringify(phaseQuestionCounts) !== JSON.stringify(sessionData?.phase_question_counts || {});
+    
+    if (needsUpdate) {
+      const updateSession = async () => {
+        try {
+          if (isDev) {
+            console.log(`📊 Updating session: ${currentPhase} → ${correctPhase}`);
+            console.log(`📊 Old phase counts:`, sessionData?.phase_question_counts || {});
+            console.log(`📊 New phase counts:`, phaseQuestionCounts);
           }
 
-          // If email isn't confirmed, we'll stay on the login page
-          // Sign out to ensure clean state
-          await supabase.auth.signOut();
+          const { error } = await supabase
+            .from('chat_sessions')
+            .update({ 
+              current_phase: correctPhase,
+              phase_question_counts: phaseQuestionCounts
+            })
+            .eq('id', sessionId);
+
+          if (error) {
+            if (isDev) console.error('❌ Error updating session:', error);
+          } else {
+            if (isDev) {
+              console.log(`✅ Session updated successfully`);
+              console.log(`📊 Current phase: ${correctPhase} (${currentPhaseQuestionCount}/${currentPhaseMaxQuestions})`);
+            }
+          }
+        } catch (error) {
+          if (isDev) console.error('❌ Failed to update session:', error);
+        }
+      };
+      updateSession();
+    }
+  }, [sessionId, correctPhase, currentPhase, phaseQuestionCounts, currentPhaseQuestionCount, sessionData?.phase_question_counts]);
+
+  // Function to trigger summary -> recommendations transition
+  const triggerNextPhase = async () => {
+    if (correctPhase === 'summary' && sessionId) {
+      try {
+        const updatedCounts = { ...phaseQuestionCounts, summary: phaseDefinitions.summary.maxQuestions };
+        const { error } = await supabase
+          .from('chat_sessions')
+          .update({ 
+            current_phase: 'recommendations',
+            phase_question_counts: updatedCounts,
+            phase_metadata: {
+              ...sessionData?.phase_metadata,
+              manual_transition: true,
+              transition_reason: 'User requested recommendations'
+            }
+          })
+          .eq('id', sessionId);
+
+        if (error) {
+          if (isDev) console.error('Error updating to recommendations phase:', error);
+        } else {
+          if (isDev) console.log('Successfully updated to recommendations phase');
         }
       } catch (error) {
-        console.error("Error checking auth:", error);
-      } finally {
-        setIsLoading(false);
-        authCheckingRef.current = false;
+        if (isDev) console.error('Failed to update to recommendations phase:', error);
       }
-    };
+    }
+  };
 
-    // Run the auth check
-    checkAuth();
-
-    // Listen for auth state changes to handle navigation correctly
-    const {
-      data: {
-        subscription
-      }
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event);
-      if (event === 'SIGNED_IN' && session) {
-        const {
-          data: {
-            user
-          }
-        } = await supabase.auth.getUser();
-        if (user && user.email_confirmed_at) {
-          // Email confirmed, navigate to chat
-          navigate('/chat');
-        }
-      } else if (event === 'USER_UPDATED') {
-        // User was updated, which might happen after email confirmation
-        const {
-          data: {
-            user
-          }
-        } = await supabase.auth.getUser();
-        if (user && user.email_confirmed_at) {
-          setEmailJustConfirmed(true);
-          toast({
-            title: "Email Confirmed",
-            description: "Your email has been successfully confirmed! You can now sign in."
-          });
-        }
-      }
-    });
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate, toast]);
-  if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-        <LoadingSpinner size="lg" />
-      </div>;
-  }
-  return <div className="min-h-screen relative overflow-hidden">
-      {/* Enhanced Background with animated gradient */}
-      <div className="absolute inset-0" style={{
-      background: `
-            linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 25%, rgba(236, 72, 153, 0.1) 50%, rgba(59, 130, 246, 0.1) 75%, rgba(16, 185, 129, 0.1) 100%),
-            url("https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=80")
-          `,
-      backgroundSize: 'cover, cover',
-      backgroundPosition: 'center, center',
-      backgroundRepeat: 'no-repeat, no-repeat'
-    }} />
-      
-      {/* Floating geometric shapes for visual interest */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-20 h-20 bg-blue-200/30 rounded-full blur-xl animate-pulse"></div>
-        <div className="absolute top-40 right-20 w-32 h-32 bg-purple-200/20 rounded-full blur-2xl animate-pulse delay-1000"></div>
-        <div className="absolute bottom-20 left-20 w-16 h-16 bg-indigo-200/40 rounded-full blur-lg animate-pulse delay-2000"></div>
-        <div className="absolute bottom-40 right-10 w-24 h-24 bg-pink-200/30 rounded-full blur-xl animate-pulse delay-500"></div>
-      </div>
-
-      {/* Company Logo - Enhanced positioning */}
-      <div className="absolute top-6 left-6 z-20 bg-white/10 backdrop-blur-sm rounded-xl p-2 border border-white/20">
-        <img src="/lovable-uploads/aacf68b0-e0c4-472e-9f50-8289a498979b.png" alt="FIDDS Company Emblem" className="h-12 w-auto" />
-      </div>
-
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 relative z-10">
-        <div className="w-full max-w-md">
-          {/* Enhanced Hero Section */}
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <div className="relative">
-                <MessageSquare className="h-10 w-10 text-blue-600" />
-                <Sparkles className="h-4 w-4 text-yellow-500 absolute -top-1 -right-1 animate-pulse" />
-              </div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                Frits AI
-              </h1>
-            </div>
-            <p className="text-lg text-gray-700 mb-2 font-medium">
-              Your AI Readiness Consultant
-            </p>
-            
-          </div>
-
-          {emailJustConfirmed && <Alert className="mb-6 bg-green-50/80 backdrop-blur-sm border-green-200 shadow-lg">
-              <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-              <AlertDescription className="text-green-800">
-                Email confirmed successfully! You can now sign in.
-              </AlertDescription>
-            </Alert>}
-
-          {/* Enhanced Card with glassmorphism effect */}
-          <Card className="p-8 shadow-2xl bg-white/80 backdrop-blur-md border-0 relative overflow-hidden">
-            {/* Subtle gradient overlay on card */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
-            <div className="relative z-10">
-              <AuthContent />
-            </div>
-          </Card>
-          
-          {/* Trust indicators */}
-          <div className="mt-6 text-center">
-            <p className="text-xs text-gray-500 mb-2">Trusted by innovative businesses worldwide</p>
-            <div className="flex justify-center items-center gap-4 opacity-60">
-              <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-              <span className="text-xs font-medium text-gray-600">Secure</span>
-              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-              <span className="text-xs font-medium text-gray-600">Reliable</span>
-              <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-              <span className="text-xs font-medium text-gray-600">Intelligent</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>;
+  return {
+    currentPhase: correctPhase,
+    answerCount: currentPhaseQuestionCount, // Number of answers completed in current phase
+    currentQuestionNumber: currentPhaseQuestionCount + 1, // Current question being asked (for display)
+    maxQuestions: currentPhaseMaxQuestions, // Max questions for current phase
+    totalQuestions: totalAnswers, // Total answers given (for overall progress)
+    phaseQuestionCounts, // Questions per phase breakdown
+    triggerNextPhase,
+    canTriggerNextPhase: correctPhase === 'summary'
+  };
 };
-export default Index;
