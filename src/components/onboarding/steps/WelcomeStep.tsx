@@ -25,8 +25,9 @@ const WelcomeStep = ({
 (Example: kan je dit interview in het Nederlands doen?)</li>
           <li>You reply however you want, that's it</li>
         </ul>
-        <p className="font-medium mt-2">Frits knows his role and is adaptable so feel free to ask anything!  
-(Example: kan je dit interview in het Nederlands doen?)</p>
+        <p className="font-medium mt-2">
+          Good to know:
+        </p>
         <ul className="list-disc pl-5 space-y-1">
           <li>Questions can take up to 30 seconds to load sometimes</li>
           <li>Frits knows his role and is adaptable so feel free to ask anything! 
