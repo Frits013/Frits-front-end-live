@@ -25,26 +25,11 @@ export const useDemoPhaseManagement = ({
   sessionData
 }: DemoPhaseManagementProps) => {
   
-  // Use SAME logic as working total progress in ChatContainer.tsx
-  // Filter regular user messages (exclude initial message like ChatContainer does)
-  const regularUserMessages = messages.filter(msg => 
-    msg.role === 'user' && 
-    msg.content.trim() !== "I'm looking for guidance on AI readiness for my organization. Can you help me get started with an interview that will assess our current state and provide recommendations?"
-  );
+  // Use -1 counting logic: count all user messages and subtract 1 for the initial message
+  const allUserMessages = messages.filter(msg => msg.role === 'user');
+  const userAnswerCount = Math.max(0, allUserMessages.length - 1);
   
-  // Count assistant messages to detect if we have questions that need answers
-  const assistantMessages = messages.filter(msg => msg.role === 'assistant');
-  
-  // Use the same count that works for total progress
-  let userAnswerCount = regularUserMessages.length;
-  
-  // Fix for new sessions: if we have assistant messages but no user responses yet,
-  // and this appears to be an active session (has messages), we should adjust the counting
-  // to reflect that questions are available to be answered
-  const hasQuestionsWaitingForAnswers = assistantMessages.length > 0 && userAnswerCount === 0;
-  
-  // For new sessions with questions but no answers yet, don't adjust the count
-  // The issue was that we were showing progress as if questions were already answered
+  console.log('🔍 Demo phase management - Total messages:', messages.length, 'User messages:', allUserMessages.length, 'Actual answers:', userAnswerCount);
   
   // Simple phase determination using the same counting logic
   let currentPhase: InterviewPhase = 'introduction';
@@ -117,19 +102,10 @@ export const useDemoPhaseManagement = ({
     }
   };
 
-  // Calculate current question number more accurately
-  // If we have questions waiting for answers, the question number should reflect the next unanswered question
-  let currentQuestionNumber = currentPhaseAnswers + 1;
-  
-  // For new sessions with questions loaded but no answers yet, show question 1
-  if (hasQuestionsWaitingForAnswers && userAnswerCount === 0) {
-    currentQuestionNumber = 1;
-  }
-
   return {
     currentPhase,
     answerCount: currentPhaseAnswers,
-    currentQuestionNumber,
+    currentQuestionNumber: currentPhaseAnswers + 1,
     maxQuestions: maxQuestionsInCurrentPhase,
     totalQuestions: userAnswerCount,
     phaseQuestionCounts,
