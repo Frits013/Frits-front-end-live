@@ -149,9 +149,9 @@ const Index = () => {
                 <MessageSquare className="h-10 w-10 text-blue-600" />
                 <Sparkles className="h-4 w-4 text-yellow-500 absolute -top-1 -right-1 animate-pulse" />
               </div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">Frits</h1>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">Frits - Your AI Interviewer</h1>
             </div>
-            <p className="text-lg text-gray-700 mb-2 font-medium">Your AI Interviewer</p>
+            
             
           </div>
 
