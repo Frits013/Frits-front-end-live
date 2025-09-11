@@ -11,9 +11,7 @@ export const AuthContent = () => {
           <LogIn className="h-6 w-6 text-blue-600" />
           <h1 className="text-2xl font-bold text-blue-900">Welcome!</h1>
         </div>
-        <p className="text-sm text-blue-600">
-          Access is by invitation only
-        </p>
+        
       </div>
       
       <CustomLoginForm authView="sign_in" />
