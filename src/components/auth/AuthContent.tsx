@@ -9,7 +9,7 @@ export const AuthContent = () => {
       <div className="text-center">
         <div className="flex items-center justify-center gap-2 mb-3">
           <LogIn className="h-6 w-6 text-blue-600" />
-          <h1 className="text-2xl font-bold text-blue-900">Welcome!</h1>
+          <h1 className="text-2xl font-bold text-blue-900">Are you ready? Let's begin!</h1>
         </div>
         
       </div>
