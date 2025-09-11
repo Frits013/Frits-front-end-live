@@ -19,7 +19,10 @@ const WelcomeStep = ({
           What to expect:
         </p>
         <ul className="list-disc pl-5 space-y-1">
-          <li>Frits asks short, easy-to-follow questions</li>
+          <li>Frits knows his role and is adaptable so feel free to ask anything!  
+
+
+(Example: kan je dit interview in het Nederlands doen?)</li>
           <li>You reply however you want, that's it</li>
         </ul>
         <p className="font-medium mt-2">
