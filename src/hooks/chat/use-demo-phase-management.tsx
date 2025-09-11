@@ -25,31 +25,31 @@ export const useDemoPhaseManagement = ({
   sessionData
 }: DemoPhaseManagementProps) => {
   
-  // Use -1 counting logic: count all user messages and subtract 1 for the initial message
+  // Use -1 counting logic for total progress: count all user messages and subtract 1 for the initial message
   const allUserMessages = messages.filter(msg => msg.role === 'user');
   const userAnswerCount = Math.max(0, allUserMessages.length - 1);
   
   console.log('🔍 Demo phase management - Total messages:', messages.length, 'User messages:', allUserMessages.length, 'Actual answers:', userAnswerCount);
   
-  // Simple phase determination using the same counting logic
+  // Phase determination using userAnswerCount (which already has -1 applied)
   let currentPhase: InterviewPhase = 'introduction';
   let currentPhaseAnswers = 0;
   
   if (userAnswerCount < 3) {
     currentPhase = 'introduction';
-    currentPhaseAnswers = userAnswerCount;
+    currentPhaseAnswers = userAnswerCount; // This is correct: 0, 1, 2
   } else if (userAnswerCount < 7) {
     currentPhase = 'theme_selection';
-    currentPhaseAnswers = userAnswerCount - 3;
+    currentPhaseAnswers = userAnswerCount - 3; // This is correct: 0, 1, 2, 3
   } else if (userAnswerCount < 17) {
     currentPhase = 'deep_dive';
-    currentPhaseAnswers = userAnswerCount - 7;
+    currentPhaseAnswers = userAnswerCount - 7; // This is correct: 0, 1, 2, ..., 9
   } else if (userAnswerCount < 18) {
     currentPhase = 'summary';
-    currentPhaseAnswers = userAnswerCount - 17;
+    currentPhaseAnswers = userAnswerCount - 17; // This is correct: 0
   } else {
     currentPhase = 'recommendations';
-    currentPhaseAnswers = userAnswerCount - 18;
+    currentPhaseAnswers = userAnswerCount - 18; // This is correct: 0
   }
   
   const maxQuestionsInCurrentPhase = phaseDefinitions[currentPhase].maxQuestions;
