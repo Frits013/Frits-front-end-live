@@ -19,7 +19,7 @@ const InterviewThankYou = ({ show, onComplete }: InterviewThankYouProps) => {
       // After 4 seconds, switch to "made by FIDDS" message
       const timer = setTimeout(() => {
         setCurrentMessage('made-by');
-      }, 8000);
+      }, 6000);
       
       // Stop confetti after 6 seconds total
       const confettiTimer = setTimeout(() => {
