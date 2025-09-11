@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ChatMessage, ChatSession, InterviewPhase } from "@/types/chat";
 import { supabase } from "@/integrations/supabase/client";
+import { INITIAL_MESSAGE } from "@/hooks/chat-sessions/use-session-creation";
 
 const isDev = process.env.NODE_ENV !== 'production';
 
@@ -25,11 +26,14 @@ export const useDemoPhaseManagement = ({
   sessionData
 }: DemoPhaseManagementProps) => {
   
-  // Use -1 counting logic for total progress: count all user messages and subtract 1 for the initial message
-  const allUserMessages = messages.filter(msg => msg.role === 'user');
-  const userAnswerCount = Math.max(0, allUserMessages.length - 1);
-  
-  console.log('🔍 Demo phase management - Total messages:', messages.length, 'User messages:', allUserMessages.length, 'Actual answers:', userAnswerCount);
+  // Use EXACT same logic as ChatContainer total progress (lines 129-136)
+  const regularUserMessages = messages.filter(msg => 
+    msg.role === 'user' && 
+    !msg.content.includes('YOU ARE NOW IN THE') && 
+    !msg.content.includes('The next question you will ask will be from the') &&
+    msg.content.trim() !== INITIAL_MESSAGE.trim()
+  );
+  const userAnswerCount = regularUserMessages.length;
   
   // Phase determination using userAnswerCount (which already has -1 applied)
   let currentPhase: InterviewPhase = 'introduction';
