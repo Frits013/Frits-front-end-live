@@ -163,7 +163,7 @@ const Index = () => {
             </Alert>}
 
           {/* Enhanced Card with glassmorphism effect */}
-          <Card className="p-8 shadow-2xl bg-white/80 backdrop-blur-md border-0 relative overflow-hidden">
+          <Card className="p-8 shadow-2xl bg-white/80 backdrop-blur-md border-0 relative overflow-hidden rounded-lg">
             {/* Subtle gradient overlay on card */}
             <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
             <div className="relative z-10">
