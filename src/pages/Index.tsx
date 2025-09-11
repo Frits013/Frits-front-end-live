@@ -151,7 +151,7 @@ const Index = () => {
               </div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">Frits</h1>
             </div>
-            <p className="text-lg text-gray-700 mb-2 font-medium">Your AI Interviewer - Sign In Only</p>
+            <p className="text-lg text-gray-700 mb-2 font-medium">Your AI Interviewer</p>
             
           </div>
 
