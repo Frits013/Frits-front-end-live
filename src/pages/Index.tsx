@@ -154,7 +154,7 @@ const Index = () => {
               </h1>
             </div>
             <p className="text-lg text-gray-700 mb-2 font-medium">
-              Your AI Readiness Consultant
+              Your AI Readiness Consultant - Sign In Only
             </p>
             
           </div>
