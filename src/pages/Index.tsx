@@ -173,8 +173,8 @@ const Index = () => {
           
           {/* Trust indicators */}
           <div className="mt-6 text-center">
-            <p className="text-xs text-gray-500 mb-2">Trusted by innovative businesses worldwide</p>
-            <div className="flex justify-center items-center gap-4 opacity-60">
+            <p className="text-xs mb-2 text-slate-200">Trusted by innovative businesses worldwide</p>
+            <div className="flex justify-center items-center gap-4 opacity-60 bg-slate-50 rounded-xl">
               <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
               <span className="text-xs font-medium text-gray-600">Secure</span>
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
