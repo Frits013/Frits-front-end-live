@@ -136,8 +136,8 @@ const Index = () => {
       </div>
 
       {/* Company Logo - Enhanced positioning */}
-      <div className="absolute top-6 left-6 z-20 scale-200 bg-white/10 backdrop-blur-sm rounded-xl p-2 border border-white/20">
-        <img src="/lovable-uploads/aacf68b0-e0c4-472e-9f50-8289a498979b.png" alt="FIDDS Company Emblem" className="h-12 w-auto" />
+      <div className="absolute top-6 left-6 z-20 bg-white/10 backdrop-blur-sm rounded-xl p-2 border border-white/20">
+        <img src="/lovable-uploads/aacf68b0-e0c4-472e-9f50-8289a498979b.png" alt="FIDDS Company Emblem" className="h-20 w-auto" />
       </div>
 
       <div className="min-h-screen flex flex-col items-center justify-center p-6 relative z-10">
