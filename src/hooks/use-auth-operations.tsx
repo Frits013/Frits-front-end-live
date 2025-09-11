@@ -126,6 +126,74 @@ export const useAuthOperations = () => {
     }
   };
 
+  const handleSignInWithGithub = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+
+      if (error) {
+        if (isDev) console.error('GitHub sign in error:', error);
+        toast({
+          title: "Sign In Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      if (isDev) console.error('GitHub sign in exception:', error);
+      toast({
+        title: "Sign In Failed",
+        description: "An unexpected error occurred during GitHub sign in.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEmailSignUp = async (email: string, password: string) => {
+    try {
+      if (isDev) console.log("Attempting to sign up with email:", email);
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: window.location.origin,
+        }
+      });
+
+      if (error) {
+        if (isDev) console.error('Email sign up error:', error);
+        return { error };
+      }
+      
+      if (isDev) console.log("Sign up successful:", data);
+      
+      // Check if we received a confirmation flow
+      if (data?.user && !data.user.email_confirmed_at) {
+        toast({
+          title: "Almost There!",
+          description: "Please check your email for a confirmation link. You'll need to verify your email before signing in.",
+          duration: 8000,
+        });
+      } else {
+        toast({
+          title: "Sign Up Successful",
+          description: "Your account has been created successfully!",
+          duration: 6000,
+        });
+      }
+      
+      return { data };
+    } catch (error: any) {
+      if (isDev) console.error('Email sign up exception:', error);
+      // Don't show toast here, let the calling component handle it
+      return { error };
+    }
+  };
 
   const handleEmailSignIn = async (email: string, password: string) => {
     try {
@@ -264,6 +332,8 @@ export const useAuthOperations = () => {
 
   return {
     handleSignOut,
+    handleSignInWithGithub,
+    handleEmailSignUp,
     handleEmailSignIn,
     resendConfirmationEmail,
     isEmailConfirmed,
