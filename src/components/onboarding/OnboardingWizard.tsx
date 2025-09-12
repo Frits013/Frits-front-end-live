@@ -4,7 +4,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 import WelcomeStep from "./steps/WelcomeStep";
-import CompanyCodeStep from "./steps/CompanyCodeStep";
 import UserDescriptionStep from "./steps/UserDescriptionStep";
 
 interface OnboardingWizardProps {
@@ -14,7 +13,6 @@ interface OnboardingWizardProps {
 
 const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
   const [step, setStep] = useState(1);
-  const [companyCode, setCompanyCode] = useState("");
   const [userDescription, setUserDescription] = useState("");
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,11 +22,9 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
   useEffect(() => {
     if (open) {
       const savedStep = localStorage.getItem('onboarding_step');
-      const savedCompanyCode = localStorage.getItem('onboarding_company_code');
       const savedUserDescription = localStorage.getItem('onboarding_user_description');
       
       if (savedStep) setStep(parseInt(savedStep));
-      if (savedCompanyCode) setCompanyCode(savedCompanyCode);
       if (savedUserDescription) setUserDescription(savedUserDescription);
     }
   }, [open]);
@@ -39,17 +35,6 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
       localStorage.setItem('onboarding_step', step.toString());
     }
   }, [step, open]);
-
-  // Save company code to localStorage
-  useEffect(() => {
-    if (open) {
-      if (companyCode) {
-        localStorage.setItem('onboarding_company_code', companyCode);
-      } else {
-        localStorage.removeItem('onboarding_company_code');
-      }
-    }
-  }, [companyCode, open]);
 
   // Save user description to localStorage
   useEffect(() => {
@@ -72,65 +57,14 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
     setStep(prevStep => prevStep - 1);
   };
 
-  const validateCompanyCode = async (code: string) => {
-    if (!code) return true; // Empty code is allowed (will not link to company)
-    
-    // Make sure code only contains numbers and is at most 8 digits
-    if (!/^\d{1,8}$/.test(code)) {
-      setError("Company code must be an 8-digit number");
-      return false;
-    }
-    
-    console.log("Validating company code:", code);
-    
-    // Convert string code to number before querying
-    const numericCode = parseInt(code);
-    console.log("Converted to numeric code:", numericCode);
-    
-    // Query the company_codes view to check if code exists
-    const { data: validCode } = await supabase
-      .from('company_codes')
-      .select('code')
-      .eq('code', numericCode)
-      .maybeSingle();
-
-    if (!validCode) {
-      setError("Company code not found");
-      return false;
-    }
-    
-    return true;
-  };
 
   const handleSave = async () => {
     try {
       setError("");
       setIsSubmitting(true);
-      
-      // Validate company code if provided
-      if (companyCode && !(await validateCompanyCode(companyCode))) {
-        setIsSubmitting(false);
-        return;
-      }
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-
-      // If company code was provided, use the set_user_company function
-      if (companyCode) {
-        const { data: success, error: functionError } = await supabase
-          .rpc('set_user_company', {
-            user_uuid: session.user.id,
-            company_code: companyCode
-          });
-
-        if (functionError) throw functionError;
-        if (!success) {
-          setError("Failed to link company code");
-          setIsSubmitting(false);
-          return;
-        }
-      }
 
       // Update user description and onboarding status
       // Note: We don't validate userDescription - it can be empty
@@ -151,7 +85,6 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
       
       // Clear saved onboarding state
       localStorage.removeItem('onboarding_step');
-      localStorage.removeItem('onboarding_company_code');
       localStorage.removeItem('onboarding_user_description');
       
       onComplete();
@@ -168,8 +101,6 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
       case 1:
         return "Welcome to Frits! - Your AI Readiness assessor";
       case 2:
-        return "Company Code";
-      case 3:
         return "Take the fast lane [optional]";
       default:
         return "";
@@ -183,22 +114,12 @@ const OnboardingWizard = ({ open, onComplete }: OnboardingWizardProps) => {
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-semibold">{getHeaderTitle()}</h2>
             <div className="text-sm text-muted-foreground">
-              Step {step} of 3
+              Step {step} of 2
             </div>
           </div>
 
           {step === 1 ? (
             <WelcomeStep onNext={handleNext} />
-          ) : step === 2 ? (
-            <CompanyCodeStep 
-              companyCode={companyCode}
-              onCompanyCodeChange={(code) => {
-                setCompanyCode(code);
-                setError("");
-              }}
-              onNext={handleNext}
-              onPrevious={handlePrevious}
-            />
           ) : (
             <UserDescriptionStep 
               userDescription={userDescription}
