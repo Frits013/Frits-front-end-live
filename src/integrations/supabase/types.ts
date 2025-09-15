@@ -104,19 +104,16 @@ export type Database = {
       }
       companies: {
         Row: {
-          code: number
           company_description: string | null
           company_id: string
           company_name: string | null
         }
         Insert: {
-          code: number
           company_description?: string | null
           company_id?: string
           company_name?: string | null
         }
         Update: {
-          code?: number
           company_description?: string | null
           company_id?: string
           company_name?: string | null
@@ -239,14 +236,11 @@ export type Database = {
       users: {
         Row: {
           company_id: string | null
-          consultation_history: Json | null
           created_at: string
           distilled_company_AIR_info: string | null
           distilled_user_AIR_info: string | null
           email: string | null
           onboarding_complete: boolean | null
-          preferred_themes: string[] | null
-          theme_expertise: Json | null
           TTS_flag: boolean | null
           updated_at: string
           user_description: string | null
@@ -254,14 +248,11 @@ export type Database = {
         }
         Insert: {
           company_id?: string | null
-          consultation_history?: Json | null
           created_at?: string
           distilled_company_AIR_info?: string | null
           distilled_user_AIR_info?: string | null
           email?: string | null
           onboarding_complete?: boolean | null
-          preferred_themes?: string[] | null
-          theme_expertise?: Json | null
           TTS_flag?: boolean | null
           updated_at?: string
           user_description?: string | null
@@ -269,14 +260,11 @@ export type Database = {
         }
         Update: {
           company_id?: string | null
-          consultation_history?: Json | null
           created_at?: string
           distilled_company_AIR_info?: string | null
           distilled_user_AIR_info?: string | null
           email?: string | null
           onboarding_complete?: boolean | null
-          preferred_themes?: string[] | null
-          theme_expertise?: Json | null
           TTS_flag?: boolean | null
           updated_at?: string
           user_description?: string | null
